@@ -1,6 +1,21 @@
 <<<<<<< HEAD
+---
+output: github_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
 
 # `dartR.popgenomics` <a href="https://green-striped-gecko.github.io/dartR/"><img src="man/figures/dartRlogo.png" align="right" height="140"/></a>
 
@@ -9,17 +24,17 @@
 <!-- badges: start -->
 
 ### Repositories
-
-| repo | status                                                                                                                                                                                                                        |
-|------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| main | [![main](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml/badge.svg?branch=main)](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml) |
-| dev  | [![dev](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml/badge.svg?branch=dev)](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml)   |
+| repo | status |
+|------|--------|
+| main |[![main](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml/badge.svg?branch=main)](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml)|
+| dev |[![dev](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml/badge.svg?branch=dev)](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml) |
 
 Publication:
 [![](https://img.shields.io/badge/doi-10.1111/1755--0998.12745-00cccc.svg)](https://doi.org/10.1111/1755-0998.12745)
 
 Zenodo:
 [![DOI](https://zenodo.org/badge/86640709.svg)](https://zenodo.org/badge/latestdoi/86640709)
+
 
 <!-- badges: end -->
 
@@ -29,19 +44,17 @@ Zenodo:
 
 Currently the dartRverse consists of the following packages:
 
-- dartR.base (report, filter and input/output functions, basic
-  popgenomics)
-- dartR.data
-- dartR.sim (functions to simulate SNP data)
-- dartR.spatial (spatial analysis)
-- dartR.popgenomics (this package)
-- dartR.captive (functions to support analysis around captive breeding)
-- dartR.sexlinked
+-   dartR.base   (report, filter and input/output functions, basic popgenomics)
+-   dartR.data
+-   dartR.sim     (functions to simulate SNP data)
+-   dartR.spatial (spatial analysis)
+-   dartR.popgenomics (this package)
+-   dartR.captive (functions to support analysis around captive breeding)
+-   dartR.sexlinked 
 
-`dartR` and its packages is a collaboration between the University of
-Canberra, CSIRO and Diversity Arrays Technology, and is supported with
-funding from the ACT Priority Investment Program, CSIRO and the
-University of Canberra.
+`dartR` and its packages is a collaboration between the University of Canberra, CSIRO and
+Diversity Arrays Technology, and is supported with funding from the ACT
+Priority Investment Program, CSIRO and the University of Canberra.
 
 <p align="center">
 
@@ -55,13 +68,12 @@ University of Canberra.
 ## Installation
 
 For a normal install from CRAN use:
-
-``` r
+```{r, eval=FALSE}
 install.packages("dartR.popgenomics")
 ```
 
-For hints and how to install github versions, check the help pages of
-the dartRverse package.
+
+For hints and how to install github versions, check the help pages of the dartRverse package.
 
 ## Contribute
 
@@ -75,7 +87,7 @@ Please acknowledge `dartR` if you use it in your study. Copy and paste
 the following code to the R console to retrieve the citation
 information:
 
-``` r
+```{r, eval = FALSE}
 citation("dartR.popgenomics")
 ```
 
@@ -90,8 +102,23 @@ Cheers,
 
 Bernd, Arthur, Luis, Carlo & Olly
 =======
+---
+output: github_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
 
 # `dartR.popgenomics` <a href="https://green-striped-gecko.github.io/dartR/"><img src="man/figures/dartRlogo.png" align="right" height="140"/></a>
 
@@ -100,11 +127,10 @@ Bernd, Arthur, Luis, Carlo & Olly
 <!-- badges: start -->
 
 ### Repositories
-
-| repo | status                                                                                                                                                                                                                        |
-|------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| main | [![main](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml/badge.svg?branch=main)](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml) |
-| dev  | [![dev](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml/badge.svg?branch=dev)](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml)   |
+| repo | status |
+|------|--------|
+| main |[![main](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml/badge.svg?branch=main)](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml)|
+| dev |[![dev](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml/badge.svg?branch=dev)](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml) |
 
 Publication:
 [![](https://img.shields.io/badge/doi-10.1111/1755--0998.12745-00cccc.svg)](https://doi.org/10.1111/1755-0998.12745)
@@ -112,28 +138,25 @@ Publication:
 Zenodo:
 [![DOI](https://zenodo.org/badge/86640709.svg)](https://zenodo.org/badge/latestdoi/86640709)
 
+
 <!-- badges: end -->
 
 ## Overview
 
-`dartR.popgenomics` aims to support analysis of SNP and silicodart data
-to study population structure. For example running structure and
-estimating effective population sizes
+`dartR.popgenomics` aims to support analysis of SNP and silicodart data to study population structure. For example running structure and estimating effective population sizes
 
 Currently the dartRverse consists of the following packages:
 
-- dartR.base (report, filter and input/output functions, basic
-  popgenomics)
-- dartR.data
-- dartR.sim (functions to simulate SNP data)
-- dartR.spatial (spatial analysis)
-- dartR.popgenomics (popgenomics analysis)
-- dartR.captive (functions to support analysis around captive breeding)
+-   dartR.base   (report, filter and input/output functions, basic popgenomics)
+-   dartR.data
+-   dartR.sim     (functions to simulate SNP data)
+-   dartR.spatial (spatial analysis)
+-   dartR.popgenomics (popgenomics analysis)
+-   dartR.captive (functions to support analysis around captive breeding)
 
-`dartR` and its packages is a collaboration between the University of
-Canberra, CSIRO and Diversity Arrays Technology, and is supported with
-funding from the ACT Priority Investment Program, CSIRO and the
-University of Canberra.
+`dartR` and its packages is a collaboration between the University of Canberra, CSIRO and
+Diversity Arrays Technology, and is supported with funding from the ACT
+Priority Investment Program, CSIRO and the University of Canberra.
 
 <p align="center">
 
@@ -147,13 +170,12 @@ University of Canberra.
 ## Installation
 
 For a normal install from CRAN use:
-
-``` r
+```{r, eval=FALSE}
 install.packages("dartR.popgenomics")
 ```
 
-For hints and how to install github versions, check the help pages of
-the dartRverse package.
+
+For hints and how to install github versions, check the help pages of the dartRverse package.
 
 ## Contribute
 
@@ -167,7 +189,7 @@ Please acknowledge `dartR` if you use it in your study. Copy and paste
 the following code to the R console to retrieve the citation
 information:
 
-``` r
+```{r, eval = FALSE}
 citation("dartR.base")
 ```
 
