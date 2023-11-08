@@ -2,9 +2,9 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# `dartR.popgenomics` <a href="https://green-striped-gecko.github.io/dartR/"><img src="man/figures/dartRlogo.png" align="right" height="140"/></a>
+# `dartR.popgen` <a href="https://green-striped-gecko.github.io/dartR/"><img src="man/figures/dartRlogo.png" align="right" height="140"/></a>
 
-## An accessible genetic analysis platform for conservation, ecology and agriculture - dartR.popgenomics
+## An accessible genetic analysis platform for conservation, ecology and agriculture - dartR.popgen
 
 <!-- badges: start -->
 
@@ -12,8 +12,8 @@
 
 | repo | status                                                                                                                                                                                                                        |
 |------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| main | [![main](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml/badge.svg?branch=main)](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml) |
-| dev  | [![dev](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml/badge.svg?branch=dev)](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml)   |
+| main | [![main](https://github.com/green-striped-gecko/dartR.popgen/actions/workflows/check-standard.yml/badge.svg?branch=main)](https://github.com/green-striped-gecko/dartR.popgen/actions/workflows/check-standard.yml) |
+| dev  | [![dev](https://github.com/green-striped-gecko/dartR.popgen/actions/workflows/check-standard.yml/badge.svg?branch=dev)](https://github.com/green-striped-gecko/dartR.popgen/actions/workflows/check-standard.yml)   |
 
 Publication:
 [![](https://img.shields.io/badge/doi-10.1111/1755--0998.12745-00cccc.svg)](https://doi.org/10.1111/1755-0998.12745)
@@ -25,16 +25,16 @@ Zenodo:
 
 ## Overview
 
-`dartR.popgenomics` aims to support analysis of SNP and silicodart data.
+`dartR.popgen` aims to support analysis of SNP and silicodart data.
 
 Currently the dartRverse consists of the following packages:
 
 - dartR.base (report, filter and input/output functions, basic
-  popgenomics)
+  popgen)
 - dartR.data
 - dartR.sim (functions to simulate SNP data)
 - dartR.spatial (spatial analysis)
-- dartR.popgenomics (this package)
+- dartR.popgen (this package)
 - dartR.captive (functions to support analysis around captive breeding)
 - dartR.sexlinked
 
@@ -57,7 +57,7 @@ University of Canberra.
 For a normal install from CRAN use:
 
 ``` r
-install.packages("dartR.popgenomics")
+install.packages("dartR.popgen")
 ```
 
 For hints and how to install github versions, check the help pages of
@@ -76,7 +76,7 @@ the following code to the R console to retrieve the citation
 information:
 
 ``` r
-citation("dartR.popgenomics")
+citation("dartR.popgen")
 ```
 
 Check out our
@@ -93,7 +93,7 @@ Bernd, Arthur, Luis, Carlo & Olly
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# `dartR.popgenomics` <a href="https://green-striped-gecko.github.io/dartR/"><img src="man/figures/dartRlogo.png" align="right" height="140"/></a>
+# `dartR.popgen` <a href="https://green-striped-gecko.github.io/dartR/"><img src="man/figures/dartRlogo.png" align="right" height="140"/></a>
 
 ## An accessible genetic analysis platform for conservation, ecology and agriculture - dartR.base
 
@@ -103,8 +103,8 @@ Bernd, Arthur, Luis, Carlo & Olly
 
 | repo | status                                                                                                                                                                                                                        |
 |------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| main | [![main](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml/badge.svg?branch=main)](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml) |
-| dev  | [![dev](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml/badge.svg?branch=dev)](https://github.com/green-striped-gecko/dartR.popgenomics/actions/workflows/check-standard.yml)   |
+| main | [![main](https://github.com/green-striped-gecko/dartR.popgen/actions/workflows/check-standard.yml/badge.svg?branch=main)](https://github.com/green-striped-gecko/dartR.popgen/actions/workflows/check-standard.yml) |
+| dev  | [![dev](https://github.com/green-striped-gecko/dartR.popgen/actions/workflows/check-standard.yml/badge.svg?branch=dev)](https://github.com/green-striped-gecko/dartR.popgen/actions/workflows/check-standard.yml)   |
 
 Publication:
 [![](https://img.shields.io/badge/doi-10.1111/1755--0998.12745-00cccc.svg)](https://doi.org/10.1111/1755-0998.12745)
@@ -116,18 +116,18 @@ Zenodo:
 
 ## Overview
 
-`dartR.popgenomics` aims to support analysis of SNP and silicodart data
+`dartR.popgen` aims to support analysis of SNP and silicodart data
 to study population structure. For example running structure and
 estimating effective population sizes
 
 Currently the dartRverse consists of the following packages:
 
 - dartR.base (report, filter and input/output functions, basic
-  popgenomics)
+  popgen)
 - dartR.data
 - dartR.sim (functions to simulate SNP data)
 - dartR.spatial (spatial analysis)
-- dartR.popgenomics (popgenomics analysis)
+- dartR.popgen (popgen analysis)
 - dartR.captive (functions to support analysis around captive breeding)
 
 `dartR` and its packages is a collaboration between the University of
@@ -149,7 +149,7 @@ University of Canberra.
 For a normal install from CRAN use:
 
 ``` r
-install.packages("dartR.popgenomics")
+install.packages("dartR.popgen")
 ```
 
 For hints and how to install github versions, check the help pages of

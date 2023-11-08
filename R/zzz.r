@@ -1,6 +1,6 @@
-#' Setting up the package dartR.popgenomics
+#' Setting up the package dartR.popgen
 #'
-#' Setting up dartR.popgenomics
+#' Setting up dartR.popgen
 #' @importFrom crayon blue
 #' @importFrom utils packageVersion read.csv read.delim read.table write.csv write.table
 #' @importFrom methods getPackageName is new

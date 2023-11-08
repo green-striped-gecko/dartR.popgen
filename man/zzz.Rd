@@ -3,7 +3,7 @@
 \docType{data}
 \name{zzz}
 \alias{zzz}
-\title{Setting up the package dartR.popgenomics}
+\title{Setting up the package dartR.popgen}
 \format{
 An object of class \code{NULL} of length 0.
 }
@@ -11,6 +11,6 @@ An object of class \code{NULL} of length 0.
 zzz
 }
 \description{
-Setting up dartR.popgenomics
+Setting up dartR.popgen
 }
 \keyword{internal}
