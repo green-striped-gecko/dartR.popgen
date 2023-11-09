@@ -81,7 +81,7 @@ gl.ld.distance <- function(ld_report,
     })
     bins_ld_temp <-
       lapply(split_df, function(x) {
-        fields::stats.bin(x$distance, x$ld_stat, breaks = break_bins)
+        fields::stats.bin(x$distance, x$ld.stat, breaks = break_bins)
       })
     bins_ld <-
       lapply(seq_along(bins_ld_temp), function(i) {
@@ -92,10 +92,10 @@ gl.ld.distance <- function(ld_report,
         ))
       })
     bins_ld <- rbindlist(bins_ld)
-    colnames(bins_ld) <- c("pop", "distance", "ld_stat")
+    colnames(bins_ld) <- c("pop", "distance", "ld.stat")
     bins_ld$pop <- as.factor(bins_ld$pop)
     bins_ld$distance <- as.numeric(bins_ld$distance)
-    bins_ld$ld_stat <- as.numeric(bins_ld$ld_stat)
+    bins_ld$ld.stat <- as.numeric(bins_ld$ld.stat)
   
   # pairwise LD by population
     
@@ -110,9 +110,9 @@ gl.ld.distance <- function(ld_report,
 	ncolors = nlevels(pops), verbose = 0)
     }
     
-  distance <- ld_stat <- NULL
+  distance <- ld.stat <- NULL
   p3 <-
-    ggplot(bins_ld, aes(x = distance, y = ld_stat, colour = pop)) +
+    ggplot(bins_ld, aes(x = distance, y = ld.stat, colour = pop)) +
     geom_line(size = 1) +
     geom_point(size = 2) +
     geom_hline(aes(yintercept = 0.2, 
