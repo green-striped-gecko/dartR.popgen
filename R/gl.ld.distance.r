@@ -60,59 +60,59 @@ gl.ld.distance <- function(ld_report,
   
   # SET VERBOSITY
   verbose <- gl.check.verbosity(verbose)
-
+  
   # SET WORKING DIRECTORY
   plot.dir <- gl.check.wd(plot.dir,verbose=0)
-    
+  
   # FLAG SCRIPT START
   funname <- match.call()[[1]]
   utils.flag.start(func = funname,
                    build = "Jody",
                    verbose = verbose)
-
+  
   # DO THE JOB
   
-    ld_max_pairwise <- max(ld_report$distance)
-    break_bins <- c(seq(1, ld_max_pairwise, ld_resolution), ld_max_pairwise)
-    
-    split_df <- split(ld_report, f = ld_report$pop)
-    split_df <- lapply(split_df, function(x) {
-      x[order(x$distance), ]
+  ld_max_pairwise <- max(ld_report$distance)
+  break_bins <- c(seq(1, ld_max_pairwise, ld_resolution), ld_max_pairwise)
+  
+  split_df <- split(ld_report, f = ld_report$pop)
+  split_df <- lapply(split_df, function(x) {
+    x[order(x$distance), ]
+  })
+  bins_ld_temp <-
+    lapply(split_df, function(x) {
+      fields::stats.bin(x$distance, x$ld.stat, breaks = break_bins)
     })
-    bins_ld_temp <-
-      lapply(split_df, function(x) {
-        fields::stats.bin(x$distance, x$ld_stat, breaks = break_bins)
-      })
-    bins_ld <-
-      lapply(seq_along(bins_ld_temp), function(i) {
-        as.data.frame(cbind(
-          names(bins_ld_temp[i]),
-          unname(bins_ld_temp[[i]]$breaks[2:length(bins_ld_temp[[i]]$breaks)]),
-          unname(bins_ld_temp[[i]]$stats[2, ])
-        ))
-      })
-    bins_ld <- rbindlist(bins_ld)
-    colnames(bins_ld) <- c("pop", "distance", "ld_stat")
-    bins_ld$pop <- as.factor(bins_ld$pop)
-    bins_ld$distance <- as.numeric(bins_ld$distance)
-    bins_ld$ld_stat <- as.numeric(bins_ld$ld_stat)
+  bins_ld <-
+    lapply(seq_along(bins_ld_temp), function(i) {
+      as.data.frame(cbind(
+        names(bins_ld_temp[i]),
+        unname(bins_ld_temp[[i]]$breaks[2:length(bins_ld_temp[[i]]$breaks)]),
+        unname(bins_ld_temp[[i]]$stats[2, ])
+      ))
+    })
+  bins_ld <- rbindlist(bins_ld)
+  colnames(bins_ld) <- c("pop", "distance", "ld.stat")
+  bins_ld$pop <- as.factor(bins_ld$pop)
+  bins_ld$distance <- as.numeric(bins_ld$distance)
+  bins_ld$ld.stat <- as.numeric(bins_ld$ld.stat)
   
   # pairwise LD by population
-    
-    pops <- as.factor(unique(ld_report$pop))
-      
-    if(is.null(plot_theme)){
-      plot_theme <- theme_dartR()
-    }
-    
-    if(is.null(pop_colors)){
-      pop_colors <- gl.select.colors(library="baseR", palette ="terrain.colors", 
-	ncolors = nlevels(pops), verbose = 0)
-    }
-    
-  distance <- ld_stat <- NULL
+  
+  pops <- as.factor(unique(ld_report$pop))
+  
+  if(is.null(plot_theme)){
+    plot_theme <- theme_dartR()
+  }
+  
+  if(is.null(pop_colors)){
+    pop_colors <- gl.select.colors(library="baseR", palette ="terrain.colors", 
+                                   ncolors = nlevels(pops), verbose = 0)
+  }
+  
+  distance <- ld.stat <- NULL
   p3 <-
-    ggplot(bins_ld, aes(x = distance, y = ld_stat, colour = pop)) +
+    ggplot(bins_ld, aes(x = distance, y = ld.stat, colour = pop)) +
     geom_line(size = 1) +
     geom_point(size = 2) +
     geom_hline(aes(yintercept = 0.2, 
