@@ -204,7 +204,7 @@ gl.nhybrids <- function(gl,
         pop(gl.tmp) <- indNames(gl.tmp)
         
         # Reformat the data broken down by population and locus, and calculate allele frequencies
-        gl2 <- gl.percent.freq(gl.tmp, verbose = verbose)
+        gl2 <- gl.allele.freq(gl.tmp, verbose = verbose)
         
         # IDENTIFY LOCI WITH FIXED DIFFERENCES BETWEEN P0 AND P1
         if (verbose >= 3) {
