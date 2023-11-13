@@ -44,6 +44,7 @@ Suggests:
   tidyr,
   viridis,
   zoo,
+  gsubfn,
   sp
 Remotes: github::green-striped-gecko/dartR.base
 License: GPL (>= 3)

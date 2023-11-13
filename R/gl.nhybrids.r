@@ -63,8 +63,8 @@
 #' [default two colors].
 #' @param pprob Threshold level for assignment to likelihood bins
 #' [default 0.95, used only if plot=TRUE].
-#' @param method Specifies the method (random or AvgPIC) to select 200 loci for
-#'  NewHybrids [default random].
+#' @param method Specifies the method (random) to select 200 loci for
+#'  NewHybrids [default random]. Previous AvgPic does not work anymore!
 #' @param nhyb.directory Directory that holds the NewHybrids executable file
 #' e.g. C:/NewHybsPC [default NULL].
 #' @param BurnIn Number of sweeps to use in the burn in [default 10000].
@@ -260,9 +260,10 @@ gl.nhybrids <- function(gl,
                 )
             }
             gl.fixed.used <-
-                gl.subsample.loci(gl,
+                gl.subsample.loc(gl,
                                   loc.limit,
-                                  method = "random",
+                                 # method = "random",
+                                 replace = FALSE,
                                   verbose = 0)
            
          
@@ -289,9 +290,10 @@ gl.nhybrids <- function(gl,
                     gl[, (locNames(gl) %in% fixed.loci)]
                 gl.fixed.used <- gl.fixed.all
                 tmp <-
-                    gl.subsample.loci(gl,
+                    gl.subsample.loc(gl,
                                       200 - nloci,
-                                      method = "random",
+                                      #method = "random",
+                                     replace=FALSE,
                                       verbose = 0)
                 gl2nhyb <- cbind(gl.fixed.used, tmp)
                 gl2nhyb@other$loc.metrics <-
@@ -311,10 +313,13 @@ gl.nhybrids <- function(gl,
                 gl.fixed.all <-
                     gl[, (locNames(gl) %in% fixed.loci)]
                 gl.fixed.used <- gl.fixed.all
+                
+                
                 tmp <-
-                    gl.subsample.loci(gl,
+                    gl.subsample.loc(gl,
                                       loc.limit - nloci,
-                                      method = "AvgPic",
+                                      #method = "AvgPic",
+                                     replace = FALSE,
                                       verbose = 0)
                 gl2nhyb <- cbind(gl.fixed.used, tmp)
                 gl2nhyb@other$loc.metrics <-
@@ -365,7 +370,7 @@ gl.nhybrids <- function(gl,
                 "loci with most information content (AvgPIC)\n")
         }
         gl2nhyb <-
-            gl.subsample.loci(gl, loc.limit, method = method, verbose = 0)
+            gl.subsample.loc(gl, loc.limit, replace = FALSE, verbose = 0)
         gl2nhyb@other$loc.metrics <-
             gl@other$loc.metrics[locNames(gl) %in% locNames(gl2nhyb), ]
         flag <- "onepar"
@@ -389,7 +394,7 @@ gl.nhybrids <- function(gl,
                 )
             )
         }
-        gl2nhyb <- gl.subsample.loci(gl, loc.limit, method = method, verbose = 0)
+        gl2nhyb <- gl.subsample.loc(gl, loc.limit, replace=FALSE, verbose = 0)
         gl2nhyb@other$loc.metrics <-
             gl@other$loc.metrics[locNames(gl) %in% locNames(gl2nhyb), ]
         flag <- "nopar"
