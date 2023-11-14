@@ -17,25 +17,25 @@
 #'  [default 0].
 #' @param seed Seed for random number generator [default NULL].
 #' @details
-#' Download faststructure binary for your system from here (only runs on Mac or 
+#' Download faststructure binary for your system from here (only runs on Mac or
 #' Linux):
-#' 
+#'
 #' https://github.com/StuntsPT/Structure_threader/tree/master/structure_threader/bins
-#' 
-#' Move faststructure file to working directory. Make file executable using 
+#'
+#' Move faststructure file to working directory. Make file executable using
 #' terminal app.
-#' 
+#'
 #' \code{system(paste0("chmod u+x ",getwd(), "/faststructure"))}
-#' 
+#'
 #' Download plink binary for your system from here:
-#' 
+#'
 #' https://www.cog-genomics.org/plink/
-#' 
-#' Move plink file to working directory. Make file executable using 
+#'
+#' Move plink file to working directory. Make file executable using
 #' terminal app.
-#' 
+#'
 #' \code{system(paste0("chmod u+x ",getwd(), "/plink"))}
-#' 
+#'
 #' To install fastStructure dependencies follow these directions:
 #' https://github.com/rajanil/fastStructure
 #'
@@ -57,13 +57,15 @@
 #'
 #' @examples
 #' \dontrun{
-#' #Please note: faststructure needs to be installed 
-#' #Please note: faststructure is not available for windows
-#' t1 <- gl.filter.callrate(platypus.gl,threshold = 1)
-#' res <- gl.run.faststructure(t1, exec = "./fastStructure",k.range = 2:3, 
-#'                           num.k.rep = 2,output = paste0(getwd(),"/res_str"))
-#' qmat <- gl.plot.faststructure(res,k.range=2:3)
-#' gl.map.structure(qmat, K=2, t1, scalex=1, scaley=0.5)
+#' # Please note: faststructure needs to be installed
+#' # Please note: faststructure is not available for windows
+#' t1 <- gl.filter.callrate(platypus.gl, threshold = 1)
+#' res <- gl.run.faststructure(t1,
+#'   exec = "./fastStructure", k.range = 2:3,
+#'   num.k.rep = 2, output = paste0(getwd(), "/res_str")
+#' )
+#' qmat <- gl.plot.faststructure(res, k.range = 2:3)
+#' gl.map.structure(qmat, K = 2, t1, scalex = 1, scaley = 0.5)
 #' }
 #' @export
 #' @references
@@ -76,13 +78,12 @@
 gl.run.faststructure <- function(x,
                                  k.range,
                                  num.k.rep,
-                                 exec =  "./fastStructure",
+                                 exec = "./fastStructure",
                                  output = getwd(),
                                  tol = 10e-6,
                                  prior = "simple",
                                  cv = 0,
                                  seed = NULL) {
-
   pkg <- "gsubfn"
   if (!(requireNamespace(pkg, quietly = TRUE))) {
     cat(error(
@@ -92,14 +93,15 @@ gl.run.faststructure <- function(x,
     ))
     return(-1)
   }
-  
-  
-  
+
+
+
   gl2plink(x,
-           bed.files = TRUE,
-           outpath = output,
-           verbose = 0)
-  
+    bed.files = TRUE,
+    outpath = output,
+    verbose = 0
+  )
+
   for (k_n in k.range) {
     for (rep_n in 1:num.k.rep) {
       if (is.null(seed)) {
@@ -124,7 +126,7 @@ gl.run.faststructure <- function(x,
             cv
           )
         )
-      } else{
+      } else {
         system(
           paste0(
             exec,
@@ -151,9 +153,11 @@ gl.run.faststructure <- function(x,
       }
     }
   }
-  
-  files_structure <- list.files(path = output,
-                                pattern =  "^genotypes_output.+log")
+
+  files_structure <- list.files(
+    path = output,
+    pattern = "^genotypes_output.+log"
+  )
   files_structure_2 <- paste0(output, "/", files_structure)
   n_first_line <- 23
   df_likelihood <-
@@ -161,40 +165,45 @@ gl.run.faststructure <- function(x,
   for (i in 1:length(files_structure_2)) {
     file_name <- files_structure[i]
     file_name <-
-      strsplit(sub('(^[^_]+_[^_]+)_(.*)$', '\\2', file_name), ' ')
+      strsplit(sub("(^[^_]+_[^_]+)_(.*)$", "\\2", file_name), " ")
     file_name <- strsplit(file_name[[1]], "\\.")
     k_replicate <- as.numeric(file_name[[1]][1])
     k_run <- as.numeric(file_name[[1]][2])
     likelihood <- as.character(unname(unlist(
-      gsubfn::read.pattern(file = files_structure_2[i],
-                           pattern = "^Marginal Likelihood = .*")
+      gsubfn::read.pattern(
+        file = files_structure_2[i],
+        pattern = "^Marginal Likelihood = .*"
+      )
     )))
     likelihood_2 <-
-      as.numeric(substr(likelihood, n_first_line , nchar(likelihood)))
+      as.numeric(substr(likelihood, n_first_line, nchar(likelihood)))
     df_likelihood[k_run, k_replicate] <- likelihood_2
   }
   df_likelihood <-
     df_likelihood[stats::complete.cases(df_likelihood), ]
   df_likelihood_res <- rowMeans(df_likelihood)
-  
+
   p3 <- ggplot() +
     geom_line(aes(x = k.range, y = df_likelihood_res), size = 1) +
     geom_point(aes(x = k.range, y = df_likelihood_res),
-               size = 2,
-               color = "blue") +
+      size = 2,
+      color = "blue"
+    ) +
     theme_bw(base_size = 14) +
     theme(legend.title = element_blank()) +
     theme(legend.position = "bottom") +
     xlab("K") +
     ylab("Marginal Likelihood") +
     scale_x_continuous(breaks = round(seq(1, 10, by = 1), 1))
-  
+
   print(p3)
-  
-  files_structure <- list.files(path = output,
-                                pattern =  "^genotypes_output.+log")
+
+  files_structure <- list.files(
+    path = output,
+    pattern = "^genotypes_output.+log"
+  )
   files_structure_2 <- paste0(output, "/", files_structure)
-  
+
   files_q <- list.files(path = output, pattern = "*meanQ")
   files_q_2 <- paste0(output, "/", files_q)
   q_list <-
@@ -202,25 +211,23 @@ gl.run.faststructure <- function(x,
   for (i in 1:length(files_q)) {
     file_name <- files_q[i]
     file_name <-
-      strsplit(sub('(^[^_]+_[^_]+)_(.*)$', '\\2', file_name), ' ')
+      strsplit(sub("(^[^_]+_[^_]+)_(.*)$", "\\2", file_name), " ")
     file_name <- strsplit(file_name[[1]], "\\.")
     k_replicate <- as.numeric(file_name[[1]][1])
     k_run <- as.numeric(file_name[[1]][2])
     q_df <- read.table(files_q_2[i])
     q_df <- cbind(id = x$ind.names, orig.pop = pop(x), q_df)
     q_list[[k_run]][[k_replicate]] <- q_df
-    
   }
-  
+
   names(q_list) <- 1:(length(k.range) + 1)
-  
+
   q_list <- lapply(q_list, function(y) {
     names(y) <- 1:num.k.rep
     return(y)
   })
-  
+
   q_list <- q_list[-(1)]
-  
+
   return(q_list)
-  
 }

@@ -24,7 +24,7 @@ gl.plot.structure(
 \item{sr}{Structure run object from \code{\link{gl.run.structure}} [required].}
 
 \item{K}{The number for K of the q matrix that should be plotted. Needs to
-be within you simulated range of K's in your sr structure run object. If 
+be within you simulated range of K's in your sr structure run object. If
 NULL, all the K's are plotted [default NULL].}
 
 \item{met_clumpp}{The algorithm to use to infer the correct permutations.
@@ -43,7 +43,7 @@ as many colors as there are clusters (K) [default NULL].}
 
 \item{ind_name}{Whether to plot individual names [default TRUE].}
 
-\item{border_ind}{The width of the border line between individuals 
+\item{border_ind}{The width of the border line between individuals
 [default 0.25].}
 
 \item{plot.out}{Specify if plot is to be produced [default TRUE].}
@@ -68,22 +68,22 @@ This function takes a structure run object (output from
 \details{
 The function outputs a barplot which is the typical output of
  structure. For a Evanno plot use gl.evanno.
- 
- This function is based on the methods of CLUMPP and Clumpak as implemented 
- in the R package starmie (https://github.com/sa-lee/starmie). 
- 
- The Clumpak method identifies sets of highly similar runs among 
- all the replicates of the same K. The method then separates the distinct 
+
+ This function is based on the methods of CLUMPP and Clumpak as implemented
+ in the R package starmie (https://github.com/sa-lee/starmie).
+
+ The Clumpak method identifies sets of highly similar runs among
+ all the replicates of the same K. The method then separates the distinct
  groups of runs representing distinct modes in the space of possible solutions.
- 
- The CLUMPP method permutes the clusters output by independent runs of 
- clustering programs such as structure, so that they match up as closely as 
+
+ The CLUMPP method permutes the clusters output by independent runs of
+ clustering programs such as structure, so that they match up as closely as
  possible.
- 
- This function averages the replicates within each mode identified by the 
+
+ This function averages the replicates within each mode identified by the
  Clumpak method.
-  
- Plots and table are saved to the working directory specified in plot.dir (tempdir ) 
+
+ Plots and table are saved to the working directory specified in plot.dir (tempdir )
  if plot.file is set.
 
 Examples of other themes that can be used can be consulted in \itemize{
@@ -93,21 +93,21 @@ Examples of other themes that can be used can be consulted in \itemize{
 }
 \examples{
 \dontrun{
-#bc <- bandicoot.gl[,1:100]
-#sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3, exec = './structure')
-#ev <- gl.evanno(sr)
-#ev
-#qmat <- gl.plot.structure(sr, K=3)
-#head(qmat)
-#gl.map.structure(qmat, K=3, bc, scalex=1, scaley=0.5)
+# bc <- bandicoot.gl[,1:100]
+# sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3, exec = './structure')
+# ev <- gl.evanno(sr)
+# ev
+# qmat <- gl.plot.structure(sr, K=3)
+# head(qmat)
+# gl.map.structure(qmat, K=3, bc, scalex=1, scaley=0.5)
 }
 }
 \references{
 \itemize{
 \item Pritchard, J.K., Stephens, M., Donnelly, P. (2000) Inference of
 population structure using multilocus genotype data. Genetics 155, 945-959.
-\item Kopelman, Naama M., et al. "Clumpak: a program for identifying 
-clustering modes and packaging population structure inferences across K." 
+\item Kopelman, Naama M., et al. "Clumpak: a program for identifying
+clustering modes and packaging population structure inferences across K."
 Molecular ecology resources 15.5 (2015): 1179-1191.
 \item Mattias Jakobsson and Noah A. Rosenberg. 2007. CLUMPP: a cluster
 matching and permutation program for dealing with label switching and

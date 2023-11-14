@@ -45,12 +45,12 @@ A list in which each list entry is a single faststructure run output
 This function takes a genlight object and runs a faststructure analysis.
 }
 \details{
-Download faststructure binary for your system from here (only runs on Mac or 
+Download faststructure binary for your system from here (only runs on Mac or
 Linux):
 
 https://github.com/StuntsPT/Structure_threader/tree/master/structure_threader/bins
 
-Move faststructure file to working directory. Make file executable using 
+Move faststructure file to working directory. Make file executable using
 terminal app.
 
 \code{system(paste0("chmod u+x ",getwd(), "/faststructure"))}
@@ -59,7 +59,7 @@ Download plink binary for your system from here:
 
 https://www.cog-genomics.org/plink/
 
-Move plink file to working directory. Make file executable using 
+Move plink file to working directory. Make file executable using
 terminal app.
 
 \code{system(paste0("chmod u+x ",getwd(), "/plink"))}
@@ -80,13 +80,15 @@ the mainparams and extraparam files. The inference algorithm used by
 }
 \examples{
 \dontrun{
-#Please note: faststructure needs to be installed 
-#Please note: faststructure is not available for windows
-t1 <- gl.filter.callrate(platypus.gl,threshold = 1)
-res <- gl.run.faststructure(t1, exec = "./fastStructure",k.range = 2:3, 
-                          num.k.rep = 2,output = paste0(getwd(),"/res_str"))
-qmat <- gl.plot.faststructure(res,k.range=2:3)
-gl.map.structure(qmat, K=2, t1, scalex=1, scaley=0.5)
+# Please note: faststructure needs to be installed
+# Please note: faststructure is not available for windows
+t1 <- gl.filter.callrate(platypus.gl, threshold = 1)
+res <- gl.run.faststructure(t1,
+  exec = "./fastStructure", k.range = 2:3,
+  num.k.rep = 2, output = paste0(getwd(), "/res_str")
+)
+qmat <- gl.plot.faststructure(res, k.range = 2:3)
+gl.map.structure(qmat, K = 2, t1, scalex = 1, scaley = 0.5)
 }
 }
 \references{

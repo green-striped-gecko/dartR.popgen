@@ -60,8 +60,8 @@ an n-dimensional array (n is the number of populations in the genlight/dartR
 Creates a site frequency spectrum based on a dartR or genlight object
 }
 \examples{
-gl.sfs(bandicoot.gl, singlepop=TRUE)
-gl.sfs(possums.gl[c(1:5,31:33),], minbinsize=1)
+gl.sfs(bandicoot.gl, singlepop = TRUE)
+gl.sfs(possums.gl[c(1:5, 31:33), ], minbinsize = 1)
 }
 \references{
 Excoffier L., Dupanloup I., Huerta-Sánchez E., Sousa V. C. and

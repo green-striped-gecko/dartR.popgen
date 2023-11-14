@@ -2,7 +2,7 @@
 % Please edit documentation in R/gl.nhybrids.r
 \name{gl.nhybrids}
 \alias{gl.nhybrids}
-\title{Creates an input file for the program NewHybrids and runs it if 
+\title{Creates an input file for the program NewHybrids and runs it if
 NewHybrids is installed}
 \usage{
 gl.nhybrids(
@@ -129,17 +129,18 @@ default).
 }
 \examples{
 \dontrun{
-m <- gl.nhybrids(testset.gl, 
-p0=NULL, p1=NULL,
-nhyb.directory='D:/workspace/R/NewHybsPC', # Specify as necessary
-outpath="D:/workspace",  # Specify as necessary, usually getwd() [= workspace]
-BurnIn=100,
-sweeps=100,
-verbose=3)
+m <- gl.nhybrids(testset.gl,
+  p0 = NULL, p1 = NULL,
+  nhyb.directory = "D:/workspace/R/NewHybsPC", # Specify as necessary
+  outpath = "D:/workspace", # Specify as necessary, usually getwd() [= workspace]
+  BurnIn = 100,
+  sweeps = 100,
+  verbose = 3
+)
 }
 }
 \references{
-Anderson, E.C. and Thompson, E.A.(2002). A model-based method for identifying 
+Anderson, E.C. and Thompson, E.A.(2002). A model-based method for identifying
 species hybrids using multilocus genetic data. Genetics. 160:1217-1229.
 }
 \author{

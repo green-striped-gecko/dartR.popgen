@@ -33,26 +33,27 @@
 #' To make use of this function you need to download STRUCTURE for you system
 #' (\bold{non GUI version}) from here
 #' \href{https://web.stanford.edu/group/pritchardlab/structure_software/release_versions/v2.3.4/html/structure.html}{STRUCTURE}.
-#' 
+#'
 #' \bold{Format note}
-#' 
-#' For this function to work, make sure that individual and population names 
-#' have no spaces. To substitute spaces by underscores you could use the R 
+#'
+#' For this function to work, make sure that individual and population names
+#' have no spaces. To substitute spaces by underscores you could use the R
 #' function \code{gsub} as below.
-#' 
+#'
 #' \code{
-#' popNames(gl) <- gsub(" ","_",popNames(gl))
-#' 
-#' indNames(gl) <- gsub(" ","_",indNames(gl))  
+#' popNames(gl) <- gsub(" ","_",popNames(gl));
 #' }
-#' 
-#' It's also worth noting that Structure truncates individual names at 11 
+#' \code{
+#' indNames(gl) <- gsub(" ","_",indNames(gl))
+#' }
+#'
+#' It's also worth noting that Structure truncates individual names at 11
 #' characters. The function will fail if the names of individuals are not unique
-#'  after truncation. To avoid this possible problem, a number sequence, as 
+#'  after truncation. To avoid this possible problem, a number sequence, as
 #'  shown in the code below, might be used instead of individual names.
 #' \code{
 #' indNames(gl) <- as.character(1:length(indNames(gl)))
-#'}
+#' }
 #' @return An sr object (structure.result list output). Each list entry is a
 #' single structurerun output (there are k.range * num.k.rep number of runs).
 #' For example the summary output of the first run can be accessed via
@@ -65,18 +66,18 @@
 #'
 #' @examples
 #' \dontrun{
-#' #bc <- bandicoot.gl[,1:100]
-#' #sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3, 
+#' # bc <- bandicoot.gl[,1:100]
+#' # sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3,
 #' # exec = './structure.exe')
-#' #ev <- gl.evanno(sr)
-#' #ev
-#' #qmat <- gl.plot.structure(sr, K=3)
-#' #head(qmat)
-#' #gl.map.structure(qmat, bc, scalex=1, scaley=0.5)
+#' # ev <- gl.evanno(sr)
+#' # ev
+#' # qmat <- gl.plot.structure(sr, K=3)
+#' # head(qmat)
+#' # gl.map.structure(qmat, bc, scalex=1, scaley=0.5)
 #' }
 #' @import patchwork
 ### @importFrom strataG genind2gtypes structureRun
-#' @importFrom dplyr bind_rows mutate_at vars starts_with mutate group_by 
+#' @importFrom dplyr bind_rows mutate_at vars starts_with mutate group_by
 #' ungroup arrange n rename select everything n_distinct bind_rows starts_with
 #' @export
 ### @seealso \code{structureRun}
@@ -96,100 +97,101 @@ gl.run.structure <- function(x,
                              plot_theme = theme_dartR(),
                              save2tmp = FALSE,
                              verbose = NULL) {
-    
-    pkg <- "purrr"
-    if (!(requireNamespace(pkg, quietly = TRUE))) {
-      cat(error(
-        "Package",
-        pkg,
-        " needed for this function to work. Please install it.\n"
-      ))
-      return(-1)
-    }
-        # check that Structure is installed
-        structure <- file.exists(exec)
-        
-        if (!structure) {
-            stop(error(
-                paste(
-"Cannot find Structure executable in the exex path provided:\n",
-                    exec,
-"\nCheck the help page of ?gl.run.structure on how to download and the exec
+  pkg <- "purrr"
+  if (!(requireNamespace(pkg, quietly = TRUE))) {
+    cat(error(
+      "Package",
+      pkg,
+      " needed for this function to work. Please install it.\n"
+    ))
+    return(-1)
+  }
+  # check that Structure is installed
+  structure <- file.exists(exec)
+
+  if (!structure) {
+    stop(error(
+      paste(
+        "Cannot find Structure executable in the exex path provided:\n",
+        exec,
+        "\nCheck the help page of ?gl.run.structure on how to download and the exec
 parameter to locate it."
-                )
-            ))
-        }
-        # SET VERBOSITY
-        verbose <- gl.check.verbosity(verbose)
-        
-        # FLAG SCRIPT START
-        funname <- match.call()[[1]]
-        utils.flag.start(func = funname,
-                         build = "Jody",
-                         verbose = verbose)
-        
-        # CHECK DATATYPE
-        datatype <- utils.check.datatype(x, verbose = verbose)
-        
-        if (datatype != "SNP") {
-            stop(error(
-                "You need to provide a SNP genlight object (ploidy=2)!"
-            ))
-        }
-        
-        # DO THE JOB
-        gg <- utils.structure.genind2gtypes(gl2gi(x, verbose = 0))
-        
-        sr <- utils.structure.run(gg, exec = exec, ...)
-        
-        ev <- utils.structure.evanno(sr)
-        
-        pa <- ((ev$plots$mean.ln.k + ev$plots$mean.ln.k) / 
-                 (ev$plots$ln.ppk + ev$plots$delta.k)) + plot_theme
-        
-        # PRINTING OUTPUTS
-        if (plot.out) {
-            suppressMessages(print(pa))
-        }
-        
-        # SAVE INTERMEDIATES TO TEMPDIR
-        if (save2tmp & plot.out) {
-            # check for '/' in match.call
-            mc <- gsub("/", ":", as.character(funname))
-            mc <- gsub(":", "-", mc)
-            nmc <- gsub("/", "_over_", names(funname))
-            nmc <- gsub(":", "-", nmc)
-            
-            # creating temp file names
-            temp_plot <-
-                tempfile(pattern = paste0("Plot", paste0(nmc, "_", mc,
-                                                         collapse = "_")))
-            
-            # saving to tempdir
-            saveRDS(pa, file = temp_plot)
-            if (verbose >= 2) {
-                cat(
-                    report(
-                        "  Saving the plot in ggplot format to the tempfile as",
-                        temp_plot,
-                        "using saveRDS\n"
-                    )
-                )
-                cat(
-                    report(
-                        "  NOTE: Retrieve output files from tempdir using 
+      )
+    ))
+  }
+  # SET VERBOSITY
+  verbose <- gl.check.verbosity(verbose)
+
+  # FLAG SCRIPT START
+  funname <- match.call()[[1]]
+  utils.flag.start(
+    func = funname,
+    build = "Jody",
+    verbose = verbose
+  )
+
+  # CHECK DATATYPE
+  datatype <- utils.check.datatype(x, verbose = verbose)
+
+  if (datatype != "SNP") {
+    stop(error(
+      "You need to provide a SNP genlight object (ploidy=2)!"
+    ))
+  }
+
+  # DO THE JOB
+  gg <- utils.structure.genind2gtypes(gl2gi(x, verbose = 0))
+
+  sr <- utils.structure.run(gg, exec = exec, ...)
+
+  ev <- utils.structure.evanno(sr)
+
+  pa <- ((ev$plots$mean.ln.k + ev$plots$mean.ln.k) /
+    (ev$plots$ln.ppk + ev$plots$delta.k)) + plot_theme
+
+  # PRINTING OUTPUTS
+  if (plot.out) {
+    suppressMessages(print(pa))
+  }
+
+  # SAVE INTERMEDIATES TO TEMPDIR
+  if (save2tmp & plot.out) {
+    # check for '/' in match.call
+    mc <- gsub("/", ":", as.character(funname))
+    mc <- gsub(":", "-", mc)
+    nmc <- gsub("/", "_over_", names(funname))
+    nmc <- gsub(":", "-", nmc)
+
+    # creating temp file names
+    temp_plot <-
+      tempfile(pattern = paste0("Plot", paste0(nmc, "_", mc,
+        collapse = "_"
+      )))
+
+    # saving to tempdir
+    saveRDS(pa, file = temp_plot)
+    if (verbose >= 2) {
+      cat(
+        report(
+          "  Saving the plot in ggplot format to the tempfile as",
+          temp_plot,
+          "using saveRDS\n"
+        )
+      )
+      cat(
+        report(
+          "  NOTE: Retrieve output files from tempdir using
                         gl.list.reports() and gl.print.reports()\n"
-                    )
-                )
-            }
-        }
-        
-        # FLAG SCRIPT END
-        if (verbose >= 1) {
-            cat(report("Completed:", funname, "\n\n"))
-        }
-        
-        # RETURN
-        return(sr)
-    
+        )
+      )
+    }
+  }
+
+  # FLAG SCRIPT END
+  if (verbose >= 1) {
+    cat(report("Completed:", funname, "\n\n"))
+  }
+
+  # RETURN
+  return(sr)
 }

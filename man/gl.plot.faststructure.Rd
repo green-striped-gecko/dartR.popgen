@@ -20,8 +20,8 @@ gl.plot.faststructure(
 \item{sr}{fastStructure run object from \code{\link{gl.run.faststructure}}
 [required].}
 
-\item{k.range}{The number for K of the q matrix that should be plotted. Needs 
-to be within you simulated range of K's in your sr structure run object. If 
+\item{k.range}{The number for K of the q matrix that should be plotted. Needs
+to be within you simulated range of K's in your sr structure run object. If
  NULL, all the K's are plotted [default NULL].}
 
 \item{met_clumpp}{The algorithm to use to infer the correct permutations.
@@ -40,7 +40,7 @@ as many colors as there are clusters (K) [default NULL].}
 
 \item{ind_name}{Whether to plot individual names [default TRUE].}
 
-\item{border_ind}{The width of the border line between individuals 
+\item{border_ind}{The width of the border line between individuals
 [default 0.25].}
 }
 \value{
@@ -54,19 +54,19 @@ This function takes a fastStructure run object (output from
 \details{
 The function outputs a barplot which is the typical output of
  fastStructure.
- 
- This function is based on the methods of CLUMPP and Clumpak as implemented 
- in the R package starmie (https://github.com/sa-lee/starmie). 
- 
- The Clumpak method identifies sets of highly similar runs among 
- all the replicates of the same K. The method then separates the distinct 
+
+ This function is based on the methods of CLUMPP and Clumpak as implemented
+ in the R package starmie (https://github.com/sa-lee/starmie).
+
+ The Clumpak method identifies sets of highly similar runs among
+ all the replicates of the same K. The method then separates the distinct
  groups of runs representing distinct modes in the space of possible solutions.
- 
- The CLUMPP method permutes the clusters output by independent runs of 
- clustering programs such as structure, so that they match up as closely as 
+
+ The CLUMPP method permutes the clusters output by independent runs of
+ clustering programs such as structure, so that they match up as closely as
  possible.
- 
- This function averages the replicates within each mode identified by the 
+
+ This function averages the replicates within each mode identified by the
  Clumpak method.
 
 Examples of other themes that can be used can be consulted in \itemize{
@@ -76,22 +76,24 @@ Examples of other themes that can be used can be consulted in \itemize{
 }
 \examples{
 \dontrun{
-t1 <- gl.filter.callrate(platypus.gl,threshold = 1)
-res <- gl.run.faststructure(t1, exec = "./fastStructure",k.range = 2:3, 
-                          num.k.rep = 2,output = paste0(getwd(),"/res_str"))
-qmat <- gl.plot.faststructure(res,k.range=2:3)
-gl.map.structure(qmat, K=2, t1, scalex=1, scaley=0.5)
+t1 <- gl.filter.callrate(platypus.gl, threshold = 1)
+res <- gl.run.faststructure(t1,
+  exec = "./fastStructure", k.range = 2:3,
+  num.k.rep = 2, output = paste0(getwd(), "/res_str")
+)
+qmat <- gl.plot.faststructure(res, k.range = 2:3)
+gl.map.structure(qmat, K = 2, t1, scalex = 1, scaley = 0.5)
 }
 }
 \references{
 \itemize{
-\item Raj, A., Stephens, M., & Pritchard, J. K. (2014). fastSTRUCTURE: 
-variational inference of population structure in large SNP data sets. 
+\item Raj, A., Stephens, M., & Pritchard, J. K. (2014). fastSTRUCTURE:
+variational inference of population structure in large SNP data sets.
 Genetics, 197(2), 573-589.
 \item Pritchard, J.K., Stephens, M., Donnelly, P. (2000) Inference of
 population structure using multilocus genotype data. Genetics 155, 945-959.
-\item Kopelman, Naama M., et al. "Clumpak: a program for identifying 
-clustering modes and packaging population structure inferences across K." 
+\item Kopelman, Naama M., et al. "Clumpak: a program for identifying
+clustering modes and packaging population structure inferences across K."
 Molecular ecology resources 15.5 (2015): 1179-1191.
 \item Mattias Jakobsson and Noah A. Rosenberg. 2007. CLUMPP: a cluster
 matching and permutation program for dealing with label switching and

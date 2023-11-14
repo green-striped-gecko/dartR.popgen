@@ -66,19 +66,20 @@ To make use of this function you need to download STRUCTURE for you system
 
 \bold{Format note}
 
-For this function to work, make sure that individual and population names 
-have no spaces. To substitute spaces by underscores you could use the R 
+For this function to work, make sure that individual and population names
+have no spaces. To substitute spaces by underscores you could use the R
 function \code{gsub} as below.
 
 \code{
-popNames(gl) <- gsub(" ","_",popNames(gl))
-
-indNames(gl) <- gsub(" ","_",indNames(gl))  
+popNames(gl) <- gsub(" ","_",popNames(gl));
+}
+\code{
+indNames(gl) <- gsub(" ","_",indNames(gl))
 }
 
-It's also worth noting that Structure truncates individual names at 11 
+It's also worth noting that Structure truncates individual names at 11
 characters. The function will fail if the names of individuals are not unique
- after truncation. To avoid this possible problem, a number sequence, as 
+ after truncation. To avoid this possible problem, a number sequence, as
  shown in the code below, might be used instead of individual names.
 \code{
 indNames(gl) <- as.character(1:length(indNames(gl)))
@@ -86,14 +87,14 @@ indNames(gl) <- as.character(1:length(indNames(gl)))
 }
 \examples{
 \dontrun{
-#bc <- bandicoot.gl[,1:100]
-#sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3, 
+# bc <- bandicoot.gl[,1:100]
+# sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3,
 # exec = './structure.exe')
-#ev <- gl.evanno(sr)
-#ev
-#qmat <- gl.plot.structure(sr, K=3)
-#head(qmat)
-#gl.map.structure(qmat, bc, scalex=1, scaley=0.5)
+# ev <- gl.evanno(sr)
+# ev
+# qmat <- gl.plot.structure(sr, K=3)
+# head(qmat)
+# gl.map.structure(qmat, bc, scalex=1, scaley=0.5)
 }
 }
 \references{

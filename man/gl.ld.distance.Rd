@@ -2,7 +2,7 @@
 % Please edit documentation in R/gl.ld.distance.r
 \name{gl.ld.distance}
 \alias{gl.ld.distance}
-\title{Plots linkage disequilibrium against distance by population 
+\title{Plots linkage disequilibrium against distance by population
 disequilibrium patterns}
 \usage{
 gl.ld.distance(
@@ -17,10 +17,10 @@ gl.ld.distance(
 )
 }
 \arguments{
-\item{ld_report}{Output from function \code{\link{gl.report.ld.map}} 
+\item{ld_report}{Output from function \code{\link{gl.report.ld.map}}
 [required].}
 
-\item{ld_resolution}{Resolution at which LD should be reported in number of 
+\item{ld_resolution}{Resolution at which LD should be reported in number of
 base pairs [default NULL].}
 
 \item{pop_colors}{A color palette for box plots by population or a list
@@ -45,31 +45,31 @@ A dataframe with information of LD against distance by population.
 \description{
 The function creates a plot showing
 the pairwise LD measure against distance in number of base pairs pooled over
-all the chromosomes and a red line representing the threshold (R.squared = 
+all the chromosomes and a red line representing the threshold (R.squared =
 0.2) that is commonly used to imply that two loci are unlinked (Delourme et
 al., 2013; Li et al., 2014).
 }
 \examples{
 if ((requireNamespace("snpStats", quietly = TRUE)) & (requireNamespace("fields", quietly = TRUE))) {
-require("dartR.data")
-x <- platypus.gl
-x <- gl.filter.callrate(x,threshold = 1)
-x <- gl.filter.monomorphs(x)
-x$position <- x$other$loc.metrics$ChromPos_Platypus_Chrom_NCBIv1
-x$chromosome <- as.factor(x$other$loc.metrics$Chrom_Platypus_Chrom_NCBIv1)
-ld_res <- gl.report.ld.map(x,ld.max.pairwise = 10000000)
-ld_res_2 <- gl.ld.distance(ld_res,ld_resolution= 1000000)
+  require("dartR.data")
+  x <- platypus.gl
+  x <- gl.filter.callrate(x, threshold = 1)
+  x <- gl.filter.monomorphs(x)
+  x$position <- x$other$loc.metrics$ChromPos_Platypus_Chrom_NCBIv1
+  x$chromosome <- as.factor(x$other$loc.metrics$Chrom_Platypus_Chrom_NCBIv1)
+  ld_res <- gl.report.ld.map(x, ld.max.pairwise = 10000000)
+  ld_res_2 <- gl.ld.distance(ld_res, ld_resolution = 1000000)
 }
 }
 \references{
 \itemize{
-\item Delourme, R., Falentin, C., Fomeju, B. F., Boillot, M., Lassalle, G., 
-André, I., . . . Marty, A. (2013). High-density SNP-based genetic map 
-development and linkage disequilibrium assessment in Brassica napusL. BMC 
+\item Delourme, R., Falentin, C., Fomeju, B. F., Boillot, M., Lassalle, G.,
+André, I., . . . Marty, A. (2013). High-density SNP-based genetic map
+development and linkage disequilibrium assessment in Brassica napusL. BMC
 genomics, 14(1), 120.
-\item Li, X., Han, Y., Wei, Y., Acharya, A., Farmer, A. D., Ho, J., . . . 
-Brummer, E. C. (2014). Development of an alfalfa SNP array and its use to 
-evaluate patterns of population structure and linkage disequilibrium. PLoS 
+\item Li, X., Han, Y., Wei, Y., Acharya, A., Farmer, A. D., Ho, J., . . .
+Brummer, E. C. (2014). Development of an alfalfa SNP array and its use to
+evaluate patterns of population structure and linkage disequilibrium. PLoS
 One, 9(1), e84329.
  }
 }

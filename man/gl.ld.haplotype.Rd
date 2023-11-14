@@ -2,7 +2,7 @@
 % Please edit documentation in R/gl.ld.haplotype.r
 \name{gl.ld.haplotype}
 \alias{gl.ld.haplotype}
-\title{Visualize patterns of linkage disequilibrium and identification of 
+\title{Visualize patterns of linkage disequilibrium and identification of
 haplotypes}
 \usage{
 gl.ld.haplotype(
@@ -27,16 +27,16 @@ gl.ld.haplotype(
 \arguments{
 \item{x}{Name of the genlight object containing the SNP data [required].}
 
-\item{pop_name}{Name of the population to analyse. If NULL all the 
+\item{pop_name}{Name of the population to analyse. If NULL all the
 populations are analised [default NULL].}
 
-\item{chrom_name}{Nme of the chromosome to analyse. If NULL all the 
+\item{chrom_name}{Nme of the chromosome to analyse. If NULL all the
 chromosomes are analised [default NULL].}
 
 \item{ld_max_pairwise}{Maximum distance in number of base pairs at which LD
 should be calculated [default 10000000].}
 
-\item{maf}{Minor allele frequency (by population) threshold to filter out 
+\item{maf}{Minor allele frequency (by population) threshold to filter out
 loci. If a value > 1 is provided it will be interpreted as MAC (i.e. the
  minimum number of times an allele needs to be observed) [default 0.05].}
 
@@ -47,14 +47,14 @@ loci. If a value > 1 is provided it will be interpreted as MAC (i.e. the
 \item{ind.limit}{Minimum number of individuals that a population should
 contain to take it in account to report loci in LD [default 10].}
 
-\item{min_snps}{Minimum number of SNPs that should have a haplotype to call 
+\item{min_snps}{Minimum number of SNPs that should have a haplotype to call
 it [default 10].}
 
-\item{ld_threshold_haplo}{Minimum LD between adjacent SNPs to call a 
+\item{ld_threshold_haplo}{Minimum LD between adjacent SNPs to call a
 haplotype [default 0.5].}
 
-\item{coordinates}{A vector of two elements with the start and end 
-coordinates in base pairs to which restrict the 
+\item{coordinates}{A vector of two elements with the start and end
+coordinates in base pairs to which restrict the
 analysis e.g. c(1,1000000) [default NULL].}
 
 \item{color_haplo}{Color palette for haplotype plot. See details
@@ -77,15 +77,15 @@ progress log; 3, progress and results summary; 5, full report
 A table with the haplotypes that were identified.
 }
 \description{
-This function plots a Linkage disequilibrium (LD) heatmap, where the colour 
+This function plots a Linkage disequilibrium (LD) heatmap, where the colour
 shading indicates the strength of LD. Chromosome positions (Mbp) are shown on
- the horizontal axis, and haplotypes appear as triangles and delimited by 
- dark yellow vertical lines. Numbers identifying each haplotype are shown in 
- the upper part of the plot. 
- 
- The heatmap also shows heterozygosity for each SNP. 
- 
- The function identifies haplotypes based on contiguous SNPs that are in 
+ the horizontal axis, and haplotypes appear as triangles and delimited by
+ dark yellow vertical lines. Numbers identifying each haplotype are shown in
+ the upper part of the plot.
+
+ The heatmap also shows heterozygosity for each SNP.
+
+ The function identifies haplotypes based on contiguous SNPs that are in
  linkage disequilibrium using as threshold \code{ld_threshold_haplo} and
 containing more than \code{min_snps} SNPs.
 }
@@ -93,26 +93,28 @@ containing more than \code{min_snps} SNPs.
 The information for SNP's position should be stored in the genlight accessor
   "@position" and the SNP's chromosome name in the accessor "@chromosome"
   (see examples). The function will then calculate LD within each chromosome.
-   
+
 The output of the function includes a table with the haplotypes
  that were identified and their location.
- 
+
  Colors of the heatmap (\code{color_haplo}) are based on the function
-   \code{\link[viridis]{scale_fill_viridis}} from  package \code{viridis}. 
+   \code{\link[viridis]{scale_fill_viridis}} from  package \code{viridis}.
    Other color palettes options are "magma", "inferno", "plasma", "viridis",
     "cividis", "rocket", "mako" and "turbo".
 }
 \examples{
 require("dartR.data")
 x <- platypus.gl
-x <- gl.filter.callrate(x,threshold = 1)
-#only the first 20 individuals because of speed during tests
-x <- gl.keep.pop(x, pop.list = "TENTERFIELD")[1:20,]
+x <- gl.filter.callrate(x, threshold = 1)
+# only the first 20 individuals because of speed during tests
+x <- gl.keep.pop(x, pop.list = "TENTERFIELD")[1:20, ]
 x$chromosome <- as.factor(x$other$loc.metrics$Chrom_Platypus_Chrom_NCBIv1)
 x$position <- x$other$loc.metrics$ChromPos_Platypus_Chrom_NCBIv1
-ld_res <- gl.ld.haplotype(x,chrom_name = "NC_041728.1_chromosome_1",
-                          ld_max_pairwise = 10000000 )
-     
+ld_res <- gl.ld.haplotype(x,
+  chrom_name = "NC_041728.1_chromosome_1",
+  ld_max_pairwise = 10000000
+)
+
 }
 \seealso{
 Other ld functions: 
