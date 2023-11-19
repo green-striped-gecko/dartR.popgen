@@ -22,7 +22,7 @@ Description: Facilitates the analysis of 'SNP' (single nucleotide polymorphism)
     population structure. Quite a few functions need additional software to be 
     able to run ('gl.run.structure', 'gl.blast', 'gl.LDNe'). You find detailed description 
     in the help pages how to download and link the packages so the function can 
-    run the software. how'dartR.popgen' is part of the the 'dartRverse' suit of packages.
+    run the software. 'dartR.popgen' is part of the the 'dartRverse' suit of packages.
 Encoding: UTF-8
 Depends: R (>= 3.5), adegenet (>= 2.0.0),  dartR.base, dartR.data
 Imports: methods, utils, MASS, dplyr, patchwork, crayon, ggplot2, data.table, stringr
