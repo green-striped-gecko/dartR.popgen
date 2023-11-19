@@ -15,7 +15,7 @@ Authors@R: c(
             person("Floriaan", "Devloo-Delva",email="Floriaan.Devloo-Delva@csiro.au", role="ctb"),
             person("Eric","Archer", email="eric.archer@noaa.gov", role="ctb")
             )
-Description: Facilitates the analysis of 'SNP' (single nucleotide 'polymorphism') 
+Description: Facilitates the analysis of 'SNP' (single nucleotide polymorphism) 
     and 'silicodart' (presence/absence) data. 'dartR.popgen' provides a suit of 
     functions to analyse such data in a population genetics context. It provides
     several functions to calculate population genetic metrics and to study 
