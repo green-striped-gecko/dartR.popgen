@@ -8,6 +8,7 @@
 #'   Eric Archer \url{https://github.com/EricArcher/strataG}
 #' @param sr structure run object
 #' @param plot should the plots be returned
+#' @return returns a list of dataframes (structure results) and a list of plots
 
 
 utils.structure.evanno <- function(sr, plot = TRUE) {

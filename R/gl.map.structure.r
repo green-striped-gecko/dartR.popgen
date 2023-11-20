@@ -43,18 +43,19 @@
 #' @return returns the map and a list of the qmat split into sorted matrices per
 #'  population. This can be used to create your own map.
 #' @examples
+#' # examples need structure to be installed on the system (see above)
 #' \dontrun{
-#' # bc <- bandicoot.gl[,1:100]
-#' # sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3, exec = './structure.exe')
-#' # ev <- gl.evanno(sr)
-#' # ev
-#' # qmat <- gl.plot.structure(sr, k=2:4)#' #head(qmat)
-#' # gl.map.structure(qmat, bc,K=3)
-#' # gl.map.structure(qmat, bc,K=4)
+#' bc <- bandicoot.gl[,1:100]
+#' sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3, exec = './structure.exe')
+#' ev <- gl.evanno(sr)
+#' ev
+#' qmat <- gl.plot.structure(sr, k=2:4)#' #head(qmat)
+#' gl.map.structure(qmat, bc,K=3)
+#' gl.map.structure(qmat, bc,K=4)
 #' # move population 4 (out of 5) 0.5 degrees to the right and populations 1
 #' # 0.3 degree to the north of the map.
-#' # mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
-#' # gl.map.structure(qmat, bc,K=4, movepops=mp)
+#' mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
+#' gl.map.structure(qmat, bc,K=4, movepops=mp)
 #' }
 #' @export
 #' @seealso \code{\link{gl.run.structure}},  \code{clumpp},
@@ -122,7 +123,7 @@ gl.map.structure <- function(qmat,
   sc <-
     match(rownames(centers), levels(factor(qmat$orig.pop)))
   if (any(is.na(sc))) {
-    cat(
+    message(
       error(
         "Population names (coordinates) in the genlight object do not match population in your q-matrix. Please check both."
       )

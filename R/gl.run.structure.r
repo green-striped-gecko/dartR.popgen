@@ -23,8 +23,9 @@
 #' to be at least three different k steps [default TRUE].
 #' @param plot_theme Theme for the plot. See details for options
 #' [default theme_dartR()].
-#' @param save2tmp If TRUE, saves any ggplots and listings to the session
-#' temporary directory (tempdir) [default FALSE].
+#' @param plot.dir Directory to save the plot RDS files [default as specified 
+#' by the global working directory or tempdir()]
+#' @param plot.file Name for the RDS binary file to save (base name only, exclude extension) [default NULL]
 #' @param verbose Set verbosity for this function (though structure output
 #' cannot be switched off currently) [default NULL]
 #' @details The function is basically a convenient wrapper around the beautiful
@@ -65,15 +66,16 @@
 #' @author Bernd Gruber (Post to \url{https://groups.google.com/d/forum/dartr})
 #'
 #' @examples
+#' # examples need structure to be installed on the system (see above)
 #' \dontrun{
-#' # bc <- bandicoot.gl[,1:100]
-#' # sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3,
-#' # exec = './structure.exe')
-#' # ev <- gl.evanno(sr)
-#' # ev
-#' # qmat <- gl.plot.structure(sr, K=3)
-#' # head(qmat)
-#' # gl.map.structure(qmat, bc, scalex=1, scaley=0.5)
+#' bc <- bandicoot.gl[,1:100]
+#' sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3,
+#' exec = './structure.exe')
+#' ev <- gl.evanno(sr)
+#' ev
+#' qmat <- gl.plot.structure(sr, K=3)
+#' head(qmat)
+#' gl.map.structure(qmat, bc, scalex=1, scaley=0.5)
 #' }
 #' @import patchwork
 ### @importFrom strataG genind2gtypes structureRun
@@ -90,12 +92,14 @@
 #'  Mol Ecol Resour. doi:10.1111/1755-0998.12559
 #' }
 
+
 gl.run.structure <- function(x,
                              ...,
                              exec = ".",
                              plot.out = TRUE,
                              plot_theme = theme_dartR(),
-                             save2tmp = FALSE,
+                             plot.dir = NULL,
+                             plot.file = NULL,
                              verbose = NULL) {
   pkg <- "purrr"
   if (!(requireNamespace(pkg, quietly = TRUE))) {
@@ -121,6 +125,10 @@ parameter to locate it."
   }
   # SET VERBOSITY
   verbose <- gl.check.verbosity(verbose)
+  
+  # SET WORKING DIRECTORY
+  plot.dir <- gl.check.wd(plot.dir,verbose=0)
+  
 
   # FLAG SCRIPT START
   funname <- match.call()[[1]]
@@ -154,39 +162,15 @@ parameter to locate it."
     suppressMessages(print(pa))
   }
 
-  # SAVE INTERMEDIATES TO TEMPDIR
-  if (save2tmp & plot.out) {
-    # check for '/' in match.call
-    mc <- gsub("/", ":", as.character(funname))
-    mc <- gsub(":", "-", mc)
-    nmc <- gsub("/", "_over_", names(funname))
-    nmc <- gsub(":", "-", nmc)
-
-    # creating temp file names
-    temp_plot <-
-      tempfile(pattern = paste0("Plot", paste0(nmc, "_", mc,
-        collapse = "_"
-      )))
-
-    # saving to tempdir
-    saveRDS(pa, file = temp_plot)
-    if (verbose >= 2) {
-      cat(
-        report(
-          "  Saving the plot in ggplot format to the tempfile as",
-          temp_plot,
-          "using saveRDS\n"
-        )
-      )
-      cat(
-        report(
-          "  NOTE: Retrieve output files from tempdir using
-                        gl.list.reports() and gl.print.reports()\n"
-        )
-      )
-    }
+  if(!is.null(plot.file)){
+    tmp <- utils.plot.save(pa,
+                           dir=plot.dir,
+                           file=plot.file,
+                           verbose=verbose)
   }
-
+  
+  
+  
   # FLAG SCRIPT END
   if (verbose >= 1) {
     cat(report("Completed:", funname, "\n\n"))

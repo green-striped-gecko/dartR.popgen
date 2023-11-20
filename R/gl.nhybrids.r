@@ -614,6 +614,7 @@ gl.nhybrids <- function(gl,
       tmp <- file.remove("nhyb.cmd")
 
       setwd(wd.hold)
+      on.exit(setwd(wd.hold))
     }
   } ##### END WINDOWS BLOCK
 

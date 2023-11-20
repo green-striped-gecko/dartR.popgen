@@ -313,7 +313,7 @@ gl.blast <- function(x,
         stringsAsFactors = FALSE
       )
   } else {
-    cat(report("No sequences were aligned\n\n"))
+    if (verbose>0) cat(report("No sequences were aligned\n\n"))
     return(x)
   }
 

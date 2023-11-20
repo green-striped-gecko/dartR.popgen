@@ -88,7 +88,7 @@ gl.LDNe <- function(x,
 
   # works only with SNP data
   if (datatype != "SNP") {
-    cat(error(
+    message(error(
       "  Only SNPs (diploid data can be transformed into genepop format!\n"
     ))
   }
@@ -163,6 +163,7 @@ gl.LDNe <- function(x,
   # change into tempdir (run it there)
   old.path <- getwd()
   setwd(tempdir())
+  on.exit(setwd(old.path))
   system(cmd)
   res <- read.delim(outfile)
   res <-

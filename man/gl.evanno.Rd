@@ -25,14 +25,15 @@ strataG function \code{evanno} (Archer et al. 2016). For a detailed
 description please refer to this package (see references below).
 }
 \examples{
+# examples need structure to be installed on the system (see above)
 \dontrun{
-# bc <- bandicoot.gl[,1:100]
-# sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3, exec = './structure.exe')
-# ev <- gl.evanno(sr)
-# ev
-# qmat <- gl.plot.structure(sr, K=3)
-# head(qmat)
-# gl.map.structure(qmat, bc, K=3, scalex=1, scaley=0.5)
+ bc <- bandicoot.gl[,1:100]
+ sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3, exec = './structure.exe')
+ ev <- gl.evanno(sr)
+ ev
+ qmat <- gl.plot.structure(sr, K=3)
+ head(qmat)
+ gl.map.structure(qmat, bc, K=3, scalex=1, scaley=0.5)
 }
 }
 \references{

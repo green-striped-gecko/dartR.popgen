@@ -61,14 +61,15 @@
 #' @author Bernd Gruber & Luis Mijangos (Post to \url{https://groups.google.com/d/forum/dartr})
 #'
 #' @examples
+#' # examples need structure to be installed on the system (see above)
 #' \dontrun{
-#' # bc <- bandicoot.gl[,1:100]
-#' # sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3, exec = './structure')
-#' # ev <- gl.evanno(sr)
-#' # ev
-#' # qmat <- gl.plot.structure(sr, K=3)
-#' # head(qmat)
-#' # gl.map.structure(qmat, K=3, bc, scalex=1, scaley=0.5)
+#' bc <- bandicoot.gl[,1:100]
+#' sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3, exec = './structure')
+#' ev <- gl.evanno(sr)
+#' ev
+#' qmat <- gl.plot.structure(sr, K=3)
+#' head(qmat)
+#' gl.map.structure(qmat, K=3, bc, scalex=1, scaley=0.5)
 #' }
 #' @export
 #' @seealso \code{gl.run.structure}, \code{gl.plot.structure}
