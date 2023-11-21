@@ -2,7 +2,7 @@
 % Please edit documentation in R/gl.blast.r
 \name{gl.blast}
 \alias{gl.blast}
-\title{Aligns nucleotides sequences against those present in a target database 
+\title{Aligns nucleotides sequences against those present in a target database
 using blastn}
 \usage{
 gl.blast(
@@ -132,7 +132,7 @@ Basic Local Alignment Search Tool (BLAST; Altschul et al., 1990 &
 }
 \examples{
 \dontrun{
-res <- gl.blast(x= testset.gl,ref_genome = 'sequence.fasta')
+res <- gl.blast(x = testset.gl, ref_genome = "sequence.fasta")
 # display of reports saved in the temporal directory
 # open the reports saved in the temporal directory
 }

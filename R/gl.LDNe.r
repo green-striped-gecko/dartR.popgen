@@ -44,10 +44,12 @@
 #' @examples
 #' \dontrun{
 #' # SNP data (use two populations and only the first 100 SNPs)
-#' pops <- possums.gl[1:60,1:100]
-#' nes <- gl.LDNe(pops, outfile="popsLD.txt", outpath=tempdir(),
-#' neest.path = "./path_to Ne-21",
-#' critical=c(0,0.05), singleton.rm=TRUE, mating='random')
+#' pops <- possums.gl[1:60, 1:100]
+#' nes <- gl.LDNe(pops,
+#'   outfile = "popsLD.txt", outpath = tempdir(),
+#'   neest.path = "./path_to Ne-21",
+#'   critical = c(0, 0.05), singleton.rm = TRUE, mating = "random"
+#' )
 #' nes
 #' }
 #' @export
@@ -58,90 +60,94 @@ gl.LDNe <- function(x,
                     neest.path = getwd(),
                     critical = 0,
                     singleton.rm = TRUE,
-                    mating = 'random',
+                    mating = "random",
                     plot.out = TRUE,
                     plot_theme = theme_dartR(),
-                    plot_colors_pop = gl.select.colors(x, verbose=0),
-                    plot.file=NULL,
-                    plot.dir=NULL,
+                    plot_colors_pop = gl.select.colors(x, verbose = 0),
+                    plot.file = NULL,
+                    plot.dir = NULL,
                     verbose = NULL) {
   # SET VERBOSITY
   verbose <- gl.check.verbosity(verbose)
 
   # SET WORKING DIRECTORY
-  plot.dir <- gl.check.wd(plot.dir,verbose=0)
-  
+  plot.dir <- gl.check.wd(plot.dir, verbose = 0)
+
   # FLAG SCRIPT START
   funname <- match.call()[[1]]
-  utils.flag.start(func = funname,
-                   build = "Jody",
-                   verbose = verbose)
-  
+  utils.flag.start(
+    func = funname,
+    build = "Jody",
+    verbose = verbose
+  )
+
   # CHECK DATATYPE
   datatype <- utils.check.datatype(x, verbose = verbose)
-  
+
   # FUNCTION SPECIFIC ERROR CHECKING
-  
-  #works only with SNP data
-  if (datatype != "SNP")
-    cat(error(
+
+  # works only with SNP data
+  if (datatype != "SNP") {
+    message(error(
       "  Only SNPs (diploid data can be transformed into genepop format!\n"
     ))
-  
+  }
+
   # DO THE JOB
   # Set NULL to variables to pass CRAN checks
-"Lowest Allele Frequency Used"<-"CI high Parametric"<-"CI low Parametric"<-"Estimated Ne^" <- NULL
-  
+  "Lowest Allele Frequency Used" <- "CI high Parametric" <- "CI low Parametric" <- "Estimated Ne^" <- NULL
+
   xx <- gl2genepop(x, outfile = "dummy.gen", outpath = tempdir())
-  
+
   if (singleton.rm == TRUE) {
     critical[length(critical) + 1] <- 1
   }
-  
-  #copy info file to tempdir
+
+  # copy info file to tempdir
   info <- NA
   info[1] <- "1"
-  info[2] <- "./"  #path of input file
-  info[3] <- "dummy.gen"  #input file
-  info[4] <- 2  #Genepop format
-  info[5] <- "./" #path of output file
-  info[6] <- outfile #output file
+  info[2] <- "./" # path of input file
+  info[3] <- "dummy.gen" # input file
+  info[4] <- 2 # Genepop format
+  info[5] <- "./" # path of output file
+  info[6] <- outfile # output file
   info[7] <- length(critical)
   info[8] <- paste(critical, collapse = " ")
-  
+
   mm <- pmatch(mating, c("random", "mono")) - 1
   if (mm == 0 | mm == 1) {
     info[9] <- mm
-  } else{
+  } else {
     cat(error("  Mating is not either 'random' or 'monogamy'. Please check\n"))
     stop()
   }
-  
+
   con <- file(file.path(tempdir(), "infodummy"), "w")
   writeLines(info, con)
   close(con)
-  
+
   if (Sys.info()["sysname"] == "Windows") {
     prog <- "Ne2-1.exe"
     cmd <- "Ne2-1.exe i:infodummy"
   }
-  
+
   if (Sys.info()["sysname"] == "Linux") {
     prog <- "Ne2-1L"
     cmd <- "./Ne2-1L i:infodummy"
   }
-  
+
   if (Sys.info()["sysname"] == "Darwin") {
     prog <- "Ne2-1M"
     cmd <- "./Ne2-1M i:infodummy"
   }
-  
-  #check if file program can be found
+
+  # check if file program can be found
   if (file.exists(file.path(neest.path, prog))) {
     file.copy(file.path(neest.path, prog),
-              to = tempdir(),
-              overwrite = TRUE)
-  } else{
+      to = tempdir(),
+      overwrite = TRUE
+    )
+  } else {
     cat(
       error(
         "  Cannot find",
@@ -153,64 +159,74 @@ gl.LDNe <- function(x,
     )
     stop()
   }
-  
-  #change into tempdir (run it there)
+
+  # change into tempdir (run it there)
   old.path <- getwd()
   setwd(tempdir())
+  on.exit(setwd(old.path))
   system(cmd)
   res <- read.delim(outfile)
   res <-
     unlist(lapply(res[, 1], function(x) {
       x <- gsub(pattern = "Infinite", replacement = "Inf", x)
     }))
-  
+
   pops <-
-    sapply(res[res %like% "Population"], function(x)
-      str_extract(x, "(?<=\\[).*(?=\\])"), USE.NAMES = F)
+    sapply(res[res %like% "Population"], function(x) {
+      str_extract(x, "(?<=\\[).*(?=\\])")
+    }, USE.NAMES = F)
   pops <- sub("_[^_]+$", "", pops)
-  freq <- str_split(res[res %like% "Lowest"], '\\s{3,}')[[1]][-1]
+  freq <- str_split(res[res %like% "Lowest"], "\\s{3,}")[[1]][-1]
   Estimated_Ne <-
-    lapply(res[res %like% "Estimated"], function(x)
-      strsplit(x, "\\s{3,}")[[1]][-1])
+    lapply(res[res %like% "Estimated"], function(x) {
+      strsplit(x, "\\s{3,}")[[1]][-1]
+    })
   CI_low_Parametric <-
-    lapply(res[res %like% "* Parametric"], function(x)
-      strsplit(x, "\\s{3,}")[[1]][-1])
+    lapply(res[res %like% "* Parametric"], function(x) {
+      strsplit(x, "\\s{3,}")[[1]][-1]
+    })
   CI_high_Parametric <-
-    lapply(res[grep("^\\* Parametric", res) + 1], function(x)
-      strsplit(x, "\\s{3,}")[[1]][-1])
+    lapply(res[grep("^\\* Parametric", res) + 1], function(x) {
+      strsplit(x, "\\s{3,}")[[1]][-1]
+    })
   CI_low_JackKnife <-
-    lapply(res[res %like% "* JackKnife"], function(x)
-      strsplit(x, "\\s{3,}")[[1]][-1])
+    lapply(res[res %like% "* JackKnife"], function(x) {
+      strsplit(x, "\\s{3,}")[[1]][-1]
+    })
   CI_high_JackKnife <-
-    lapply(res[grep("^\\* JackKnife", res) + 1], function(x)
-      strsplit(x, "\\s{3,}")[[1]][-1])
-  
-  # JackKnife works only with more than 2 individuals 
-  
-  ind_threshold <- which(table(pop(x))<3)
-  
-  if(length(ind_threshold)>0){
-    
-    for(r in unname(ind_threshold)){
-      CI_low_JackKnife <- c(CI_low_JackKnife[1:(r-1)],NA,CI_low_JackKnife[r:length(CI_low_JackKnife)] )
-      CI_high_JackKnife <- c(CI_high_JackKnife[1:(r-1)],NA,CI_high_JackKnife[r:length(CI_high_JackKnife)] )
+    lapply(res[grep("^\\* JackKnife", res) + 1], function(x) {
+      strsplit(x, "\\s{3,}")[[1]][-1]
+    })
+
+  # JackKnife works only with more than 2 individuals
+
+  ind_threshold <- which(table(pop(x)) < 3)
+
+  if (length(ind_threshold) > 0) {
+    for (r in unname(ind_threshold)) {
+      CI_low_JackKnife <- c(CI_low_JackKnife[1:(r - 1)], NA, CI_low_JackKnife[r:length(CI_low_JackKnife)])
+      CI_high_JackKnife <- c(CI_high_JackKnife[1:(r - 1)], NA, CI_high_JackKnife[r:length(CI_high_JackKnife)])
     }
   }
-  
+
   harmonic_mean <-
-    lapply(res[res %like% "Harmonic"], function(x)
-      strsplit(x, "\\s{3,}")[[1]][-1])
+    lapply(res[res %like% "Harmonic"], function(x) {
+      strsplit(x, "\\s{3,}")[[1]][-1]
+    })
   comparisons <-
-    lapply(res[res %like% "Independent"], function(x)
-      strsplit(x, "\\s{3,}")[[1]][-1])
+    lapply(res[res %like% "Independent"], function(x) {
+      strsplit(x, "\\s{3,}")[[1]][-1]
+    })
   overall_r2 <-
-    lapply(res[res %like% "OverAll"], function(x)
-      strsplit(x, "\\s{3,}")[[1]][-1])
+    lapply(res[res %like% "OverAll"], function(x) {
+      strsplit(x, "\\s{3,}")[[1]][-1]
+    })
   expected_r2 <-
-    lapply(res[res %like% "Expected"], function(x)
-      strsplit(x, "\\s{3,}")[[1]][-1])
-  
-  pop_list <-  lapply(1:length(pops), function(i) {
+    lapply(res[res %like% "Expected"], function(x) {
+      strsplit(x, "\\s{3,}")[[1]][-1]
+    })
+
+  pop_list <- lapply(1:length(pops), function(i) {
     df_temp <- as.data.frame(cbind(
       c(
         "Lowest Allele Frequency Used",
@@ -237,34 +253,34 @@ gl.LDNe <- function(x,
         as.numeric(CI_high_JackKnife[[i]])
       )
     ))
-    
+
     df_temp <- df_temp[!duplicated(as.list(df_temp))]
-      
+
     colnames(df_temp) <-
       c("Statistic", paste("Frequency", 1:sum(!duplicated(freq))))
     rownames(df_temp) <- 1:nrow(df_temp)
     return(df_temp)
   })
-  
+
   names(pop_list) <- pops
-  
+
   file.copy(outfile, file.path(outpath, outfile))
   setwd(old.path)
-  
+
   # PLOTS
   if (plot.out) {
     # printing plots and reports assigning colors to populations
-    
+
     pop_list_plot <- lapply(pop_list, function(x) {
       stats::setNames(data.frame(t(x[, -1])), x[, 1])
     })
-    
+
     pop_list_plot <- lapply(1:length(pops), function(i) {
       pop_temp <- pop_list_plot[[i]]
       pop_temp$pop <- pops[i]
       return(pop_temp)
     })
-    
+
     pop_list_plot <- as.data.frame(rbindlist(pop_list_plot))
     pop_list_plot$pop <- as.factor(pop_list_plot$pop)
     pop_list_plot[pop_list_plot == Inf] <- NA
@@ -275,14 +291,16 @@ gl.LDNe <- function(x,
       as.numeric(pop_list_plot$`CI high Parametric`)
     pop_list_plot$`Estimated Ne^` <-
       as.numeric(pop_list_plot$`Estimated Ne^`)
-    
+
     pop_size <- unlist(lapply(harmonic_mean, function(x) {
       mean(as.numeric(x), na.rm = T)
     }))
-    
+
     p3 <-
-      ggplot(data = pop_list_plot, aes(x = pop,
-                                       y = `Estimated Ne^`)) +
+      ggplot(data = pop_list_plot, aes(
+        x = pop,
+        y = `Estimated Ne^`
+      )) +
       geom_bar(
         position = "dodge2",
         stat = "identity",
@@ -290,12 +308,19 @@ gl.LDNe <- function(x,
         fill = pop_list_plot$color
       ) +
       scale_x_discrete(labels = paste(unique(pop_list_plot$pop),
-                                      round(pop_size,
-                                            0),
-                                      sep = " | ")) +
-      geom_errorbar(aes(ymin = `CI low Parametric`,
-                        ymax = `CI high Parametric`),
-                    position = position_dodge2(padding = 0.5)) +
+        round(
+          pop_size,
+          0
+        ),
+        sep = " | "
+      )) +
+      geom_errorbar(
+        aes(
+          ymin = `CI low Parametric`,
+          ymax = `CI high Parametric`
+        ),
+        position = position_dodge2(padding = 0.5)
+      ) +
       geom_text(
         aes(label = `Lowest Allele Frequency Used`),
         position = position_dodge2(width = 0.9),
@@ -318,34 +343,35 @@ gl.LDNe <- function(x,
       ) +
       ylab("Estimated Ne") +
       ggtitle("Effective population size (Ne) by Population")
-    
   }
-  
+
   # PRINTING OUTPUTS
   if (plot.out) {
     print(p3)
   }
-  
+
   print(pop_list, row.names = FALSE)
 
   # Optionally save the plot ---------------------
-  
-  if(!is.null(plot.file)){
+
+  if (!is.null(plot.file)) {
     tmp <- utils.plot.save(p3,
-                           dir=plot.dir,
-                           file=plot.file,
-                           verbose=verbose)
+      dir = plot.dir,
+      file = plot.file,
+      verbose = verbose
+    )
   }
-  #save also table (automatically if plot is not null)
-  if(!is.null(plot.file)){
+  # save also table (automatically if plot is not null)
+  if (!is.null(plot.file)) {
     tmp <- utils.plot.save(pop_list,
-                           dir=plot.dir,
-                           file=paste0(plot.file,"_tab"),
-                           verbose=verbose)
-  }  
-  
-    
-  
+      dir = plot.dir,
+      file = paste0(plot.file, "_tab"),
+      verbose = verbose
+    )
+  }
+
+
+
   if (verbose >= 1) {
     cat(report(
       "  The results are saved in:",
@@ -353,13 +379,13 @@ gl.LDNe <- function(x,
       "\n"
     ))
   }
-  
+
   # FLAG SCRIPT END
-  
+
   if (verbose >= 1) {
     cat(report("Completed:", funname, "\n"))
   }
-  
+
   # RETURN
   return(invisible(pop_list))
 }

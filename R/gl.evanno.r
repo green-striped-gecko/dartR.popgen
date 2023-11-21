@@ -12,14 +12,15 @@
 #' @return An Evanno plot is created and a list of all four plots is returned.
 #' @author Bernd Gruber (Post to \url{https://groups.google.com/d/forum/dartr})
 #' @examples
+#' # examples need structure to be installed on the system (see above)
 #' \dontrun{
-#' #bc <- bandicoot.gl[,1:100]
-#' #sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3, exec = './structure.exe')
-#' #ev <- gl.evanno(sr)
-#' #ev
-#' #qmat <- gl.plot.structure(sr, K=3)
-#' #head(qmat)
-#' #gl.map.structure(qmat, bc, K=3, scalex=1, scaley=0.5)
+#'  bc <- bandicoot.gl[,1:100]
+#'  sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3, exec = './structure.exe')
+#'  ev <- gl.evanno(sr)
+#'  ev
+#'  qmat <- gl.plot.structure(sr, K=3)
+#'  head(qmat)
+#'  gl.map.structure(qmat, bc, K=3, scalex=1, scaley=0.5)
 #' }
 #' @import patchwork
 ### @importFrom strataG genind2gtypes structureRun
@@ -38,9 +39,8 @@
 #' }
 
 gl.evanno <- function(sr, plot.out = TRUE) {
-        evno <- utils.structure.evanno(sr, plot = plot.out)
-        # for (i in 1:4) evno$plots[[i]] <- evno$plots[[i]]+theme_dartR()
-        
-        return(evno)
-}
+  evno <- utils.structure.evanno(sr, plot = plot.out)
+  # for (i in 1:4) evno$plots[[i]] <- evno$plots[[i]]+theme_dartR()
 
+  return(evno)
+}

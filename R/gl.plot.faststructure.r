@@ -1,15 +1,16 @@
-#' @name gl.plot.structure
+#' @name gl.plot.faststructure
 #'
-#' @title Plots STRUCTURE analysis results (Q-matrix)
+#' @title Plots fastStructure analysis results (Q-matrix)
 #'
 #' @description
-#' This function takes a structure run object (output from
-#'  \code{\link{gl.run.structure}}) and plots the typical structure bar
-#'   plot that visualize the q matrix of a structure run.
+#' This function takes a fastStructure run object (output from
+#'  \code{\link{gl.run.faststructure}}) and plots the typical structure bar
+#'   plot that visualize the q matrix of a fastStructure run.
 #'
-#' @param sr Structure run object from \code{\link{gl.run.structure}} [required].
-#' @param K The number for K of the q matrix that should be plotted. Needs to
-#'  be within you simulated range of K's in your sr structure run object. If
+#' @param sr fastStructure run object from \code{\link{gl.run.faststructure}}
+#'  [required].
+#' @param k.range The number for K of the q matrix that should be plotted. Needs
+#' to be within you simulated range of K's in your sr structure run object. If
 #'  NULL, all the K's are plotted [default NULL].
 #' @param met_clumpp The algorithm to use to infer the correct permutations.
 #' One of 'greedy' or 'greedyLargeK' or 'stephens' [default "greedyLargeK"].
@@ -18,21 +19,14 @@
 #' @param clumpak Whether use the Clumpak method (see details) [default TRUE].
 #' @param plot_theme Theme for the plot. See Details for options
 #' [default NULL].
-#' @param color_clusters A color palette for clusters (K) or a list with
+#' @param colors_clusters A color palette for clusters (K) or a list with
 #' as many colors as there are clusters (K) [default NULL].
 #' @param ind_name Whether to plot individual names [default TRUE].
 #' @param border_ind The width of the border line between individuals
 #' [default 0.25].
-#' @param plot.out Specify if plot is to be produced [default TRUE].
-#' @param plot.dir Directory in which to save files [default = working directory]
-#' @param plot.file Name for the RDS binary file to save (base name only, exclude
-#' extension) [default NULL]
-#' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
-#'  progress log ; 3, progress and results summary; 5, full report [default
-#'   NULL, unless specified using gl.set.verbosity]
 #'
 #' @details The function outputs a barplot which is the typical output of
-#'  structure. For a Evanno plot use gl.evanno.
+#'  fastStructure.
 #'
 #'  This function is based on the methods of CLUMPP and Clumpak as implemented
 #'  in the R package starmie (https://github.com/sa-lee/starmie).
@@ -48,9 +42,6 @@
 #'  This function averages the replicates within each mode identified by the
 #'  Clumpak method.
 #'
-#'  Plots and table are saved to the working directory specified in plot.dir (tempdir )
-#'  if plot.file is set.
-#'
 #' Examples of other themes that can be used can be consulted in \itemize{
 #'  \item \url{https://ggplot2.tidyverse.org/reference/ggtheme.html} and \item
 #'  \url{https://yutannihilation.github.io/allYourFigureAreBelongToUs/ggthemes/}
@@ -61,20 +52,22 @@
 #' @author Bernd Gruber & Luis Mijangos (Post to \url{https://groups.google.com/d/forum/dartr})
 #'
 #' @examples
-#' # examples need structure to be installed on the system (see above)
 #' \dontrun{
-#' bc <- bandicoot.gl[,1:100]
-#' sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3, exec = './structure')
-#' ev <- gl.evanno(sr)
-#' ev
-#' qmat <- gl.plot.structure(sr, K=3)
-#' head(qmat)
-#' gl.map.structure(qmat, K=3, bc, scalex=1, scaley=0.5)
+#' t1 <- gl.filter.callrate(platypus.gl, threshold = 1)
+#' res <- gl.run.faststructure(t1,
+#'   exec = "./fastStructure", k.range = 2:3,
+#'   num.k.rep = 2, output = paste0(getwd(), "/res_str")
+#' )
+#' qmat <- gl.plot.faststructure(res, k.range = 2:3)
+#' gl.map.structure(qmat, K = 2, t1, scalex = 1, scaley = 0.5)
 #' }
 #' @export
-#' @seealso \code{gl.run.structure}, \code{gl.plot.structure}
+#' @seealso \code{gl.run.faststructure}
 #' @references
 #' \itemize{
+#' \item Raj, A., Stephens, M., & Pritchard, J. K. (2014). fastSTRUCTURE:
+#' variational inference of population structure in large SNP data sets.
+#' Genetics, 197(2), 573-589.
 #' \item Pritchard, J.K., Stephens, M., Donnelly, P. (2000) Inference of
 #' population structure using multilocus genotype data. Genetics 155, 945-959.
 #' \item Kopelman, Naama M., et al. "Clumpak: a program for identifying
@@ -87,67 +80,24 @@
 #' \href{http://web.stanford.edu/group/rosenberglab/clumppDownload.html}{clumpp}
 #' }
 
-gl.plot.structure <- function(sr,
-                              K = NULL,
-                              met_clumpp = "greedyLargeK",
-                              iter_clumpp = 100,
-                              clumpak = TRUE,
-                              plot_theme = NULL,
-                              color_clusters = NULL,
-                              ind_name = TRUE,
-                              border_ind = 0.15,
-                              plot.out = TRUE,
-                              plot.file = NULL,
-                              plot.dir = NULL,
-                              verbose = NULL) {
-  # SET VERBOSITY
-  verbose <- gl.check.verbosity(verbose)
-
-  # SET WORKING DIRECTORY
-  plot.dir <- gl.check.wd(plot.dir, verbose = 0)
-
-  # FLAG SCRIPT START
-  funname <- match.call()[[1]]
-  utils.flag.start(
-    func = funname,
-    build = "Jody",
-    verbose = verbose
-  )
-
-  # DO THE JOB
-
-  if (!is(sr, "structure.result")) {
-    stop(error(
-      "sr is not a structure result object returned from gl.run.structure.\n"
-    ))
-  }
-
-  if (is.null(K)) {
-    ks <- range((lapply(sr, function(x) {
-      x$summary[1]
-    })))
-    ks <- ks[1]:ks[2]
-  } else {
-    ks <- K
-  }
-
+gl.plot.faststructure <- function(sr,
+                                  k.range,
+                                  met_clumpp = "greedyLargeK",
+                                  iter_clumpp = 100,
+                                  clumpak = TRUE,
+                                  plot_theme = NULL,
+                                  colors_clusters = NULL,
+                                  ind_name = TRUE,
+                                  border_ind = 0.15) {
   res <- list()
 
-  for (i in ks) {
-    eq.k <- sapply(sr, function(x) {
-      x$summary["k"] == i
-    })
+  for (i in k.range) {
+    eq.k <- which(names(sr) == as.character(i))
 
-    if (sum(eq.k) == 0) {
-      stop(error(paste(
-        "No entries for K =", K, "found in 'sr'.\n"
-      )))
-    }
-
-    sr_tmp <- sr[eq.k]
+    sr_tmp <- sr[[eq.k]]
 
     Q_list_tmp <- lapply(sr_tmp, function(x) {
-      as.matrix(x[[2]][, 4:ncol(x[[2]])])
+      as.matrix(x[, 3:ncol(x)])
     })
 
     # If K = 1
@@ -160,7 +110,9 @@ gl.plot.structure <- function(sr,
         res_tmp <- Q_list_tmp[[1]]
         # if more than 1 replicate
       } else {
-        res_tmp <- clumpp(Q_list_tmp, method = met_clumpp, iter = iter_clumpp)$Q_list
+        # res_tmp <- dartR:::clumpp(Q_list_tmp,
+        # method = met_clumpp,
+        # iter = iter_clumpp)$Q_list
       }
 
       # clumpak method for inferring modes within multiple structure runs as
@@ -217,7 +169,13 @@ gl.plot.structure <- function(sr,
   }
 
   # flattening lists
-  renquote <- function(l) if (is.list(l)) lapply(l, renquote) else enquote(l)
+  renquote <- function(l) {
+    if (is.list(l)) {
+      lapply(l, renquote)
+    } else {
+      enquote(l)
+    }
+  }
 
   res <- lapply(unlist(renquote(res)), eval)
 
@@ -236,10 +194,10 @@ gl.plot.structure <- function(sr,
 
   for (i in 1:length(Q_list)) {
     Q_list_tmp <- data.frame(
-      Label = sr[[1]]$q.mat$id,
+      Label = sr[[1]][[1]]$id,
       Q_list[[i]],
       K = rep(Ks[[i]], nrow(Q_list[[i]])),
-      orig.pop = sr[[1]]$q.mat$orig.pop
+      orig.pop = sr[[1]][[1]]$orig.pop
     )
     n_col <- ncol(Q_list_tmp) - 3
     colnames(Q_list_tmp) <-
@@ -254,6 +212,7 @@ gl.plot.structure <- function(sr,
     Q_list_tmp <- data.table::rbindlist(Q_list_tmp_list_2)
     Q_list_tmp$ord <- 1:nrow(Q_list_tmp)
     Q_list[[i]] <- Q_list_tmp
+    Q_list[[i]] <- as.data.frame(Q_list[[i]])
   }
 
   order_df <- Q_list[[1]][order(Q_list[[1]]$Label), ]
@@ -268,8 +227,16 @@ gl.plot.structure <- function(sr,
     plot_theme <- theme_dartR()
   }
 
-  if (is.null(color_clusters)) {
-    color_clusters <- gl.select.colors(ncolors = max(ks), verbose = 0)
+  if (is.null(colors_clusters)) {
+    colors_clusters <- gl.select.colors(ncolors = max(k.range))
+  }
+
+  if (is(colors_clusters, "function")) {
+    cols_clusters <- colors_clusters(max(k.range))
+  }
+
+  if (!is(colors_clusters, "function")) {
+    cols_clusters <- colors_clusters
   }
 
   # #Melt and append Q matrices
@@ -285,7 +252,7 @@ gl.plot.structure <- function(sr,
     )
 
   Q_melt$orig.pop <-
-    factor(Q_melt$orig.pop, levels = unique(sr[[1]]$q.mat$orig.pop))
+    factor(Q_melt$orig.pop, levels = unique(sr[[1]][[1]]$orig.pop))
 
   p3 <- ggplot(Q_melt, aes_(x = ~ factor(ord), y = ~value, fill = ~Cluster)) +
     geom_col(color = "black", size = border_ind, width = 1) +
@@ -296,7 +263,7 @@ gl.plot.structure <- function(sr,
       labels = unique(Q_melt$Label),
       expand = c(0, 0)
     ) +
-    scale_fill_manual(values = color_clusters) +
+    scale_fill_manual(values = cols_clusters) +
     plot_theme +
     theme(
       panel.spacing = unit(0, "lines"),
@@ -327,26 +294,7 @@ gl.plot.structure <- function(sr,
     )
   }
 
-  if (plot.out) {
-    print(p3)
-  }
-
-
-  # Optionally save the plot ---------------------
-
-  if (!is.null(plot.file)) {
-    tmp <- utils.plot.save(p3,
-      dir = plot.dir,
-      file = plot.file,
-      verbose = verbose
-    )
-  }
-
-  # FLAG SCRIPT END
-
-  if (verbose >= 1) {
-    cat(report("Completed:", funname, "\n"))
-  }
+  print(p3)
 
   return(invisible(Q_list))
 }

@@ -79,10 +79,12 @@ This function is basically a convenience function that runs the LD Ne
 \examples{
 \dontrun{
 # SNP data (use two populations and only the first 100 SNPs)
-pops <- possums.gl[1:60,1:100]
-nes <- gl.LDNe(pops, outfile="popsLD.txt", outpath=tempdir(),
-neest.path = "./path_to Ne-21",
-critical=c(0,0.05), singleton.rm=TRUE, mating='random')
+pops <- possums.gl[1:60, 1:100]
+nes <- gl.LDNe(pops,
+  outfile = "popsLD.txt", outpath = tempdir(),
+  neest.path = "./path_to Ne-21",
+  critical = c(0, 0.05), singleton.rm = TRUE, mating = "random"
+)
 nes
 }
 }

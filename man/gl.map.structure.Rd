@@ -29,7 +29,7 @@ gl.map.structure(
 \item{provider}{Provider    passed to leaflet. Check \link[leaflet]{providers}
 for a list of possible backgrounds [default "Esri.NatGeoWorldMap"].}
 
-\item{scalex}{Scaling factor to determine the size of the bars in x direction 
+\item{scalex}{Scaling factor to determine the size of the bars in x direction
 [default 1].}
 
 \item{scaley}{Scaling factor to determine the size of the bars in y direction
@@ -42,13 +42,13 @@ dimensions [rows=number of populations, columns = 2 (lon/lat)]. For each
 population you have to specify the x and y (lon and lat) units you want to
 move the center of the plot, (see example for details) [default NULL].}
 
-\item{pop.labels}{Switch for population labels below the parplots 
+\item{pop.labels}{Switch for population labels below the parplots
 [default TRUE].}
 
 \item{pop.labels.cex}{Size of population labels [default 12].}
 }
 \value{
-An interactive map that shows the structure plots broken down by 
+An interactive map that shows the structure plots broken down by
 population.
 
 returns the map and a list of the qmat split into sorted matrices per
@@ -72,18 +72,19 @@ You may need to adjust scalex and scaley values [default 1], as the size
 depends on the scale of the map and the position of the populations.
 }
 \examples{
+# examples need structure to be installed on the system (see above)
 \dontrun{
-#bc <- bandicoot.gl[,1:100]
-#sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3, exec = './structure.exe')
-#ev <- gl.evanno(sr)
-#ev
-#qmat <- gl.plot.structure(sr, k=2:4)#' #head(qmat)
-#gl.map.structure(qmat, bc,K=3)
-#gl.map.structure(qmat, bc,K=4)
-#move population 4 (out of 5) 0.5 degrees to the right and populations 1
-#0.3 degree to the north of the map.
-#mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
-#gl.map.structure(qmat, bc,K=4, movepops=mp)
+bc <- bandicoot.gl[,1:100]
+sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3, exec = './structure.exe')
+ev <- gl.evanno(sr)
+ev
+qmat <- gl.plot.structure(sr, k=2:4)#' #head(qmat)
+gl.map.structure(qmat, bc,K=3)
+gl.map.structure(qmat, bc,K=4)
+# move population 4 (out of 5) 0.5 degrees to the right and populations 1
+# 0.3 degree to the north of the map.
+mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
+gl.map.structure(qmat, bc,K=4, movepops=mp)
 }
 }
 \references{

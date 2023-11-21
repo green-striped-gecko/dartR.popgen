@@ -32,12 +32,12 @@
 #'      e.g. using fastsimcoal2.
 #' @export
 #' @examples
-#' gl.sfs(bandicoot.gl, singlepop=TRUE)
-#' gl.sfs(possums.gl[c(1:5,31:33),], minbinsize=1)
-#'@references Excoffier L., Dupanloup I., Huerta-Sánchez E., Sousa V. C. and
+#' gl.sfs(bandicoot.gl, singlepop = TRUE)
+#' gl.sfs(possums.gl[c(1:5, 31:33), ], minbinsize = 1)
+#' @references Excoffier L., Dupanloup I., Huerta-Sánchez E., Sousa V. C. and
 #'  Foll M. (2013) Robust demographic inference from genomic and SNP data. PLoS
 #'  genetics 9(10)
-#'@author Custodian: Bernd Gruber & Carlo Pacioni (Post to
+#' @author Custodian: Bernd Gruber & Carlo Pacioni (Post to
 #'  \url{https://groups.google.com/d/forum/dartr})
 
 
@@ -46,26 +46,28 @@ gl.sfs <- function(x,
                    folded = TRUE,
                    singlepop = FALSE,
                    plot.out = TRUE,
-                   plot.file=NULL,
-                   plot.dir=NULL,
+                   plot.file = NULL,
+                   plot.dir = NULL,
                    verbose = NULL) {
   # SET VERBOSITY
   verbose <- gl.check.verbosity(verbose)
-  
+
   # SET WORKING DIRECTORY
-  plot.dir <- gl.check.wd(plot.dir,verbose=0)
-  
+  plot.dir <- gl.check.wd(plot.dir, verbose = 0)
+
   # FLAG SCRIPT START
   funname <- match.call()[[1]]
-                   utils.flag.start(func = funname,
-                   build = "Jody",
-                   verbose = verbose)
-  
+  utils.flag.start(
+    func = funname,
+    build = "Jody",
+    verbose = verbose
+  )
+
   # CHECK DATATYPE
-  datatype <-utils.check.datatype(x, verbose = verbose)
-  
+  datatype <- utils.check.datatype(x, verbose = verbose)
+
   # FUNCTION SPECIFIC ERROR CHECKING
-  
+
   if (sum(is.na(as.matrix(x))) > 0) {
     cat(
       warn(
@@ -73,8 +75,8 @@ gl.sfs <- function(x,
       )
     )
   }
-  
-  #only a single population....
+
+  # only a single population....
   if (nPop(x) == 0) {
     cat(
       warn(
@@ -83,8 +85,8 @@ gl.sfs <- function(x,
     )
     pop(x) <- rep("A", nInd(x))
   }
-  
-  if (!singlepop &  (prod(table(pop(x)) * 2 + 1)) > 2 ^ 30) {
+
+  if (!singlepop & (prod(table(pop(x)) * 2 + 1)) > 2^30) {
     cat(
       error(
         "Cannot create a multidimensional sfs, due to too high dimensions. Reduce the number of populations/individuals or use singlepop=TRUE."
@@ -96,7 +98,7 @@ gl.sfs <- function(x,
   if (nPop(x) == 1 | singlepop == TRUE) {
     mi <- nInd(x)
     if (!folded) {
-      mi <- 2 * mi  #double the number of slots...
+      mi <- 2 * mi # double the number of slots...
     }
     cs <- colSums(as.matrix(x), na.rm = TRUE)
     if (folded) {
@@ -107,97 +109,102 @@ gl.sfs <- function(x,
     sfsf <- rep(0, mi + 1)
     sfsf[as.numeric(names(sfs0)) + 1] <- sfs0
     names(sfsf) <- paste0("d", 0:mi)
-    #delete minbinsize
-    if (minbinsize > 0){
+    # delete minbinsize
+    if (minbinsize > 0) {
       sfsf <- sfsf[-c(1:(minbinsize))]
     }
     sfs <- sfsf
-    #multidimensional
+    # multidimensional
   } else {
     pp <- seppop(x)
     cs <- list()
-    
+
     for (i in 1:length(pp)) {
       mi <- nInd(pp[[i]])
       if (!folded) {
-        mi <- 2 * mi  #double the number of slots...
+        mi <- 2 * mi # double the number of slots...
       }
       sfs0 <- colSums(as.matrix(pp[[i]]), na.rm = TRUE)
-      if (folded){
+      if (folded) {
         cs[[i]] <- mi - (abs(mi - sfs0))
-      }else{
+      } else {
         cs[[i]] <- sfs0
       }
     }
-    
-    #add zeros and make sure they are consistent
-    
+
+    # add zeros and make sure they are consistent
+
     msfs0 <- do.call(table, cs)
     aa <- array(0, dim = table(pop(x)) * 2 + 1)
     dimnames(aa) <-
-      sapply(dim(aa), function(x)
-        paste0("d", 0:(x - 1)), simplify = F)
+      sapply(dim(aa), function(x) {
+        paste0("d", 0:(x - 1))
+      }, simplify = F)
     dn <- dimnames(msfs0)
-    
-    do <- lapply(dn, function(x)
-      1:length(x))
+
+    do <- lapply(dn, function(x) {
+      1:length(x)
+    })
     do1 <- expand.grid(do)
     do2 <- apply(do1, 2, as.numeric)
     dn1 <- expand.grid(dn)
     dn2 <- apply(dn1, 2, as.numeric)
     dn3 <- dn2 + 1
-    
+
     for (i in 1:nrow(dn3)) {
       aa[t(dn3[i, ])] <- msfs0[t(do2[i, ])]
     }
-    #delete minbinsize
+    # delete minbinsize
     if (minbinsize > 0) {
-      tt <- paste0("aa[", paste0(rep("-c(1:minbinsize)",
-                                     length(dim(
-                                       aa
-                                     ))),
-                                 collapse = ","), "]")
+      tt <- paste0("aa[", paste0(
+        rep(
+          "-c(1:minbinsize)",
+          length(dim(
+            aa
+          ))
+        ),
+        collapse = ","
+      ), "]")
       aa <- eval(parse(text = tt))
-      
     }
-    
+
     sfs <- aa
   }
-  #needs to be saved and turned into a ggplot
+  # needs to be saved and turned into a ggplot
   if (plot.out) {
     if (!is.array(sfs)) {
       df <- data.frame(sfs)
       df$names <- 1:length(sfs)
       gp <-
-        ggplot(df, aes(x = names, y = sfs)) + 
-        geom_bar(stat = "identity") + 
+        ggplot(df, aes(x = names, y = sfs)) +
+        geom_bar(stat = "identity") +
         xlab("bin") +
         ylab("Frequency")
       print(gp)
-      
-    } else{
+    } else {
       cat(report(
         "The sfs has more than 2 dimensions, therefore no plot is returned\n"
       ))
     }
   }
-  
+
   # Optionally save the plot ---------------------
-  
-  if(!is.null(plot.file)){
+
+  if (!is.null(plot.file)) {
     tmp <- utils.plot.save(gp,
-                           dir=plot.dir,
-                           file=plot.file,
-                           verbose=verbose)
+      dir = plot.dir,
+      file = plot.file,
+      verbose = verbose
+    )
   }
-  
-  
-  
+
+
+
   # FLAG SCRIPT END
-  
+
   if (verbose >= 1) {
     cat(report("Completed:", funname, "\n"))
   }
-  
+
   return(sfs)
 }

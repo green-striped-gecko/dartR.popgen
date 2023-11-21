@@ -11,8 +11,11 @@ utils.structure.evanno(sr, plot = TRUE)
 
 \item{plot}{should the plots be returned}
 }
+\value{
+returns a list of dataframes (structure results) and a list of plots
+}
 \description{
-These functions were copied from package strataG, which is no longer on CRAN 
+These functions were copied from package strataG, which is no longer on CRAN
 (maintained by Eric Archer)
 }
 \author{

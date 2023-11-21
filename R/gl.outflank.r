@@ -14,7 +14,7 @@
 #' from a locus [default 0.1].
 #' @param qthreshold The desired false discovery rate threshold for calculating
 #' q-values [default 0.05].
-#' @param ... additional parameters (see documentation of outflank on github). 
+#' @param ... additional parameters (see documentation of outflank on github).
 #' @return Returns an index of outliers and the full outflank list
 #' @details
 #' This function is a wrapper around the outflank function provided by
@@ -46,48 +46,50 @@ gl.outflank <- function(gi,
                         Hmin = 0.1,
                         qthreshold = 0.05,
                         ...) {
-    # CHECK IF PACKAGES ARE INSTALLED
-    pkg <- "qvalue"
-    if (!(requireNamespace(pkg, quietly = TRUE))) {
-      cat(error(
-        "Package",
-        pkg,
-        " needed for this function to work. Please install it.\n"
-      ))
-      return(-1)
-    }
-    
-    # convert genlight to genind
-    if (is(gi, "genlight")) {
-        gi <- gl2gi(gi)
-    }
-    
-    # missing value is 9!!! tempted to rewrite their model to be able to use genlight directly....
-    snpmat <- as.matrix(gi)  #(matrix(NA, nrow=nind, ncol=nsnp)
-    snpmat <- replace(snpmat, is.na(snpmat), 9)
-    mdfm <- utils.outflank.MakeDiploidFSTMat(SNPmat = snpmat, 
-                                             list(colnames(snpmat)), 
-                                             list(as.character(gi@pop)))
-    # run outflank
-    outf <-
-        utils.outflank(
-          FstDataFrame = mdfm,
-            LeftTrimFraction = LeftTrimFraction,
-            RightTrimFraction = RightTrimFraction,
-            Hmin = Hmin,
-            NumberOfSamples = length(levels(gi@pop)),
-            qthreshold = qthreshold
-        )
-    
-    outf$results$LocusName <- gsub("\\..*","",outf$results$LocusName)
-    
-    outf$results <- outf$results[!duplicated(outf$results$LocusName),]
-    
-    if (plot) {
-        utils.outflank.plotter(outf)
-    }
-    
-    index.outflank <- !(outf$results$OutlierFlag)
-    
-    return(list(index = index.outflank, outflank = outf))
+  # CHECK IF PACKAGES ARE INSTALLED
+  pkg <- "qvalue"
+  if (!(requireNamespace(pkg, quietly = TRUE))) {
+    cat(error(
+      "Package",
+      pkg,
+      " needed for this function to work. Please install it.\n"
+    ))
+    return(-1)
+  }
+
+  # convert genlight to genind
+  if (is(gi, "genlight")) {
+    gi <- gl2gi(gi)
+  }
+
+  # missing value is 9!!! tempted to rewrite their model to be able to use genlight directly....
+  snpmat <- as.matrix(gi) # (matrix(NA, nrow=nind, ncol=nsnp)
+  snpmat <- replace(snpmat, is.na(snpmat), 9)
+  mdfm <- utils.outflank.MakeDiploidFSTMat(
+    SNPmat = snpmat,
+    list(colnames(snpmat)),
+    list(as.character(gi@pop))
+  )
+  # run outflank
+  outf <-
+    utils.outflank(
+      FstDataFrame = mdfm,
+      LeftTrimFraction = LeftTrimFraction,
+      RightTrimFraction = RightTrimFraction,
+      Hmin = Hmin,
+      NumberOfSamples = length(levels(gi@pop)),
+      qthreshold = qthreshold
+    )
+
+  outf$results$LocusName <- gsub("\\..*", "", outf$results$LocusName)
+
+  outf$results <- outf$results[!duplicated(outf$results$LocusName), ]
+
+  if (plot) {
+    utils.outflank.plotter(outf)
+  }
+
+  index.outflank <- !(outf$results$OutlierFlag)
+
+  return(list(index = index.outflank, outflank = outf))
 }

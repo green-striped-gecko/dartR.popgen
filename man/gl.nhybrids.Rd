@@ -2,7 +2,7 @@
 % Please edit documentation in R/gl.nhybrids.r
 \name{gl.nhybrids}
 \alias{gl.nhybrids}
-\title{Creates an input file for the program NewHybrids and runs it if 
+\title{Creates an input file for the program NewHybrids and runs it if
 NewHybrids is installed}
 \usage{
 gl.nhybrids(
@@ -40,8 +40,8 @@ gl.nhybrids(
 \item{threshold}{Sets the level at which a gene frequency difference is
 considered to be fixed [default 0].}
 
-\item{method}{Specifies the method (random or AvgPIC) to select 200 loci for
-NewHybrids [default random].}
+\item{method}{Specifies the method (random) to select 200 loci for
+NewHybrids [default random]. Previous AvgPic does not work anymore!}
 
 \item{plot}{If TRUE, a plot of the frequency of homozygous reference,
 heterozygotes and homozygous alternate (SNP) is produced for the F1
@@ -129,17 +129,18 @@ default).
 }
 \examples{
 \dontrun{
-m <- gl.nhybrids(testset.gl, 
-p0=NULL, p1=NULL,
-nhyb.directory='D:/workspace/R/NewHybsPC', # Specify as necessary
-outpath="D:/workspace",  # Specify as necessary, usually getwd() [= workspace]
-BurnIn=100,
-sweeps=100,
-verbose=3)
+m <- gl.nhybrids(testset.gl,
+  p0 = NULL, p1 = NULL,
+  nhyb.directory = "D:/workspace/R/NewHybsPC", # Specify as necessary
+  outpath = "D:/workspace", # Specify as necessary, usually getwd() [= workspace]
+  BurnIn = 100,
+  sweeps = 100,
+  verbose = 3
+)
 }
 }
 \references{
-Anderson, E.C. and Thompson, E.A.(2002). A model-based method for identifying 
+Anderson, E.C. and Thompson, E.A.(2002). A model-based method for identifying
 species hybrids using multilocus genetic data. Genetics. 160:1217-1229.
 }
 \author{

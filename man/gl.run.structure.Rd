@@ -10,7 +10,8 @@ gl.run.structure(
   exec = ".",
   plot.out = TRUE,
   plot_theme = theme_dartR(),
-  save2tmp = FALSE,
+  plot.dir = NULL,
+  plot.file = NULL,
   verbose = NULL
 )
 }
@@ -37,8 +38,10 @@ to be at least three different k steps [default TRUE].}
 \item{plot_theme}{Theme for the plot. See details for options
 [default theme_dartR()].}
 
-\item{save2tmp}{If TRUE, saves any ggplots and listings to the session
-temporary directory (tempdir) [default FALSE].}
+\item{plot.dir}{Directory to save the plot RDS files [default as specified 
+by the global working directory or tempdir()]}
+
+\item{plot.file}{Name for the RDS binary file to save (base name only, exclude extension) [default NULL]}
 
 \item{verbose}{Set verbosity for this function (though structure output
 cannot be switched off currently) [default NULL]}
@@ -66,34 +69,36 @@ To make use of this function you need to download STRUCTURE for you system
 
 \bold{Format note}
 
-For this function to work, make sure that individual and population names 
-have no spaces. To substitute spaces by underscores you could use the R 
+For this function to work, make sure that individual and population names
+have no spaces. To substitute spaces by underscores you could use the R
 function \code{gsub} as below.
 
 \code{
-popNames(gl) <- gsub(" ","_",popNames(gl))
-
-indNames(gl) <- gsub(" ","_",indNames(gl))  
+popNames(gl) <- gsub(" ","_",popNames(gl));
+}
+\code{
+indNames(gl) <- gsub(" ","_",indNames(gl))
 }
 
-It's also worth noting that Structure truncates individual names at 11 
+It's also worth noting that Structure truncates individual names at 11
 characters. The function will fail if the names of individuals are not unique
- after truncation. To avoid this possible problem, a number sequence, as 
+ after truncation. To avoid this possible problem, a number sequence, as
  shown in the code below, might be used instead of individual names.
 \code{
 indNames(gl) <- as.character(1:length(indNames(gl)))
 }
 }
 \examples{
+# examples need structure to be installed on the system (see above)
 \dontrun{
-#bc <- bandicoot.gl[,1:100]
-#sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3, 
-# exec = './structure.exe')
-#ev <- gl.evanno(sr)
-#ev
-#qmat <- gl.plot.structure(sr, K=3)
-#head(qmat)
-#gl.map.structure(qmat, bc, scalex=1, scaley=0.5)
+bc <- bandicoot.gl[,1:100]
+sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3,
+exec = './structure.exe')
+ev <- gl.evanno(sr)
+ev
+qmat <- gl.plot.structure(sr, K=3)
+head(qmat)
+gl.map.structure(qmat, bc, scalex=1, scaley=0.5)
 }
 }
 \references{

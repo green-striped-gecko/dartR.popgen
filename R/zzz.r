@@ -18,11 +18,11 @@
 #' @keywords internal
 
 
-#needed to avoid error
-zzz<-NULL
+# needed to avoid error
+zzz <- NULL
 
 
-build = "Jody"
+build <- "Jody"
 error <- crayon::red
 warn <- crayon::yellow
 report <- crayon::green
@@ -35,10 +35,9 @@ code <- crayon::cyan
   pn <- getPackageName()
   packageStartupMessage(important(
     paste(
-      "**** Welcome to",pn,"[Version",
+      "**** Welcome to", pn, "[Version",
       packageVersion(pn),
       "] ****\n"
     )
   ))
 }
-
