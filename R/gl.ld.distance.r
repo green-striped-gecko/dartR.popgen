@@ -92,6 +92,7 @@ gl.ld.distance <- function(ld_report,
         unname(bins_ld_temp[[i]]$stats[2, ])
       ))
     })
+
   bins_ld <- rbindlist(bins_ld)
   colnames(bins_ld) <- c("pop", "distance", "ld.stat")
   bins_ld$pop <- as.factor(bins_ld$pop)
