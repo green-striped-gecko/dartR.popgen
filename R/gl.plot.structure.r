@@ -96,8 +96,8 @@ gl.plot.structure <- function(sr,
                                 ind_name = TRUE,
                                 border_ind = 0.15,
                                 plot.out = TRUE,
-                                plot.file=NULL,
-                                plot.dir=NULL,
+                                plot.file = NULL,
+                                plot.dir = NULL,
                                 verbose = NULL) {
   
   # SET VERBOSITY
@@ -291,7 +291,7 @@ gl.plot.structure <- function(sr,
     factor(Q_melt$orig.pop, levels = unique(sr[[1]]$q.mat$orig.pop))
 
   p3 <- ggplot(Q_melt, aes_(x= ~ factor(ord), y = ~value, fill = ~Cluster)) +
-    geom_col(color = "black", size = border_ind,width = 1) +
+    geom_col(color = "black", linewidth = border_ind,width = 1) +
      facet_grid(K ~ orig.pop , scales = "free", space = "free") +
     scale_y_continuous(expand = c(0, 0)) +
     scale_x_discrete(

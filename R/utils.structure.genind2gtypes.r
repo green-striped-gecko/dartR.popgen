@@ -189,7 +189,7 @@ function (x)
       gen.data
     ) %>% 
       as.data.frame(stringsAsFactors = FALSE) %>% 
-      tidyr::gather("locus", "allele", -.data$id, -.data$stratum) %>% 
+      tidyr::gather("locus", "allele", -id, -stratum) %>% 
       dplyr::mutate(locus = locus.names.lookup[as.character(.data$locus)])
     
     data.table::setDT(gen.data, key = c("id", "stratum", "locus"))

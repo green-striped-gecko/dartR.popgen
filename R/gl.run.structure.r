@@ -137,6 +137,16 @@ parameter to locate it."
             ))
         }
         
+        # Structure truncates individual names at 11 characters. The function 
+        # will fail if the names of individuals are not unique after truncation. 
+        if(length(unique(substr(indNames(x),1,11))) != nInd(x)){
+          stop(error(
+            "Structure truncates individual names at 11 characters. Individual 
+            names are not unique after truncation. Please change the names of 
+            individuals."
+          ))
+        }
+        
         # DO THE JOB
         gg <- utils.structure.genind2gtypes(gl2gi(x, verbose = 0))
         

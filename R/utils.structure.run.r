@@ -32,7 +32,7 @@ utils.structure.run <- function (g,
                                  k.range = NULL,
                                  num.k.rep = 1,
                                  label = NULL,
-                                 delete.files = TRUE,
+                                 delete.files = FALSE,
                                  exec = "structure",
                                  ...) {
 
@@ -171,7 +171,7 @@ utils.structure.run <- function (g,
       main.file <- ifelse(is.null(label), "mainparams", paste(label, "mainparams", sep = "_"))
       extra.file <- ifelse(is.null(label), "extraparams", paste(label, "extraparams", sep = "_"))
       mat <- .stackedAlleles(g, alleles2integer = TRUE, na.val = -9) %>% 
-        dplyr::select(-.data$allele) %>%
+        dplyr::select(-allele) %>%
         dplyr::mutate(id = gsub(" ", "_", .data$id), 
                       stratum = as.numeric(factor(.data$stratum)), 
                       popflag = popflag[.data$id]) %>% 
@@ -357,17 +357,17 @@ utils.structure.run <- function (g,
     label <- paste(label, "structureRun", sep = ".")
     label <- gsub("[[:space:]]", ".", label)
     label <- gsub(":", ".", label)
+
+    unlink(paste0(tempdir(),"/",label), recursive = TRUE, force = TRUE)
     
-    unlink(label, recursive = TRUE, force = TRUE)
+    dir.create(paste0(tempdir(),"/",label))
     
-    dir.create(label)
-    
-    if (!utils::file_test("-d", label)) {
+    if (!utils::file_test("-d",paste0(tempdir(),"/", label))) {
       stop(error(paste("'", label, "' is not a valid folder.", 
                  sep = "")))
     }
     
-    label <- file.path(label, label)
+    label <- file.path(tempdir(), label,label)
     
     if (is.null(k.range)){ 
       k.range <- 1:(dplyr::n_distinct(g$data$stratum))
@@ -379,31 +379,52 @@ utils.structure.run <- function (g,
     
     out.files <- lapply(rownames(rep.df), function(x) {
       sw.out <- structureWrite(g, label = x, maxpops = rep.df[x,"k"],...)
-
+      
       files <- sw.out$files
-      cmd <- paste0(exec, " -m ", files["mainparams"], 
+      #copy structure executable to tempdir so the seed file is not written to
+      # the working directory 
+      file.copy(exec,tempdir())
+      # If Unix
+      if (grepl("unix", .Platform$OS.type, ignore.case = TRUE)) {
+        exec <- "structure"
+      }
+      # If Windows
+      if (!grepl("unix", .Platform$OS.type, ignore.case = TRUE)) {
+        exec <- "structure.exe"
+      }
+      
+      cmd <- paste0(tempdir(),"/",exec, " -m ", files["mainparams"], 
                     " -e ", files["extraparams"], " -i ", 
                     files["data"], " -o ", files["out"])
       err.code <- system(cmd)
       if (err.code == 127) {
-        stop("You do not have STRUCTURE installed.")
+        stop(error(
+          "You do not have STRUCTURE installed."
+        ))
       }
-      else if (!err.code == 0) {
-        stop(paste("Error running STRUCTURE. Error code", 
-                   err.code, "returned."))
+      if (!err.code == 0) {
+        stop(error(paste(
+          "Error running STRUCTURE. Error code", 
+          err.code, "returned.")))
       }
       files["out"] <- paste(files["out"], "_f", 
                             sep = "")
       result <- structureRead(files["out"], sw.out$pops)
-      if (file.exists("seed.txt")) 
+      
+      if (file.exists("seed.txt")){ 
         file.remove("seed.txt")
-      files <- if (delete.files) 
+      }
+      
+      files <- if (delete.files){ 
         NULL
-      else files
+      } else {
+        files
+      }
+      
       result <- c(result, list(files = files, label = basename(x)))
       fname <- paste(x, ".ws.rdata", sep = "")
       save(result, file = fname)
-      fname
+      return(fname)
     })
     
     run.result <- lapply(out.files, function(f) {
@@ -413,8 +434,11 @@ utils.structure.run <- function (g,
     })
     names(run.result) <- sapply(run.result, function(x) x$label)
     class(run.result) <- c("structure.result", class(run.result))
-    if (delete.files) 
+    
+    if (delete.files){ 
       unlink(dirname(label), recursive = TRUE, force = TRUE)
+    }
+    
     run.result
   }
 

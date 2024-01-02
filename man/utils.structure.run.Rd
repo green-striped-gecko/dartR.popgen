@@ -9,7 +9,7 @@ utils.structure.run(
   k.range = NULL,
   num.k.rep = 1,
   label = NULL,
-  delete.files = TRUE,
+  delete.files = FALSE,
   exec = "structure",
   ...
 )
