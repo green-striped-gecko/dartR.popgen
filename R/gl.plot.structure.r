@@ -347,7 +347,7 @@ gl.plot.structure <- function(sr,
     )
 
   if (ind_name == FALSE) {
-    p3 + theme(
+    p3 <- p3 + theme(
       axis.text.x = element_blank(),
       axis.ticks.x = element_blank()
     )

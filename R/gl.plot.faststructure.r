@@ -24,6 +24,11 @@
 #' @param ind_name Whether to plot individual names [default TRUE].
 #' @param border_ind The width of the border line between individuals
 #' [default 0.25].
+#' @param den Whether to include a dendrogram. It is necessary to include the 
+#' original genlight object used in gl.run.structure in the parameter x 
+#' [default FALSE].
+#' @param x The original genlight object used in gl.run.structure description
+#' [default NULL]. 
 #'
 #' @details The function outputs a barplot which is the typical output of
 #'  fastStructure.
@@ -79,6 +84,7 @@
 #' 23(14):1801-1806. Available at
 #' \href{http://web.stanford.edu/group/rosenberglab/clumppDownload.html}{clumpp}
 #' }
+#' @import ggdendro
 
 gl.plot.faststructure <- function(sr,
                                   k.range,
@@ -88,7 +94,9 @@ gl.plot.faststructure <- function(sr,
                                   plot_theme = NULL,
                                   colors_clusters = NULL,
                                   ind_name = TRUE,
-                                  border_ind = 0.15) {
+                                  border_ind = 0.15,
+                                  den = FALSE,
+                                  x = NULL) {
   res <- list()
 
   for (i in k.range) {
@@ -250,6 +258,25 @@ gl.plot.faststructure <- function(sr,
         variable.name = "Cluster"
       )
     )
+  
+  if(den){
+    
+    res <- gl.dist.ind(x,method = "Manhattan",plot.display = FALSE,verbose = 0)
+    
+    reorderfun <- function(d, w) reorder(d, w, agglo.FUN = mean)
+    
+    distr <- dist(res)
+    hcr <- hclust(distr)
+    ddr <- as.dendrogram(hcr)
+    ddr <- reorderfun(ddr, TRUE)
+    p_den <- ggdendrogram(ddr)
+    rowInd <- order.dendrogram(ddr)
+    rowInd_2 <- data.frame(Label=indNames(x)[rowInd])
+    rowInd_2$order_d <- 1:nInd(x)
+    Q_melt <- merge(Q_melt,rowInd_2,by= "Label")
+    Q_melt$ord <- Q_melt$order_d
+    Q_melt$ord <- as.factor( Q_melt$ord)
+  }
 
   Q_melt$orig.pop <-
     factor(Q_melt$orig.pop, levels = unique(sr[[1]][[1]]$orig.pop))
@@ -288,10 +315,17 @@ gl.plot.faststructure <- function(sr,
     )
 
   if (ind_name == FALSE) {
-    p3 + theme(
+    p3 <- p3 + theme(
       axis.text.x = element_blank(),
       axis.ticks.x = element_blank()
     )
+  }
+  
+  if(den){
+    design <-  "#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#
+               BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+    p3 <- p3 / p_den + 
+      plot_layout(design = design)
   }
 
   print(p3)
