@@ -79,6 +79,7 @@ gl.run.faststructure <- function(x,
                                  k.range,
                                  num.k.rep,
                                  exec = "./fastStructure",
+                                 exec.plink = getwd(),
                                  output = getwd(),
                                  tol = 10e-6,
                                  prior = "simple",
@@ -94,12 +95,11 @@ gl.run.faststructure <- function(x,
     return(-1)
   }
 
-
-
-  gl2plink(x,
+  dartR.base::gl2plink(x,
     bed.files = TRUE,
     outpath = output,
-    verbose = 0
+    verbose = 0,
+    plink.bin.path = exec.plink
   )
 
   for (k_n in k.range) {
@@ -161,7 +161,7 @@ gl.run.faststructure <- function(x,
   files_structure_2 <- paste0(output, "/", files_structure)
   n_first_line <- 23
   df_likelihood <-
-    as.data.frame(matrix(nrow = dplyr::last(k.range), ncol = num.k.rep))
+    as.data.frame(matrix(nrow = length(k.range), ncol = num.k.rep))
   for (i in 1:length(files_structure_2)) {
     file_name <- files_structure[i]
     file_name <-
@@ -229,5 +229,5 @@ gl.run.faststructure <- function(x,
 
   q_list <- q_list[-(1)]
 
-  return(q_list)
+  return(list(q_list=q_list,plot=p3))
 }
