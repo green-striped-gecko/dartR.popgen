@@ -13,6 +13,7 @@ gl.LDNe(
   critical = 0,
   singleton.rm = TRUE,
   mating = "random",
+  pairing = "all",
   plot.out = TRUE,
   plot_theme = theme_dartR(),
   plot_colors_pop = gl.select.colors(x, verbose = 0),
@@ -45,7 +46,10 @@ c(0,0.05) [default 0].}
 
 \item{singleton.rm}{Whether to remove singleton alleles [default TRUE].}
 
-\item{mating}{Formula for Random mating='random' or monogamy= 'monogamy'
+\item{mating}{Formula for Random mating='random' or monogamy= 'monogamy'}
+
+\item{pairing}{"all" [default] if all possible loci should be paired, or "separate"
+   if only loci on different chromososmes should be used
 [default 'random'].}
 
 \item{plot.out}{Specify if plot is to be produced [default TRUE].}
@@ -86,6 +90,15 @@ nes <- gl.LDNe(pops,
   critical = c(0, 0.05), singleton.rm = TRUE, mating = "random"
 )
 nes
+
+# Using only pairs of loci on different chromosomes
+made up some chromosome location
+pops@chromosome <- as.factor(sample(1:10, size = nLoc(pops), replace = TRUE))
+nessep <- gl.LDNe(pops,
+              outfile = "popsLD.txt", outpath = "./TestNe", pairing="separate",
+              neest.path = "./path_to Ne-21",
+              critical = c(0, 0.05), singleton.rm = TRUE, mating = "random"
+nessep
 }
 }
 \author{

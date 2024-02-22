@@ -27,6 +27,8 @@
 #' c(0,0.05) [default 0].
 #' @param singleton.rm Whether to remove singleton alleles [default TRUE].
 #' @param mating Formula for Random mating='random' or monogamy= 'monogamy'
+#' @param pairing "all" [default] if all possible loci should be paired, or "separate"
+#'    if only loci on different chromososmes should be used
 #' [default 'random'].
 #' @param plot.out Specify if plot is to be produced [default TRUE].
 #' @param plot_theme User specified theme [default theme_dartR()].
@@ -51,6 +53,16 @@
 #'   critical = c(0, 0.05), singleton.rm = TRUE, mating = "random"
 #' )
 #' nes
+#'
+#' # Using only pairs of loci on different chromosomes
+
+#' made up some chromosome location
+#' pops@chromosome <- as.factor(sample(1:10, size = nLoc(pops), replace = TRUE))
+#' nessep <- gl.LDNe(pops,
+#'               outfile = "popsLD.txt", outpath = "./TestNe", pairing="separate",
+#'               neest.path = "./path_to Ne-21",
+#'               critical = c(0, 0.05), singleton.rm = TRUE, mating = "random"
+#' nessep
 #' }
 #' @export
 
@@ -61,6 +73,7 @@ gl.LDNe <- function(x,
                     critical = 0,
                     singleton.rm = TRUE,
                     mating = "random",
+                    pairing = "all",
                     plot.out = TRUE,
                     plot_theme = theme_dartR(),
                     plot_colors_pop = gl.select.colors(x, verbose = 0),
@@ -125,20 +138,49 @@ gl.LDNe <- function(x,
   con <- file(file.path(tempdir(), "infodummy"), "w")
   writeLines(info, con)
   close(con)
+  
+  # set the pairing option and generate the map file if necessary 
+  if(pairing == "all") {
+    setPairs <- 0
+  } else {
+    if(pairing == "separate") {
+      setPairs <- "2 ChrMap"
+      write.table(
+      data.frame(x@chromosome, locNames(x)), 
+      file = file.path(tempdir(), "ChrMap"), 
+      row.names = FALSE, col.names = FALSE, quote = FALSE)
+    }
+  }
+  # copy option file to tempdir
+  option <- NA
+  option[1] <- paste(c(1,0, length(critical), 0), collapse = " ")
+  option[2] <- 0 # Maximum individuals/pop. If 0: no limit
+  option[3] <- -1 # -1: Freq. output up to population 50
+  option[4] <- 0 # Burrow output 0: No output; -1: first 50 pop
+  option[5] <- 1 # Parameter CI: 1 for Yes
+  option[6] <- 1 # Jackknife CI: 1 for Yes
+  option[7] <- 0 # Up to population. 0: no restriction
+  option[8] <- 0 # All loci accepted
+  option[9] <- 0 # No file with missing data summary
+  option[10] <- setPairs  # 0: no pairing restriction; 1: loci within same chrs; 2: loci on separate Chrs
+  
+  con <- file(file.path(tempdir(), "option"), "w")
+  writeLines(option, con)
+  close(con)
 
   if (Sys.info()["sysname"] == "Windows") {
     prog <- "Ne2-1.exe"
-    cmd <- "Ne2-1.exe i:infodummy"
+    cmd <- "Ne2-1.exe i:infodummy o:option"
   }
 
   if (Sys.info()["sysname"] == "Linux") {
     prog <- "Ne2-1L"
-    cmd <- "./Ne2-1L i:infodummy"
+    cmd <- "./Ne2-1L i:infodummy o:option"
   }
 
   if (Sys.info()["sysname"] == "Darwin") {
     prog <- "Ne2-1M"
-    cmd <- "./Ne2-1M i:infodummy"
+    cmd <- "./Ne2-1M i:infodummy o:option"
   }
 
   # check if file program can be found
