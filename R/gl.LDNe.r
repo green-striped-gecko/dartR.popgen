@@ -28,7 +28,7 @@
 #' @param singleton.rm Whether to remove singleton alleles [default TRUE].
 #' @param mating Formula for Random mating='random' or monogamy= 'monogamy'
 #' @param pairing "all" [default] if all possible loci should be paired, or "separate"
-#'    if only loci on different chromososmes should be used
+#'    if only loci on different chromosomes should be used
 #' [default 'random'].
 #' @param plot.out Specify if plot is to be produced [default TRUE].
 #' @param plot_theme User specified theme [default theme_dartR()].
@@ -103,6 +103,12 @@ gl.LDNe <- function(x,
   if (datatype != "SNP") {
     message(error(
       "  Only SNPs (diploid data can be transformed into genepop format!\n"
+    ))
+  }
+  
+  if(!pairing %in% c("all", "separate")) {
+    message(error(
+      "  'pairing' can only be either 'all' or 'separate'!\n"
     ))
   }
 

@@ -49,7 +49,7 @@ c(0,0.05) [default 0].}
 \item{mating}{Formula for Random mating='random' or monogamy= 'monogamy'}
 
 \item{pairing}{"all" [default] if all possible loci should be paired, or "separate"
-   if only loci on different chromososmes should be used
+   if only loci on different chromosomes should be used
 [default 'random'].}
 
 \item{plot.out}{Specify if plot is to be produced [default TRUE].}
