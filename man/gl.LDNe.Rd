@@ -14,6 +14,8 @@ gl.LDNe(
   singleton.rm = TRUE,
   mating = "random",
   pairing = "all",
+  Waples.correction = NULL,
+  Waples.correction.value = NULL,
   plot.out = TRUE,
   plot_theme = theme_dartR(),
   plot_colors_pop = gl.select.colors(x, verbose = 0),
@@ -46,11 +48,18 @@ c(0,0.05) [default 0].}
 
 \item{singleton.rm}{Whether to remove singleton alleles [default TRUE].}
 
-\item{mating}{Formula for Random mating='random' or monogamy= 'monogamy'}
+\item{mating}{Formula for Random mating='random' or monogamy= 'monogamy'
+[default 'random'].}
 
 \item{pairing}{"all" [default] if all possible loci should be paired, or "separate"
-   if only loci on different chromosomes should be used
-[default 'random'].}
+if only loci on different chromosomes should be used.}
+
+\item{Waples.correction}{The type of Waples et al 2016 correction to apply. 
+This is ignored if \code{pairing} is set to "separate".
+Options are "nChromosomes", for eq 1a, or "chrLength" for eq 1b. 
+NULL is none should be applied [default NULL].}
+
+\item{Waples.correction.value}{}
 
 \item{plot.out}{Specify if plot is to be produced [default TRUE].}
 

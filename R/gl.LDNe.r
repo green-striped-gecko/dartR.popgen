@@ -27,9 +27,15 @@
 #' c(0,0.05) [default 0].
 #' @param singleton.rm Whether to remove singleton alleles [default TRUE].
 #' @param mating Formula for Random mating='random' or monogamy= 'monogamy'
-#' @param pairing "all" [default] if all possible loci should be paired, or "separate"
-#'    if only loci on different chromosomes should be used
 #' [default 'random'].
+#' @param pairing 'all' [default] if all possible loci should be paired, or 'separate'
+#'    if only loci on different chromosomes should be used.
+#' @param Waples.correction The type of Waples et al 2016 correction to apply. 
+#'    This is ignored if \code{pairing} is set to 'separate'.
+#'    Options are 'nChromosomes', for eq 1a, or 'genomeLength' for eq 1b. 
+#'    NULL if none should be applied [default NULL]. 
+#' @param Waples.correction.value The number of chromosomes or the genome length 
+#'    in cM. See Waples et al 2016 for details.
 #' @param plot.out Specify if plot is to be produced [default TRUE].
 #' @param plot_theme User specified theme [default theme_dartR()].
 #' @param plot_colors_pop  population colors with as many colors as there are populations in the dataset
@@ -74,6 +80,8 @@ gl.LDNe <- function(x,
                     singleton.rm = TRUE,
                     mating = "random",
                     pairing = "all",
+                    Waples.correction=NULL,
+                    Waples.correction.value=NULL, 
                     plot.out = TRUE,
                     plot_theme = theme_dartR(),
                     plot_colors_pop = gl.select.colors(x, verbose = 0),
@@ -106,10 +114,24 @@ gl.LDNe <- function(x,
     ))
   }
   
+  # Correct arg options?
   if(!pairing %in% c("all", "separate")) {
     message(error(
       "  'pairing' can only be either 'all' or 'separate'!\n"
     ))
+  }
+  
+  if(pairing == "separate") Waples.correction <- NULL
+  
+  if(!is.null(Waples.correction)) {
+    if(!Waples.correction %in% c('nChromosomes', 'genomeLength'))
+    message(error(
+      "  'Waples.correction' can only be either 'nChromosomes' or 'genomeLength'!\n"
+    ))
+    if(!(is.numeric(Waples.correction.value) & length(Waples.correction.value == 1)))
+      message(error(
+        "  'Waples.correction.value' should be a numeric vector of length == 1!\n"
+      ))
   }
 
   # DO THE JOB
@@ -314,6 +336,34 @@ gl.LDNe <- function(x,
 
   file.copy(outfile, file.path(outpath, outfile))
   setwd(old.path)
+  
+  # Apply correction if relevant
+  cr.est <- function(pop, crtn, fr) {
+    # Pull out the numerical values and apply correction
+    m <- round(matrix(as.numeric(as.matrix(pop[6:nrow(pop), -1])) / crtn, 
+             nrow = nrow(pop) - 5), digits = 1)
+    df <- data.frame(m)
+    names(df) <- paste("Frequency", 1:sum(!duplicated(fr)))
+    # labels
+    lbs <- c("Waples' corrected Ne",
+             "Waples' corrected CI low Parametric",
+             "Waples' corrected CI high Parametric",
+             "Waples' corrected CI low JackKnife",
+             "Waples' corrected CI high JackKnife")
+    # append to existing df
+    res <- rbind(pop,
+      cbind(Statistic=lbs, df))
+    return(res)
+  } 
+  
+  if(!is.null(Waples.correction)) {
+    if(Waples.correction == "nChromosomes") {
+      crc <- 0.098 + 0.219 * log(Waples.correction.value)
+    } else {
+      crc <- -0.910 + 0.219 * log(Waples.correction.value)
+    }
+    pop_list <- lapply(pop_list, cr.est, crtn=crc, fr=freq)
+  }
 
   # PLOTS
   if (plot.out) {
