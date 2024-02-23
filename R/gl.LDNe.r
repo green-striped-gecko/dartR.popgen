@@ -36,6 +36,9 @@
 #'    NULL if none should be applied [default NULL]. 
 #' @param Waples.correction.value The number of chromosomes or the genome length 
 #'    in cM. See Waples et al 2016 for details.
+#' @param naive Whether the naive (uncorrected for samples size - see 
+#'    eq 7 and eq 8 in Waples 2006) should also be reported. This is mostly 
+#'    to diagnose the source of Inf estimate.
 #' @param plot.out Specify if plot is to be produced [default TRUE].
 #' @param plot_theme User specified theme [default theme_dartR()].
 #' @param plot_colors_pop  population colors with as many colors as there are populations in the dataset
@@ -82,6 +85,7 @@ gl.LDNe <- function(x,
                     pairing = "all",
                     Waples.correction=NULL,
                     Waples.correction.value=NULL, 
+                    naive=FALSE,
                     plot.out = TRUE,
                     plot_theme = theme_dartR(),
                     plot_colors_pop = gl.select.colors(x, verbose = 0),
@@ -135,6 +139,39 @@ gl.LDNe <- function(x,
   }
 
   # DO THE JOB
+  
+  # Helper FUN to obtain naive Ne estimate
+  naiveNe <- function(tmp, bur="dummyBur.txt", matingsys) {
+    # Figure out where the data are
+    fnBur <- file.path(tmp, bur)
+    rl <- readLines(fnBur)
+    headings <- grep("Loc1   Loc2   LowP1   LowP2  Samp.Size", rl)
+    starts <- headings + 2
+    ends <- grep("Total locus pairs investigated", rl) - 2
+    headr <-  c("Loc1", "Loc2", "LowP1", "LowP2", "Samp.Size", "Mean_rsq", "rsq_drift")
+    
+    # do the actual calculations. This return a vector with estimates for each 
+    # frequencies threshold, for each pop, in this order
+    Ne <- function(i, fn, starts=starts, ends=ends, headr=headr, ms=matingsys) {
+      d<-data.table::fread(file = fn, skip = starts[i], 
+               nrows = ends[i] - starts[i], col.names = headr)
+      
+      d[, rsq_sample := 1/Samp.Size]
+      d[, pc.rsq_drift := Mean_rsq - rsq_sample]
+      
+      wmean.rsq_drift <- d[, weighted.mean(x = pc.rsq_drift, w = Samp.Size)]
+      num <- ifelse(ms == "random", 1, 2)
+      Ne <- num/(3*wmean.rsq_drift)
+      return(Ne)
+    }
+    
+    Ne <- sapply(seq_along(starts), Ne, fn=fnBur,
+                 starts=starts, ends=ends, headr=headr)
+    return(Ne)
+    
+  }
+  
+  #-------End helper FUN----------------#
   # Set NULL to variables to pass CRAN checks
   "Lowest Allele Frequency Used" <- "CI high Parametric" <- "CI low Parametric" <- "Estimated Ne^" <- NULL
 
@@ -184,7 +221,7 @@ gl.LDNe <- function(x,
   option[1] <- paste(c(1,0, length(critical), 0), collapse = " ")
   option[2] <- 0 # Maximum individuals/pop. If 0: no limit
   option[3] <- -1 # -1: Freq. output up to population 50
-  option[4] <- 0 # Burrow output 0: No output; -1: first 50 pop
+  option[4] <- ifelse(naive, -1, 0) # Burrow output 0: No output; -1: first 50 pop
   option[5] <- 1 # Parameter CI: 1 for Yes
   option[6] <- 1 # Jackknife CI: 1 for Yes
   option[7] <- 0 # Up to population. 0: no restriction
@@ -364,7 +401,25 @@ gl.LDNe <- function(x,
     }
     pop_list <- lapply(pop_list, cr.est, crtn=crc, fr=freq)
   }
-
+  # --- Apply correction if relevant END --- #
+  #------------------------------------------#
+  
+  # Naive Ne estimates
+  if(naive) {
+    nNe <- naiveNe(tmp = tempdir(), matingsys = mating)
+    pop_list <- lapply(seq_along(pop_list), function(i, fr=freq, nPops=length(pop_list)){
+    nValuesPop <- length(nNe) / nPops  
+    v <- nNe[((i - 1)*nValuesPop + 1):(i*nValuesPop)]
+    v <- round(v[!duplicated(fr)], 1)
+    m <- matrix(v, ncol=sum(!duplicated(fr)), byrow = TRUE)
+    tmpdf <- data.frame(m)
+    names(tmpdf) <- paste("Frequency", 1:sum(!duplicated(fr)))
+    tmpdf2 <- data.frame(Statistic="Naive Estimated Ne^")
+    updated <- rbind(pop_list[[i]], cbind(tmpdf2, tmpdf))
+      return(updated)
+    })
+  }
+  
   # PLOTS
   if (plot.out) {
     # printing plots and reports assigning colors to populations

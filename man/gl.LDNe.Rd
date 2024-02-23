@@ -16,6 +16,7 @@ gl.LDNe(
   pairing = "all",
   Waples.correction = NULL,
   Waples.correction.value = NULL,
+  naive = FALSE,
   plot.out = TRUE,
   plot_theme = theme_dartR(),
   plot_colors_pop = gl.select.colors(x, verbose = 0),
@@ -51,15 +52,20 @@ c(0,0.05) [default 0].}
 \item{mating}{Formula for Random mating='random' or monogamy= 'monogamy'
 [default 'random'].}
 
-\item{pairing}{"all" [default] if all possible loci should be paired, or "separate"
+\item{pairing}{'all' [default] if all possible loci should be paired, or 'separate'
 if only loci on different chromosomes should be used.}
 
 \item{Waples.correction}{The type of Waples et al 2016 correction to apply. 
-This is ignored if \code{pairing} is set to "separate".
-Options are "nChromosomes", for eq 1a, or "chrLength" for eq 1b. 
-NULL is none should be applied [default NULL].}
+This is ignored if \code{pairing} is set to 'separate'.
+Options are 'nChromosomes', for eq 1a, or 'genomeLength' for eq 1b. 
+NULL if none should be applied [default NULL].}
 
-\item{Waples.correction.value}{}
+\item{Waples.correction.value}{The number of chromosomes or the genome length 
+in cM. See Waples et al 2016 for details.}
+
+\item{naive}{Whether the naive (uncorrected for samples size - see 
+eq 7 and eq 8 in Waples 2006) should also be reported. This is mostly 
+to diagnose the source of Inf estimate.}
 
 \item{plot.out}{Specify if plot is to be produced [default TRUE].}
 
