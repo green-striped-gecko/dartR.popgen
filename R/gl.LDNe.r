@@ -9,6 +9,17 @@
 #'  software has to be downloaded from their website and the appropriate
 #'  executable Ne2-1 has to be copied into the path as specified in the function
 #'  (see example below).
+#'  
+#' @references \itemize{
+#'  \item Waples, R. S. (2006). "A bias correction for estimates of effective 
+#'  population size based on linkage disequilibrium at unlinked gene loci*." 
+#'  Conservation Genetics 7(2): 167-184.
+#'
+#'  \item Waples, R. K., et al. (2016). "Estimating contemporary effective 
+#'  population size in non-model species using linkage disequilibrium across 
+#'  thousands of loci." Heredity 117(4): 233-240.
+#'  }
+#'  
 #' @param x Name of the genlight object containing the SNP data [required].
 #' @param outfile File name of the output file  with
 #' all results from Neestimator 2 [default 'genepopLD.txt'].

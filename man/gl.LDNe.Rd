@@ -116,6 +116,17 @@ nessep <- gl.LDNe(pops,
 nessep
 }
 }
+\references{
+\itemize{
+ \item Waples, R. S. (2006). "A bias correction for estimates of effective 
+ population size based on linkage disequilibrium at unlinked gene loci*." 
+ Conservation Genetics 7(2): 167-184.
+
+ \item Waples, R. K., et al. (2016). "Estimating contemporary effective 
+ population size in non-model species using linkage disequilibrium across 
+ thousands of loci." Heredity 117(4): 233-240.
+ }
+}
 \author{
 Custodian: Bernd Gruber (Post to
 \url{https://groups.google.com/d/forum/dartr})
