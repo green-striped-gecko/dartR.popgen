@@ -52,6 +52,7 @@
 #' @return Dataframe with the results as table
 #' @author Custodian: Bernd Gruber (Post to
 #' \url{https://groups.google.com/d/forum/dartr})
+#' @importFrom stats weighted.mean
 #' @examples
 #' \dontrun{
 #' # SNP data (use two populations and only the first 100 SNPs)
@@ -174,6 +175,7 @@ gl.LDNe <- function(x,
   #-------End helper FUN----------------#
   # Set NULL to variables to pass CRAN checks
   "Lowest Allele Frequency Used" <- "CI high Parametric" <- "CI low Parametric" <- "Estimated Ne^" <- NULL
+  rsq_sample <- Samp.Size <- pc.rsq_drift <- Mean_rsq <- naiveNe <- Mean_rsq <- Samp.Size <- pc.rsq_drift <- rsq_sample <- NULL
 
   xx <- gl2genepop(x, outfile = "dummy.gen", outpath = tempdir())
 
