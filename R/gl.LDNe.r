@@ -76,8 +76,7 @@
 #' nes
 #'
 #' # Using only pairs of loci on different chromosomes
-
-#' made up some chromosome location
+#' # make up some chromosome location
 #' pops@chromosome <- as.factor(sample(1:10, size = nLoc(pops), replace = TRUE))
 #' nessep <- gl.LDNe(pops,
 #'               outfile = "popsLD.txt", outpath = "./TestNe", pairing="separate",
