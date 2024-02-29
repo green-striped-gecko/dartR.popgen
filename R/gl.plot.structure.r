@@ -23,6 +23,11 @@
 #' @param ind_name Whether to plot individual names [default TRUE].
 #' @param border_ind The width of the border line between individuals
 #' [default 0.25].
+#' @param den Whether to include a dendrogram. It is necessary to include the 
+#' original genlight object used in gl.run.structure in the parameter x 
+#' [default FALSE].
+#' @param x The original genlight object used in gl.run.structure description
+#' [default NULL]. 
 #' @param plot.out Specify if plot is to be produced [default TRUE].
 #' @param plot.dir Directory in which to save files [default = working directory]
 #' @param plot.file Name for the RDS binary file to save (base name only, exclude
@@ -96,6 +101,8 @@ gl.plot.structure <- function(sr,
                               color_clusters = NULL,
                               ind_name = TRUE,
                               border_ind = 0.15,
+                              den = FALSE,
+                              x = NULL,
                               plot.out = TRUE,
                               plot.file = NULL,
                               plot.dir = NULL,
@@ -283,13 +290,32 @@ gl.plot.structure <- function(sr,
         variable.name = "Cluster"
       )
     )
+  
+  if(den){
+    
+    res <- gl.dist.ind(x,method = "Manhattan",plot.display = FALSE,verbose = 0)
+    
+    reorderfun <- function(d, w) reorder(d, w, agglo.FUN = mean)
+    
+    distr <- dist(res)
+    hcr <- hclust(distr)
+    ddr <- as.dendrogram(hcr)
+    ddr <- reorderfun(ddr, TRUE)
+    p_den <- ggdendrogram(ddr)
+    rowInd <- order.dendrogram(ddr)
+    rowInd_2 <- data.frame(Label=indNames(x)[rowInd])
+    rowInd_2$order_d <- 1:nInd(x)
+    Q_melt <- merge(Q_melt,rowInd_2,by= "Label")
+    Q_melt$ord <- Q_melt$order_d
+    Q_melt$ord <- as.factor( Q_melt$ord)
+  }
 
   Q_melt$orig.pop <-
     factor(Q_melt$orig.pop, levels = unique(sr[[1]]$q.mat$orig.pop))
 
   p3 <- ggplot(Q_melt, aes_(x = ~ factor(ord), y = ~value, fill = ~Cluster)) +
     geom_col(color = "black", size = border_ind, width = 1) +
-    facet_grid(K ~ orig.pop, scales = "free", space = "free") +
+     facet_grid(K ~ orig.pop, scales = "free", space = "free") +
     scale_y_continuous(expand = c(0, 0)) +
     scale_x_discrete(
       breaks = unique(Q_melt$ord),
@@ -321,16 +347,22 @@ gl.plot.structure <- function(sr,
     )
 
   if (ind_name == FALSE) {
-    p3 + theme(
+    p3 <- p3 + theme(
       axis.text.x = element_blank(),
       axis.ticks.x = element_blank()
     )
+  }
+  
+  if(den){
+   design <-  "#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#
+               BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+ p3 <- p3 / p_den + 
+      plot_layout(design = design)
   }
 
   if (plot.out) {
     print(p3)
   }
-
 
   # Optionally save the plot ---------------------
 
