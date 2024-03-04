@@ -134,7 +134,8 @@ gl.ld.distance <- function(ld.report,
     labs(color = "") +
     scale_color_manual(values = pop.colors) +
     plot.theme +
-    theme(legend.position = "bottom")
+    theme(legend.position = "bottom") +
+    ggtitle(plot.title)
 
 
   # PRINTING OUTPUTS
