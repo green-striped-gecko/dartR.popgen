@@ -26,6 +26,8 @@
 #' @param den Whether to include a dendrogram. It is necessary to include the 
 #' original genlight object used in gl.run.structure in the parameter x 
 #' [default FALSE].
+#' @param dis.mat A dis object (distance matrix) to be used to order structure 
+#' plot which is plotted together with structure plot [default NULL]. 
 #' @param x The original genlight object used in gl.run.structure description
 #' [default NULL]. 
 #' @param plot.out Specify if plot is to be produced [default TRUE].
@@ -102,6 +104,7 @@ gl.plot.structure <- function(sr,
                               ind_name = TRUE,
                               border_ind = 0.15,
                               den = FALSE,
+                              dis.mat = NULL,
                               x = NULL,
                               plot.out = TRUE,
                               plot.file = NULL,
@@ -292,8 +295,11 @@ gl.plot.structure <- function(sr,
     )
   
   if(den){
-    
-    res <- gl.dist.ind(x,method = "Manhattan",plot.display = FALSE,verbose = 0)
+    if(!is.null(dis.mat)){
+      res <- dis.mat
+    }else{
+      res <- gl.dist.ind(x,method = "Manhattan",plot.display = FALSE,verbose = 0)
+    }
     
     reorderfun <- function(d, w) reorder(d, w, agglo.FUN = mean)
     
@@ -309,10 +315,14 @@ gl.plot.structure <- function(sr,
     Q_melt$ord <- Q_melt$order_d
     Q_melt$ord <- as.factor( Q_melt$ord)
   }
+  
+  Q_melt_tmp <- Q_melt
+  Q_melt_tmp <- Q_melt_tmp[order(Q_melt_tmp$order_d),]
+  Q_melt_tmp_pop <- unique(Q_melt_tmp$orig.pop)
 
   Q_melt$orig.pop <-
-    factor(Q_melt$orig.pop, levels = unique(sr[[1]]$q.mat$orig.pop))
-
+    factor(Q_melt$orig.pop, levels = Q_melt_tmp_pop)
+  
   p3 <- ggplot(Q_melt, aes_(x = ~ factor(ord), y = ~value, fill = ~Cluster)) +
     geom_col(color = "black", size = border_ind, width = 1) +
      facet_grid(K ~ orig.pop, scales = "free", space = "free") +
