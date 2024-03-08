@@ -185,7 +185,7 @@ gl.LDNe <- function(x,
   #-------End helper FUN----------------#
   # Set NULL to variables to pass CRAN checks
   "Lowest Allele Frequency Used" <- "CI high Parametric" <- "CI low Parametric" <- "Estimated Ne^" <- NULL
-  rsq_sample <- Samp.Size <- pc.rsq_drift <- Mean_rsq <- naiveNe <- Mean_rsq <- Samp.Size <- pc.rsq_drift <- rsq_sample <- NULL
+  rsq_sample <- Samp.Size <- pc.rsq_drift <- Mean_rsq <- Mean_rsq <- Samp.Size <- pc.rsq_drift <- rsq_sample <- NULL
 
   xx <- gl2genepop(x, outfile = "dummy.gen", outpath = tempdir())
 
