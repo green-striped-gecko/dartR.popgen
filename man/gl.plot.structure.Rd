@@ -14,6 +14,9 @@ gl.plot.structure(
   color_clusters = NULL,
   ind_name = TRUE,
   border_ind = 0.15,
+  den = FALSE,
+  dis.mat = NULL,
+  x = NULL,
   plot.out = TRUE,
   plot.file = NULL,
   plot.dir = NULL,
@@ -45,6 +48,16 @@ as many colors as there are clusters (K) [default NULL].}
 
 \item{border_ind}{The width of the border line between individuals
 [default 0.25].}
+
+\item{den}{Whether to include a dendrogram. It is necessary to include the 
+original genlight object used in gl.run.structure in the parameter x 
+[default FALSE].}
+
+\item{dis.mat}{A dis object (distance matrix) to be used to order structure 
+plot which is plotted together with structure plot [default NULL].}
+
+\item{x}{The original genlight object used in gl.run.structure description
+[default NULL].}
 
 \item{plot.out}{Specify if plot is to be produced [default TRUE].}
 
