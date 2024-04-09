@@ -54,7 +54,7 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
           } else {
             InputData <- lapply(gen.file, data.table::fread, header = header)
           }
-        names(InputData) <- file_path_sans_ext(gen.file)
+        names(InputData) <- tools::file_path_sans_ext(gen.file)
       }
     
     if(!is.null(nonGenCols)) 
@@ -73,17 +73,17 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
   }
   
   # Adjust length of Ntry if there are multiple pops 
-  if(length(Ntry)==1) {
-    Ntry <- rep(Ntry, length(InputData))
+  if(length(minNtry)==1) {
+    Ntry <- rep(minNtry, length(InputData))
   } else {
     # Check for error in Ntry's length
-    if(length(Ntry)!=length(InputData)) 
+    if(length(minNtry)!=length(InputData)) 
       stop(error("The length of 'Ntry' and input data is not the same"))
     }
     
   # Check if Ntry values are adequate
   nSamples <- sapply(InputData, nrow)
-  if(sum((Ntry - nSamples)>0)!=length(InputData)) 
+  if(sum((minNtry - nSamples)>0)!=length(InputData)) 
     stop(error("The values of 'Ntry' have to be > than the sample size in the respective population"))
   
   # DO THE JOB #
@@ -94,7 +94,8 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
                                 replace = FALSE), ]
     return(DNADotIn)
   }
-  InputData <- randomise(InputData)
+  InputData <- lapply(InputData, randomise)
+  
   if(validate) {
     InputDataV <- lapply(InputData, function(x) {
       x[rbinom(nrow(x), 1, pvalidate),]
