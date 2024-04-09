@@ -100,11 +100,12 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
   }
   InputData <- lapply(InputData, randomise)
   
+  #### Validate ####
   if(validate) {
     InputDataV <- lapply(InputData, function(x) {
       x[rbinom(nrow(x), 1, pvalidate),]
     })
-    names(InputDataV) <- paste0(names(InputData), "V")
+    names(InputDataV) <- paste(names(InputData), "V", sep = "_")
     InputData <- c(InputData, InputDataV)
     minNtry <- c(minNtry, minNtry)
   }
