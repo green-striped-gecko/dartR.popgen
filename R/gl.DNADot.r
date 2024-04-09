@@ -74,7 +74,7 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
   
   # Adjust length of Ntry if there are multiple pops 
   if(length(minNtry)==1) {
-    Ntry <- rep(minNtry, length(InputData))
+    minNtry <- rep(minNtry, length(InputData))
   } else {
     # Check for error in Ntry's length
     if(length(minNtry)!=length(InputData)) 
@@ -102,6 +102,7 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
     })
     names(InputDataV) <- paste0(names(InputData), "V")
     InputData <- c(InputData, InputDataV)
+    minNtry <- c(minNtry, minNtry)
   }
   
   process.input <- function(x) {
@@ -124,7 +125,7 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
   minNtry <- 2 * minNtry # diploid data
   maxNtry <- 3 * minNtry
   Ninc <- round((maxNtry - minNtry) / 10)
-  Ntry <- seq(minNtry, maxNtry, by = Ninc)
+  Ntry <- mapply(seq, minNtry, maxNtry, by = Ninc, SIMPLIFY = FALSE)
   ppinc <- ppinc
   Ptry <- seq(ppinc, 1 - ppinc, by = ppinc)
   
@@ -143,7 +144,8 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
                                Ptry=Ptry, minNtry=minNtry, maxNtry, Ntry=Ntry, 
                                jj = jj)
   } else {
-    res <- lapply(indit, utils.DNADot, Ptry, minNtry, maxNtry, Ntry, jj)
+    res <- mapply(utils.DNADot, indit, minNtry, maxNtry, Ntry, 
+                  MoreArgs = list(Ptry=Ptry, jj=jj))
   }
   return(res)
 }
