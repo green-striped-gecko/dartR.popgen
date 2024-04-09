@@ -149,5 +149,8 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
     res <- mapply(utils.DNADot, indit, minNtry, maxNtry, Ntry, 
                   MoreArgs = list(Ptry=Ptry, jj=jj))
   }
+  res <- cbind(Param=c("minNtry", "maxNtry", "jj", "Nest", "SD", "SE"), 
+               data.frame(round(res, 2))
+  
   return(res)
 }
