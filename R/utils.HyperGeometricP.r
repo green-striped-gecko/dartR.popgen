@@ -11,7 +11,7 @@
 #'    sample size and JJ is the proportion of the subsample being trialled
 #' @return A vector of probabilities
 #' @author Adapted from Sherwin's MatLab code
-HypExactExp230607 <- function(parg, Narg, narg) {
+utils.HyperGeometricP <- function(parg, Narg, narg) {
   q <- 1 - parg
   qN <- round(q * Narg)
   pN <- round(parg * Narg)
