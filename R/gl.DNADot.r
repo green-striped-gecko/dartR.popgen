@@ -54,7 +54,7 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
           } else {
             InputData <- lapply(gen.file, data.table::fread, header = header)
           }
-        names(InputData) <- tools::file_path_sans_ext(gen.file)
+        names(InputData) <- tools::file_path_sans_ext(basename(gen.file))
       }
     
     if(!is.null(nonGenCols)) 
