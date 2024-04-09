@@ -28,12 +28,6 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
     cat(report("  Analysis performed on the genlight object.\n"))
   }
   
-  # avoid global binding error
-  Bin <-
-    r <-
-    L.r <-
-    U.r <- L.r.null <- U.r.null <- Freq <- Var1 <-  NULL 
-  
   # set number of cores
   if(n.cores != 1) {
     if(n.cores == "auto"){
