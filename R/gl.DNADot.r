@@ -39,6 +39,7 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
     if(n.cores == "auto"){
       n.cores <- parallel::detectCores() - 1
     }
+  }
   
   # sort out input data
   # If genotype fiels are provided
@@ -156,4 +157,5 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
   write.csv(res, file(file.path(outpath, outfile)), row.names = FALSE)
   
   return(res)
-}
+  }
+  
