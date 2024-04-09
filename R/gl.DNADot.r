@@ -140,9 +140,11 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
                                       "Ntry", "jj"), 
                             envir=environment()) 
     
-    res <- parallel::parLapply(cl = cl, X = indit, fun = utils.DNADot, 
-                               Ptry=Ptry, minNtry=minNtry, maxNtry, Ntry=Ntry, 
-                               jj = jj)
+    res <- parallel::clusterMap(cl = cl, fun = utils.DNADot, indit,  
+                                minNtry=minNtry, maxNtry, Ntry=Ntry, 
+                               MoreArgs = list(Ptry=Ptry, jj = jj)
+                               )
+    res <- do.call(cbind, res)
   } else {
     res <- mapply(utils.DNADot, indit, minNtry, maxNtry, Ntry, 
                   MoreArgs = list(Ptry=Ptry, jj=jj))
