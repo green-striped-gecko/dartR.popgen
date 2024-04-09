@@ -23,7 +23,7 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
                    verbose = verbose)
   
   # CHECK DATATYPE
-  if (!is.null(x)) {
+  if (!is.null(x) & is(x, "genlight")) {
     dt <- utils.check.datatype(x, verbose = 0)
     if(dt != "SNP") stop(error("This function is SNP data only"))
     cat(report("  Analysis performed on the genlight object.\n"))
