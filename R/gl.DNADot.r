@@ -65,7 +65,7 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
   if (!is.null(x) & is(x, "genlight")) {
     pop_list <- seppop(x)
     formatDNADot.in <- function(x) {
-      DNADotIn <- gl2related(glNoSecLD, save = FALSE, verbose = 0)
+      DNADotIn <- gl2related(x, save = FALSE, verbose = 0)
       DNADotIn <- DNADotIn[, -1]
     }
     
