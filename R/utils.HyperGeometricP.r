@@ -10,7 +10,7 @@
 #' @param narg Total number of alleles: j <- round(2 * n * jj) where n is the 
 #'    sample size and JJ is the proportion of the subsample being trialled
 #' @return A vector of probabilities
-#' @author Adapted from Sherwin's MatLab code
+#' @author Carlo Pacioni, Adapted from Sherwin's MatLab code
 utils.HyperGeometricP <- function(parg, Narg, narg) {
   q <- 1 - parg
   qN <- round(q * Narg)
