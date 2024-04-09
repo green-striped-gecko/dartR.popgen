@@ -12,7 +12,7 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
                       jj=0.7, minNtry, ppinc=0.05, validate=TRUE, pvalidate=0.5,
                       n.cores = "auto", outfile = "DNADot_out.csv",
                       outpath = tempdir(),
-                      verbose) {
+                      verbose=NULL) {
   # SET VERBOSITY
   verbose <- gl.check.verbosity(verbose)
   
@@ -37,7 +37,7 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
   }
   
   # sort out input data
-  ### Genotype files ###
+  #### Genotype files ####
   if(is.null(x)) {
     extensions <- sapply(gen.file, grepl, pattern="xls$|xlsx$")
     if(all(extensions)) { # if excel
@@ -58,7 +58,7 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
       InputData <- lapply(InputData, function(x) {x[, -nonGenCols]})
   }
   
-  ### Genlight ###
+  #### Genlight ####
   if (!is.null(x) & is(x, "genlight")) {
     pop_list <- seppop(x)
     formatDNADot.in <- function(x) {
@@ -69,6 +69,7 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
     InputData <- lapply(pop_list, formatDNADot.in)
   }
   
+  #### Genind ####
   if (!is.null(x) & is(x, "genind")) {
     pop_list <- seppop(x)
     InputData <- lapply(pop_list, genind2df, oneColPerAll = TRUE)
@@ -90,7 +91,7 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
     stop(error("The values of 'Ntry' have to be > than the sample size in the respective population"))
   
   # DO THE JOB #
-  # Randomise
+  #### Randomise ####
   randomise <- function(x) {
     DNADotIn <- x[sample(seq_len(nrow(x)), 
                                 size = nrow(x), 
@@ -132,6 +133,7 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
   ppinc <- ppinc
   Ptry <- seq(ppinc, 1 - ppinc, by = ppinc)
   
+  #### Parallele execution ####
   if(n.cores > 1 & length(InputData) > 1) {
     if(length(InputData) < n.cores) n.cores <- length(InputData)
     cl <- parallel::makeCluster(n.cores)
@@ -149,6 +151,7 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
                                )
     res <- do.call(cbind, res)
   } else {
+    #### Serial execution ####
     res <- mapply(utils.DNADot, indit, minNtry, maxNtry, Ntry, 
                   MoreArgs = list(Ptry=Ptry, jj=jj))
   }
