@@ -6,6 +6,7 @@
 #' datsets, otherwise it will be equal to the number of datesets.
 #' @import readxl 
 #' @import dplyr
+#' @export
 #' @author Carlo Pacioni, Adapted from Sherwin's MatLab code
 gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
                       jj=0.7, minNtry, ppinc=0.05, validate=TRUE, pvalidate=0.5,
@@ -36,10 +37,10 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
   }
   
   # sort out input data
-  # If genotype fiels are provided
+  ### Genotype files ###
   if(is.null(x)) {
     extensions <- sapply(gen.file, grepl, pattern="xls$|xlsx$")
-    if(all(extensions)) {
+    if(all(extensions)) { # if excel
       InputData <- lapply(gen.file, read_excel, col_names = header)
       InputData <- lapply(InputData, data.table) # Ensure that data are a datable
       } else {
@@ -47,7 +48,7 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
         stop(error("  It seems that some genotype files are in 
                                      excel, but others are not. Can process excel files only
                                      if all files are in excel"))
-          } else {
+          } else { # any other data file
             InputData <- lapply(gen.file, data.table::fread, header = header)
           }
         names(InputData) <- tools::file_path_sans_ext(basename(gen.file))
@@ -57,7 +58,7 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
       InputData <- lapply(InputData, function(x) {x[, -nonGenCols]})
   }
   
-  # if a genlight object is provided #
+  ### Genlight ###
   if (!is.null(x) & is(x, "genlight")) {
     pop_list <- seppop(x)
     formatDNADot.in <- function(x) {
@@ -66,6 +67,12 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
     }
     
     InputData <- lapply(pop_list, formatDNADot.in)
+  }
+  
+  if (!is.null(x) & is(x, "genind")) {
+    pop_list <- seppop(x)
+    InputData <- lapply(pop_list, genind2df, oneColPerAll = TRUE)
+    InputData <- lapply(InputData, function(x) x[,-1])
   }
   
   # Adjust length of Ntry if there are multiple pops 
