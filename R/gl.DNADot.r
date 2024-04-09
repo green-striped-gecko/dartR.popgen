@@ -135,13 +135,15 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
     catch <- parallel::clusterEvalQ(cl, library("dartR.popgen"))
     
     parallel::clusterExport(cl, 
-                            varlist=c("indit", "Ptry", "Ntry", "jj"), 
+                            varlist=c("indit", "Ptry", "minNtry", "maxNtry", 
+                                      "Ntry", "jj"), 
                             envir=environment()) 
     
     res <- parallel::parLapply(cl = cl, X = indit, fun = utils.DNADot, 
-                               Ptry=Ptry, Ntry=Ntry, jj = jj)
+                               Ptry=Ptry, minNtry=minNtry, maxNtry, Ntry=Ntry, 
+                               jj = jj)
   } else {
-    res <- utils.DNADot(indit, Ptry, Ntry, jj)
+    res <- lapply(indit, utils.DNADot, Ptry, minNtry, maxNtry, Ntry, jj)
   }
   return(res)
 }
