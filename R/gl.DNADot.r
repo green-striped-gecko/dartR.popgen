@@ -9,7 +9,8 @@
 #' @author Carlo Pacioni, Adapted from Sherwin's MatLab code
 gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
                       jj=0.7, minNtry, ppinc=0.05, validate=TRUE, pvalidate=0.5,
-                      n.cores = "auto",
+                      n.cores = "auto", outfile = "DNADot_out.csv",
+                      outpath = tempdir(),
                       verbose) {
   # SET VERBOSITY
   verbose <- gl.check.verbosity(verbose)
@@ -150,7 +151,9 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
                   MoreArgs = list(Ptry=Ptry, jj=jj))
   }
   res <- cbind(Param=c("minNtry", "maxNtry", "jj", "Nest", "SD", "SE"), 
-               data.frame(round(res, 2))
+               data.frame(round(res, 1)))
+               
+  write.csv(res, file(file.path(outpath, outfile)), row.names = FALSE)
   
   return(res)
 }
