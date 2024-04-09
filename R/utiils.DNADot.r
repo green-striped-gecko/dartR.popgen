@@ -11,7 +11,7 @@
 #' @author Carlo Pacioni, Adapted from Sherwin's MatLab code
 utils.DNADot <- function(indit, Ptry, Ntry, jj) {
   
-  locind <- dim(preindit)
+  locind <- dim(indit)
   L1 <- locind[1] # Number of loci
   n <- locind[2] / 2 # Number of samples
   
