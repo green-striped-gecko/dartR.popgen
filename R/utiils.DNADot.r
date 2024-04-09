@@ -9,7 +9,7 @@
 #' @inheritParams utils.HyperGeometricP
 #' @return A vector of probabilities
 #' @author Carlo Pacioni, Adapted from Sherwin's MatLab code
-utils.DNADot <- function(indit, Ptry, minNtry, maxNtry, Ntry, jj) {
+utils.DNADot <- function(indit, minNtry, maxNtry, Ntry, Ptry, jj) {
   
   locind <- dim(indit)
   L1 <- locind[1] # Number of loci
