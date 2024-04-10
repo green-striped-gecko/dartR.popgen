@@ -78,14 +78,40 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
     InputData <- lapply(InputData, function(x) x[,-1])
   }
   
-  # Adjust length of Ntry if there are multiple pops 
-  if(length(minNtry)==1) {
-    minNtry <- rep(minNtry, length(InputData))
-  } else {
-    # Check for error in Ntry's length
-    if(length(minNtry)!=length(InputData)) 
-      stop(error("The length of 'Ntry' is neither 1 or the number of the populations\n"))
+  #### If minNtry is a vector ####
+  if(is.vector(minNtry)) {
+    if(length(minNtry)==1) {
+      minNtry <- rep(minNtry, length(InputData))
+    } else {
+      # Check for error in Ntry's length
+      if(length(minNtry)!=length(InputData)) 
+        stop(error("The length of 'Ntry' is neither 1 or the number of the populations\n"))
     }
+  } else {
+    #### If minNtry is a matrix ####
+    if(is.matrix(minNtry)) {
+      if(nrow(minNtry) == 1) {
+        if(length(InputData) > 1) {
+          minNtryTEMP <- minNtry
+          for(i in 2:length(InputData)) {
+            minNtry <- rbind(minNtry, minNtryTEMP)
+          }
+        }
+      } else {        # if(nrow(minNtry) > 1)
+        if(nrow(minNtry)!=length(InputData)) 
+          stop(error("The number of rows of 'Ntry' is neither 1 or the number of the populations\n"))
+      }
+      for(i in 2:ncol(minNtry)) {
+        inputDataTEMP <- InputData
+        InputData <- c(InputData, inputDataTEMP)
+      }
+      minNtry <- matrix(minNtry, ncol = 1)
+    } else {
+      stop(error(" 'Ntry' can be only either a vector or a matrix\n"))
+      
+    }
+  }
+  
     
   # Check if Ntry values are adequate
   nSamples <- sapply(InputData, nrow)
