@@ -110,6 +110,9 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
     minNtry <- c(minNtry, minNtry)
   }
   
+  # Update sample size
+  nSamples <- sapply(InputData, nrow)
+  
   process.input <- function(x) {
     Input2 <- t(x)
     RowCol <- dim(Input2)
@@ -156,9 +159,9 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
     res <- mapply(utils.DNADot, indit, minNtry, maxNtry, Ntry, 
                   MoreArgs = list(Ptry=Ptry, jj=jj))
   }
-  res <- cbind(Param=c("minNtry", "maxNtry", "jj", "Nest", "SD", "SE"), 
-               data.frame(round(res, 1)))
-               
+  res <- cbind(Param=c("minNtry", "maxNtry", "jj", "Nest", "SD", "SE", "n"), 
+               rbind(data.frame(round(res, 1)), nSamples))
+
   write.csv(res, file(file.path(outpath, outfile)), row.names = FALSE)
   
   return(res)
