@@ -101,8 +101,8 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
         if(nrow(minNtry)!=length(InputData)) 
           stop(error("The number of rows of 'Ntry' is neither 1 or the number of the populations\n"))
       }
+      inputDataTEMP <- InputData
       for(i in 2:ncol(minNtry)) {
-        inputDataTEMP <- InputData
         InputData <- c(InputData, inputDataTEMP)
       }
       minNtry <- matrix(minNtry, ncol = 1)
