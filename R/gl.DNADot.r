@@ -39,6 +39,7 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
   # sort out input data
   #### Genotype files ####
   if(is.null(x)) {
+    cat(report("  Analysis performed on the genotype file(s)\n"))
     extensions <- sapply(gen.file, grepl, pattern="xls$|xlsx$")
     if(all(extensions)) { # if excel
       InputData <- lapply(gen.file, read_excel, col_names = header)
@@ -71,6 +72,7 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
   
   #### Genind ####
   if (!is.null(x) & is(x, "genind")) {
+    cat(report("  Analysis performed on the geninf object.\n"))
     pop_list <- seppop(x)
     InputData <- lapply(pop_list, genind2df, oneColPerAll = TRUE)
     InputData <- lapply(InputData, function(x) x[,-1])
