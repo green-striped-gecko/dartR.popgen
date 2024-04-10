@@ -84,13 +84,13 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
   } else {
     # Check for error in Ntry's length
     if(length(minNtry)!=length(InputData)) 
-      stop(error("The length of 'Ntry' and input data is not the same"))
+      stop(error("The length of 'Ntry' is neither 1 or the number of the populations\n"))
     }
     
   # Check if Ntry values are adequate
   nSamples <- sapply(InputData, nrow)
   if(sum((minNtry - nSamples)>0)!=length(InputData)) 
-    stop(error("The values of 'Ntry' have to be > than the sample size in the respective population"))
+    stop(error("The values of 'Ntry' have to be > than the sample size in the respective population\n"))
   
   # DO THE JOB #
   #### Randomise ####
