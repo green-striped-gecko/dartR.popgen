@@ -172,7 +172,7 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
   #### Validate ####
   if(validate) {
     InputDataV <- lapply(InputData, function(x) {
-      x[rbinom(nrow(x), 1, pvalidate),]
+      x[as.logical(rbinom(nrow(x), 1, pvalidate)),]
     })
     names(InputDataV) <- paste(names(InputData), "V", sep = "_")
     InputData <- c(InputData, InputDataV)
