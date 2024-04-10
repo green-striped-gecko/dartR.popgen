@@ -21,7 +21,13 @@
 #' (if there are 3 pops and a 3x3 matrix, m, is used, the analysis for population 1 
 #' will be conducted with three values: m[1, 1], m[1, 2] and m[1, 3]. For population
 #' 2, m[2, 1], m[2, 2] and m[2, 3] will be used. Etc.).
-#' If the matrix has only one row, the same values are used for all population.  
+#' If the matrix has only one row, the same values are used for all population.
+#' 
+#' If \code{validate == TRUE} the function will generate a dataset with a subset 
+#' of the samples. Each sample will have a probability \code{pvalidate} to be 
+#' included in the subset. Sherwin 2024 recommends validate the results to confirm 
+#' that the sample size is adequate as with small sample size the results could be 
+#' biased. 
 #' 
 #' @param x A genlight or genind object
 #' @param gen.file Fully qualified path(s) (i.e. full path) to the genotype files
