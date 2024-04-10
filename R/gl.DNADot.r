@@ -1,9 +1,50 @@
 #' Population size estimates using DNADot approach
 #' 
-#' @param name description
+#' Function to use the DNADot method to estimate population size from genotypes.
+#' This is a R implementation of the Matlab code provided with the original publication
+#' (with the exception of a few data handling modifications). 
+#' 
+#' This function can be used with \code{genlight}, \code{genind} or genotype files. 
+#' If files are used, alleles need to be coded as integers, two columns per sample, 
+#' one row per samples. \code{genind} objects or genotype files can be multiallelic 
+#' (i.e. not exclusively biallelic).
+#' 
+#' The user have to provide the minimum hypothesised census size, \code{minNtry}. 
+#' The range to be tested will be automatically scaled up to \code{3 * minNtry}. 
+#' \code{minNtry} can be a vector or a matrix. If a vector of length == 1, that 
+#' value is used for all populations. If a vector of \code{length(minNtry) == nPop},
+#' each value is used for each population. If a vector of \code{length(minNtry) != nPop}
+#' is used, it will generate an error.
+#' If \code{minNtry} is a matrix, the values  on different rows are used for 
+#' different populations (i.e. the first row for pop 1, the second row for pop2 
+#' and so forth). For each populations, all the values in different columns are used 
+#' (if there are 3 pops and a 3x3 matrix, m, is used, the analysis for population 1 
+#' will be conducted with three values: m[1, 1], m[1, 2] and m[1, 3]. For population
+#' 2, m[2, 1], m[2, 2] and m[2, 3] will be used. Etc.).
+#' If the matrix has only one row, the same values are used for all population.  
+#' 
+#' @param x A genlight or genind object
+#' @param gen.file Fully qualified path(s) (i.e. full path) to the genotype files
+#' if \code{is.null(x) == TRUE}. Ignored if \code{is.null(x) == FALSE}
+#' @param header Whether the genotype file(s) have headers. Ignored if 
+#' \code{is.null(x) == FALSE}. [default FALSE]
+#' @param nonGenCols The position or the column names of columns in the genotype 
+#' files that are not genotypes. These are internally removed before analysis. 
+#' Ignored if \code{is.null(x) == FALSE}
+#' @param jj The proportion of samples to be used for the JackKnife.
+#' @param minNtry The minimum population size to be used for estimates. 
+#' @param ppinc The starting and interval of the allele frequencies. The sequence 
+#' of values attempted is determined using \code{seq(ppinc, 1 - ppinc, by = ppinc)} 
+#' @param validate Whether calculations should be repeated with a subset of of the 
+#' data to validate results [default TRUE]
+#' @param pvalidate The probability of retaining any given sample when 
+#' \code{validate == TRUE} [default 0.5]
 #' @param n.cores The number of cores to use. If "auto", it will 
-#' use all but one available cores [default "auto"], if these are < number of 
-#' datsets, otherwise it will be equal to the number of datesets.
+#' use all but one available cores [default "auto"], if these are less than
+#' the number of 
+#' datasets, otherwise it will be equal to the number of datasets.
+#' @param outfile Name of the output file.
+#' @param outpath Path where to save output file.
 #' @import readxl 
 #' @import dplyr
 #' @export
