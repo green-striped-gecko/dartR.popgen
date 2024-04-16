@@ -13,6 +13,10 @@ gl.LDNe(
   critical = 0,
   singleton.rm = TRUE,
   mating = "random",
+  pairing = "all",
+  Waples.correction = NULL,
+  Waples.correction.value = NULL,
+  naive = FALSE,
   plot.out = TRUE,
   plot_theme = theme_dartR(),
   plot_colors_pop = gl.select.colors(x, verbose = 0),
@@ -47,6 +51,21 @@ c(0,0.05) [default 0].}
 
 \item{mating}{Formula for Random mating='random' or monogamy= 'monogamy'
 [default 'random'].}
+
+\item{pairing}{'all' [default] if all possible loci should be paired, or 'separate'
+if only loci on different chromosomes should be used.}
+
+\item{Waples.correction}{The type of Waples et al 2016 correction to apply. 
+This is ignored if \code{pairing} is set to 'separate'.
+Options are 'nChromosomes', for eq 1a, or 'genomeLength' for eq 1b. 
+NULL if none should be applied [default NULL].}
+
+\item{Waples.correction.value}{The number of chromosomes or the genome length 
+in cM. See Waples et al 2016 for details.}
+
+\item{naive}{Whether the naive (uncorrected for samples size - see 
+eq 7 and eq 8 in Waples 2006) should also be reported. This is mostly 
+to diagnose the source of Inf estimate.}
 
 \item{plot.out}{Specify if plot is to be produced [default TRUE].}
 
@@ -86,7 +105,27 @@ nes <- gl.LDNe(pops,
   critical = c(0, 0.05), singleton.rm = TRUE, mating = "random"
 )
 nes
+
+# Using only pairs of loci on different chromosomes
+# make up some chromosome location
+pops@chromosome <- as.factor(sample(1:10, size = nLoc(pops), replace = TRUE))
+nessep <- gl.LDNe(pops,
+              outfile = "popsLD.txt", outpath = "./TestNe", pairing="separate",
+              neest.path = "./path_to Ne-21",
+              critical = c(0, 0.05), singleton.rm = TRUE, mating = "random"
+nessep
 }
+}
+\references{
+\itemize{
+ \item Waples, R. S. (2006). "A bias correction for estimates of effective 
+ population size based on linkage disequilibrium at unlinked gene loci*." 
+ Conservation Genetics 7(2): 167-184.
+
+ \item Waples, R. K., et al. (2016). "Estimating contemporary effective 
+ population size in non-model species using linkage disequilibrium across 
+ thousands of loci." Heredity 117(4): 233-240.
+ }
 }
 \author{
 Custodian: Bernd Gruber (Post to

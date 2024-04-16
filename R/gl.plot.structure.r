@@ -323,7 +323,7 @@ gl.plot.structure <- function(sr,
   Q_melt_tmp_pop <- unique(Q_melt_tmp$orig.pop)
 
   Q_melt$orig.pop <-
-    factor(Q_melt$orig.pop, levels = Q_melt_tmp_pop)
+    factor(Q_melt$orig.pop, levels =  unique(sr[[1]]$q.mat$orig.pop))
   
   p3 <- ggplot(Q_melt, aes_(x = ~ factor(ord), y = ~value, fill = ~Cluster)) +
     geom_col(color = "black", size = border_ind, width = 1) +
