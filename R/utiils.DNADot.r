@@ -7,14 +7,13 @@
 #' @param indit Input data for 
 #' @param maxNtry Maximum value of N to be tested
 #' @param Ntry Values of N to be trialed
-@param Ptry Allele frequencies values to be trialed
+#' @param Ptry Allele frequencies values to be trialed
 #' @inheritParams gl.DNADot
 #' @inheritParams utils.HyperGeometricP
 #' @importFrom stats sd
 #' @return A vector of probabilities
 #' @author Carlo Pacioni, Adapted from Sherwin's MatLab code
 utils.DNADot <- function(indit, minNtry, maxNtry, Ntry, Ptry, jj) {
-  #maxNtry <- Ntry <- Ptry <- NULL
   
   locind <- dim(indit)
   L1 <- locind[1] # Number of loci
