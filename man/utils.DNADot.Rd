@@ -7,9 +7,15 @@
 utils.DNADot(indit, minNtry, maxNtry, Ntry, Ptry, jj)
 }
 \arguments{
-\item{indit}{Input data for analysis}
+\item{indit}{Input data for}
 
 \item{minNtry}{The minimum population size to be used for estimates.}
+
+\item{maxNtry}{Maximum value of N to be tested}
+
+\item{Ntry}{Values of N to be trialed}
+
+\item{Ptry}{Allele frequencies values to be trialed}
 
 \item{jj}{The proportion of samples to be used for the JackKnife.}
 }
