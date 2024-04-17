@@ -51,8 +51,9 @@
 #' datasets, otherwise it will be equal to the number of datasets.
 #' @param outfile Name of the output file.
 #' @param outpath Path where to save output file.
-#' @import readxl 
+#' @inheritParams gl.blast
 #' @import dplyr
+#' @importFrom stats rbinom 
 #' @export
 #' @author Carlo Pacioni, Adapted from Sherwin's MatLab code
 gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
@@ -89,7 +90,9 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
     cat(report("  Analysis performed on the genotype file(s)\n"))
     extensions <- sapply(gen.file, grepl, pattern="xls$|xlsx$")
     if(all(extensions)) { # if excel
-      InputData <- lapply(gen.file, read_excel, col_names = header)
+      if(!requireNamespace("readxl", quitely=TRUE))
+        stop(error("   The package 'readx' is required to read xls files, but it is not installed"))
+      InputData <- lapply(gen.file, readxl::read_excel, col_names = header)
       InputData <- lapply(InputData, data.table) # Ensure that data are a datable
       } else {
         if(any(extensions)) {

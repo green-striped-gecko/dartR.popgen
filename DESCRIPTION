@@ -27,7 +27,9 @@ Description: Facilitates the analysis of SNP (single nucleotide polymorphism)
     Mijangos et al. (2022) <doi:10.1111/2041-210X.13918>.
 Encoding: UTF-8
 Depends: R (>= 3.5), adegenet (>= 2.0.0),  dartR.base, dartR.data
-Imports: methods, utils, MASS, dplyr, patchwork, crayon, ggplot2, data.table, stringr
+Imports: 
+  methods, utils, MASS, dplyr, patchwork, crayon, ggdendro, ggplot2, data.table, 
+  stringr
 Suggests: 
   SIBER,
   expm,
@@ -43,6 +45,7 @@ Suggests:
   purrr,
   qvalue,
   raster,
+  readxl,
   reshape2,
   scales,
   snpStats,
@@ -50,8 +53,7 @@ Suggests:
   viridis,
   zoo,
   gsubfn,
-  sp,
-  ggdendro
+  sp
 License: GPL (>= 3)
 RoxygenNote: 7.2.3
 NeedsCompilation: no
