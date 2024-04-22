@@ -133,7 +133,7 @@ gl.plot.faststructure <- function(sr,
           res_tmp_2 <- res_tmp
           # if more than one replicate
         } else {
-          simMatrix <- as.matrix(proxy::simil(res_tmp, method = "Gower"))
+          simMatrix <- as.matrix(proxy::simil(res_tmp, method = G))
           diag(simMatrix) <- 1
           t <- calcThreshold(simMatrix)
           simMatrix[simMatrix < t] <- 0
