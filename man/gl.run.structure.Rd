@@ -30,7 +30,8 @@ gl.run.structure(
   plot_theme = theme_dartR(),
   plot.dir = NULL,
   plot.file = NULL,
-  verbose = NULL
+  verbose = NULL,
+  ...
 )
 }
 \arguments{

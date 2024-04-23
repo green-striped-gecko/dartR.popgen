@@ -165,7 +165,8 @@ gl.run.structure <- function(x,
                              plot_theme = theme_dartR(),
                              plot.dir = NULL,
                              plot.file = NULL,
-                             verbose = NULL) {
+                             verbose = NULL,
+                             ...) {
   pkg <- "purrr"
   if (!(requireNamespace(pkg, quietly = TRUE))) {
     cat(error(
