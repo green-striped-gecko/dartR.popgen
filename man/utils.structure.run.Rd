@@ -6,12 +6,30 @@
 \usage{
 utils.structure.run(
   g,
-  k.range = NULL,
-  num.k.rep = 1,
-  label = NULL,
+  k.range,
+  num.k.rep,
+  label,
   delete.files = TRUE,
-  exec = "structure",
-  ...
+  exec,
+  burnin,
+  numreps,
+  noadmix,
+  freqscorr,
+  randomize,
+  seed,
+  pop.prior,
+  locpriorinit,
+  maxlocprior,
+  gensback,
+  migrprior,
+  pfrompopflagonly,
+  popflag,
+  inferalpha,
+  alpha,
+  unifprioralpha,
+  alphamax,
+  alphapriora,
+  alphapriorb
 )
 }
 \arguments{

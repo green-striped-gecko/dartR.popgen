@@ -12,6 +12,8 @@
 #' Linux it might be something like \code{'./structure/structure'} if the
 #' executable is in a subfolder 'structure' in your home directory
 #' [default working directory "."].
+#' @param k.range Range of the number of populations [required].
+#' @param num.k.rep Number of replicates [default 1].
 #' @param burnin Number of iterations for MCMC burnin [default 1000].
 #' @param numreps Number of MCMC replicates [default 1000].
 #' @param noadmix Logical. No admixture? [default TRUE].
@@ -141,7 +143,9 @@
 #' }
 
 gl.run.structure <- function(x,
-                             exec = ".",
+                             exec = "./structure",
+                             k.range = NULL,
+                             num.k.rep = 1,
                              burnin = 1000,
                              numreps = 1000,
                              noadmix = TRUE,
@@ -163,10 +167,12 @@ gl.run.structure <- function(x,
                              alphapriorb = 0.001,
                              plot.out = TRUE,
                              plot_theme = theme_dartR(),
-                             plot.dir = NULL,
+                             plot.dir = tempdir(),
                              plot.file = NULL,
-                             verbose = NULL,
-                             ...) {
+                             verbose = NULL
+                             # ,
+                             # ...
+                             ) {
   pkg <- "purrr"
   if (!(requireNamespace(pkg, quietly = TRUE))) {
     cat(error(
@@ -216,33 +222,41 @@ parameter to locate it."
   # DO THE JOB
   gg <- utils.structure.genind2gtypes(gl2gi(x, verbose = 0))
 
-  sr <- utils.structure.run(gg, 
-                            exec = exec, 
-                            burnin = 1000,
-                            numreps = 1000,
-                            noadmix = TRUE,
-                            freqscorr = FALSE,
-                            randomize = TRUE,
-                            seed = 0,
-                            pop.prior = NULL,
-                            locpriorinit = 1,
-                            maxlocprior = 20,
-                            gensback = 2,
-                            migrprior = 0.05,
-                            pfrompopflagonly = TRUE,
-                            popflag = NULL,
-                            inferalpha = FALSE,
-                            alpha = 1,
-                            unifprioralpha = TRUE,
-                            alphamax = 20,
-                            alphapriora = 0.05,
-                            alphapriorb = 0.001,
-                            ...)
+  sr <- utils.structure.run(g = gg, 
+                            exec = exec,
+                            k.range = k.range,
+                            num.k.rep = num.k.rep,
+                            burnin = burnin,
+                            numreps = numreps,
+                            noadmix = noadmix,
+                            freqscorr = freqscorr,
+                            randomize = randomize,
+                            seed = seed,
+                            pop.prior = pop.prior,
+                            locpriorinit = locpriorinit,
+                            maxlocprior = maxlocprior,
+                            gensback = gensback,
+                            migrprior = migrprior,
+                            pfrompopflagonly = pfrompopflagonly,
+                            popflag = popflag,
+                            inferalpha = inferalpha,
+                            alpha = alpha,
+                            unifprioralpha = unifprioralpha,
+                            alphamax = alphamax,
+                            alphapriora = alphapriora,
+                            alphapriorb = alphapriorb
+                            # ...
+                            )
 
   ev <- utils.structure.evanno(sr)
 
-  pa <- ((ev$plots$mean.ln.k + ev$plots$mean.ln.k) /
-    (ev$plots$ln.ppk + ev$plots$delta.k)) + plot_theme
+  if(num.k.rep==1){
+    pa <- ((ev$plots$mean.ln.k + ev$plots$mean.ln.k) /
+             (ev$plots$ln.ppk)) + plot_theme
+  }else{
+    pa <- ((ev$plots$mean.ln.k + ev$plots$mean.ln.k) /
+             (ev$plots$ln.ppk + ev$plots$delta.k)) + plot_theme
+  }
 
   # PRINTING OUTPUTS
   if (plot.out) {
