@@ -6,7 +6,9 @@
 \usage{
 gl.run.structure(
   x,
-  exec = ".",
+  exec = "./structure",
+  k.range = NULL,
+  num.k.rep = 1,
   burnin = 1000,
   numreps = 1000,
   noadmix = TRUE,
@@ -28,10 +30,9 @@ gl.run.structure(
   alphapriorb = 0.001,
   plot.out = TRUE,
   plot_theme = theme_dartR(),
-  plot.dir = NULL,
+  plot.dir = tempdir(),
   plot.file = NULL,
-  verbose = NULL,
-  ...
+  verbose = NULL
 )
 }
 \arguments{
@@ -42,6 +43,10 @@ located. E.g. \code{'c:/structure/structure.exe'} under Windows. For Mac and
 Linux it might be something like \code{'./structure/structure'} if the
 executable is in a subfolder 'structure' in your home directory
 [default working directory "."].}
+
+\item{k.range}{Range of the number of populations [required].}
+
+\item{num.k.rep}{Number of replicates [default 1].}
 
 \item{burnin}{Number of iterations for MCMC burnin [default 1000].}
 

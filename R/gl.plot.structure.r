@@ -167,7 +167,7 @@ gl.plot.structure <- function(sr,
     } else {
       # If just one replicate
       if (length(Q_list_tmp) == 1) {
-        res_tmp <- Q_list_tmp[[1]]
+        res_tmp <- list(Q_list_tmp[[1]])
         # if more than 1 replicate
       } else {
         res_tmp <- clumpp(Q_list=Q_list_tmp, 
@@ -180,7 +180,8 @@ gl.plot.structure <- function(sr,
       if (clumpak) {
         # if just one replicate
         if (length(res_tmp) == 1) {
-          res_tmp_2 <- res_tmp[[1]]
+          # res_tmp_2 <- res_tmp[[1]]
+          res_tmp_2 <- res_tmp
           # if more than one replicate
         } else {
           simMatrix <- as.matrix(proxy::simil(res_tmp, method = G))
@@ -195,7 +196,8 @@ gl.plot.structure <- function(sr,
         # if there is just one mode
         if (length(res_tmp_2) == 1) {
           # if there is just one replicate within the mode
-          if (length(res_tmp_2[[1]]) == 1) {
+          if (!is.list(res_tmp_2[[1]]) ){
+            # length(res_tmp_2[[1]]) == 1) {
             res_tmp_3 <- res_tmp_2[[1]]
             # if there are more than 1 replicate within the mode
           } else {
