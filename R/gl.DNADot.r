@@ -56,6 +56,8 @@
 #' @importFrom stats rbinom 
 #' @export
 #' @author Carlo Pacioni, Adapted from Sherwin's MatLab code
+#' @references Sherwin W. B. (2024). DnaDot-fixing ecology and evolution’s blind spot, 
+#' population size. Ecological Indicators. 160:1470
 gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
                       jj=0.7, minNtry, ppinc=0.05, validate=TRUE, pvalidate=0.5,
                       n.cores = "auto", outfile = "DNADot_out.csv",
