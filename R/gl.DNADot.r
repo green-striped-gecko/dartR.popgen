@@ -53,7 +53,7 @@
 #' @param outpath Path where to save output file.
 #' @inheritParams gl.blast
 #' @import dplyr
-#' @importFrom stats rbinom 
+#' @importFrom stats rbinom  
 #' @export
 #' @author Carlo Pacioni, Adapted from Sherwin's MatLab code
 gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
