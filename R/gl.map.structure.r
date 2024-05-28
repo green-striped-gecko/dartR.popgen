@@ -193,7 +193,7 @@ gl.map.structure <- function(qmat,
 
   print(m1)
   # mapshot(m1, file='./Rplot.png', remove_controls = TRUE)
-  return(out)
+  return(list(qmats=out,map=m1))
   # %>% addLegend(labels=paste('Group',1:ncol(ff)), colors=rainbow(ncol(ff)),position ='topright' )
 
   # if (save) mapshot(m1, file='./Rplot.png', remove_controls = TRUE)

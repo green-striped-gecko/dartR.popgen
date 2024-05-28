@@ -167,10 +167,12 @@ gl.plot.structure <- function(sr,
     } else {
       # If just one replicate
       if (length(Q_list_tmp) == 1) {
-        res_tmp <- Q_list_tmp[[1]]
+        res_tmp <- list(Q_list_tmp[[1]])
         # if more than 1 replicate
       } else {
-        res_tmp <- clumpp(Q_list_tmp, method = met_clumpp, iter = iter_clumpp)$Q_list
+        res_tmp <- clumpp(Q_list=Q_list_tmp, 
+                          method = met_clumpp,
+                          iter = iter_clumpp)$Q_list
       }
 
       # clumpak method for inferring modes within multiple structure runs as
@@ -178,7 +180,8 @@ gl.plot.structure <- function(sr,
       if (clumpak) {
         # if just one replicate
         if (length(res_tmp) == 1) {
-          res_tmp_2 <- res_tmp[[1]]
+          # res_tmp_2 <- res_tmp[[1]]
+          res_tmp_2 <- res_tmp
           # if more than one replicate
         } else {
           simMatrix <- as.matrix(proxy::simil(res_tmp, method = G))
@@ -193,7 +196,8 @@ gl.plot.structure <- function(sr,
         # if there is just one mode
         if (length(res_tmp_2) == 1) {
           # if there is just one replicate within the mode
-          if (length(res_tmp_2[[1]]) == 1) {
+          if (!is.list(res_tmp_2[[1]]) ){
+            # length(res_tmp_2[[1]]) == 1) {
             res_tmp_3 <- res_tmp_2[[1]]
             # if there are more than 1 replicate within the mode
           } else {
@@ -316,9 +320,9 @@ gl.plot.structure <- function(sr,
     Q_melt$ord <- as.factor( Q_melt$ord)
   }
   
- # Q_melt_tmp <- Q_melt
-#  Q_melt_tmp <- Q_melt_tmp[order(Q_melt_tmp$order_d),]
-#  Q_melt_tmp_pop <- unique(Q_melt_tmp$orig.pop)
+  Q_melt_tmp <- Q_melt
+  Q_melt_tmp <- Q_melt_tmp[order(Q_melt_tmp$ord),]
+  Q_melt_tmp_pop <- unique(Q_melt_tmp$orig.pop)
 
   Q_melt$orig.pop <-
     factor(Q_melt$orig.pop, levels =  unique(sr[[1]]$q.mat$orig.pop))

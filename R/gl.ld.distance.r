@@ -110,9 +110,10 @@ gl.ld.distance <- function(ld.report,
   }
 
   if (is.null(pop.colors)) {
-    pop.colors <- gl.select.colors(
-      library = "baseR", palette = "terrain.colors",
-      ncolors = nlevels(pops), verbose = 0
+    pop.colors <- 
+    gl.select.colors(
+    library = "gr.palette", palette = "Alphabet",
+    ncolors = nlevels(pops), verbose = 0
     )
   }
 
