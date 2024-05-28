@@ -82,7 +82,7 @@ gl.DNADot <- function(x=NULL, gen.file=NULL, header=FALSE, nonGenCols=NULL,
     if(n.cores == "auto"){
       n.cores <- parallel::detectCores() - 1
     }
-  }
+  } 
   
   # sort out input data
   #### Genotype files ####
