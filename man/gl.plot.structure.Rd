@@ -13,6 +13,7 @@ gl.plot.structure(
   plot_theme = NULL,
   color_clusters = NULL,
   ind_name = TRUE,
+  k_name = NULL,
   border_ind = 0.15,
   den = FALSE,
   dis.mat = NULL,
@@ -45,6 +46,9 @@ One of 'greedy' or 'greedyLargeK' or 'stephens' [default "greedyLargeK"].}
 as many colors as there are clusters (K) [default NULL].}
 
 \item{ind_name}{Whether to plot individual names [default TRUE].}
+
+\item{k_name}{Name of the structure plot to plot. It should be character
+[default NULL].}
 
 \item{border_ind}{The width of the border line between individuals
 [default 0.25].}
