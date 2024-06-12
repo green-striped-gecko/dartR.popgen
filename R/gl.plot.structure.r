@@ -21,6 +21,8 @@
 #' @param color_clusters A color palette for clusters (K) or a list with
 #' as many colors as there are clusters (K) [default NULL].
 #' @param ind_name Whether to plot individual names [default TRUE].
+#' @param k_name Name of the structure plot to plot. It should be character
+#'  [default NULL].
 #' @param border_ind The width of the border line between individuals
 #' [default 0.25].
 #' @param den Whether to include a dendrogram. It is necessary to include the 
@@ -102,6 +104,7 @@ gl.plot.structure <- function(sr,
                               plot_theme = NULL,
                               color_clusters = NULL,
                               ind_name = TRUE,
+                              k_name = NULL,
                               border_ind = 0.15,
                               den = FALSE,
                               dis.mat = NULL,
@@ -112,10 +115,10 @@ gl.plot.structure <- function(sr,
                               verbose = NULL) {
   # SET VERBOSITY
   verbose <- gl.check.verbosity(verbose)
-
+  
   # SET WORKING DIRECTORY
   plot.dir <- gl.check.wd(plot.dir, verbose = 0)
-
+  
   # FLAG SCRIPT START
   funname <- match.call()[[1]]
   utils.flag.start(
@@ -123,15 +126,15 @@ gl.plot.structure <- function(sr,
     build = "Jody",
     verbose = verbose
   )
-
+  
   # DO THE JOB
-
+  
   if (!is(sr, "structure.result")) {
     stop(error(
       "sr is not a structure result object returned from gl.run.structure.\n"
     ))
   }
-
+  
   if (is.null(K)) {
     ks <- range((lapply(sr, function(x) {
       x$summary[1]
@@ -140,26 +143,26 @@ gl.plot.structure <- function(sr,
   } else {
     ks <- K
   }
-
+  
   res <- list()
-
+  
   for (i in ks) {
     eq.k <- sapply(sr, function(x) {
       x$summary["k"] == i
     })
-
+    
     if (sum(eq.k) == 0) {
       stop(error(paste(
         "No entries for K =", K, "found in 'sr'.\n"
       )))
     }
-
+    
     sr_tmp <- sr[eq.k]
-
+    
     Q_list_tmp <- lapply(sr_tmp, function(x) {
       as.matrix(x[[2]][, 4:ncol(x[[2]])])
     })
-
+    
     # If K = 1
     if (ncol(Q_list_tmp[[1]]) == 1) {
       res[[length(res) + 1]] <- c(res, as.matrix(Q_list_tmp[1]))
@@ -174,7 +177,7 @@ gl.plot.structure <- function(sr,
                           method = met_clumpp,
                           iter = iter_clumpp)$Q_list
       }
-
+      
       # clumpak method for inferring modes within multiple structure runs as
       # implemented in starmie package
       if (clumpak) {
@@ -191,7 +194,7 @@ gl.plot.structure <- function(sr,
           clusters <- mcl(simMatrix, addLoops = TRUE)$Cluster
           res_tmp_2 <- split(res_tmp, clusters)
         }
-
+        
         # averaging replicates
         # if there is just one mode
         if (length(res_tmp_2) == 1) {
@@ -218,7 +221,7 @@ gl.plot.structure <- function(sr,
       } else {
         res_tmp_3 <- res_tmp
       }
-
+      
       # if the object is a list
       if (is.list(res_tmp_3)) {
         for (y in 1:length(res_tmp_3)) {
@@ -229,16 +232,16 @@ gl.plot.structure <- function(sr,
       }
     }
   }
-
+  
   # flattening lists
   renquote <- function(l) if (is.list(l)) lapply(l, renquote) else enquote(l)
-
+  
   res <- lapply(unlist(renquote(res)), eval)
-
+  
   names(res) <- as.character(1:length(res))
-
+  
   Q_list <- res
-
+  
   # get K labels
   Ks <- unlist(lapply(Q_list, ncol))
   if (length(unique(Ks)) != length(Ks)) {
@@ -247,7 +250,7 @@ gl.plot.structure <- function(sr,
   } else {
     Ks <- as.character(Ks)
   }
-
+  
   for (i in 1:length(Q_list)) {
     Q_list_tmp <- data.frame(
       Label = sr[[1]]$q.mat$id,
@@ -269,23 +272,23 @@ gl.plot.structure <- function(sr,
     Q_list_tmp$ord <- 1:nrow(Q_list_tmp)
     Q_list[[i]] <- Q_list_tmp
   }
-
+  
   order_df <- Q_list[[1]][order(Q_list[[1]]$Label), ]
-
+  
   Q_list <- lapply(Q_list, function(x) {
     tmp <- x[order(x$Label), ]
     tmp$ord <- order_df$ord
     return(tmp)
   })
-
+  
   if (is.null(plot_theme)) {
     plot_theme <- theme_dartR()
   }
-
+  
   if (is.null(color_clusters)) {
     color_clusters <- gl.select.colors(ncolors = max(ks), verbose = 0)
   }
-
+  
   # #Melt and append Q matrices
   Q_melt <-
     do.call(
@@ -323,13 +326,17 @@ gl.plot.structure <- function(sr,
   Q_melt_tmp <- Q_melt
   Q_melt_tmp <- Q_melt_tmp[order(Q_melt_tmp$ord),]
   Q_melt_tmp_pop <- unique(Q_melt_tmp$orig.pop)
-
+  
   Q_melt$orig.pop <-
     factor(Q_melt$orig.pop, levels =  unique(sr[[1]]$q.mat$orig.pop))
   
+  if(!is.null(k_name)){
+    Q_melt <- Q_melt[which(Q_melt$K==k_name),]
+  }
+  
   p3 <- ggplot(Q_melt, aes_(x = ~ factor(ord), y = ~value, fill = ~Cluster)) +
     geom_col(color = "black", size = border_ind, width = 1) +
-     facet_grid(K ~ orig.pop, scales = "free", space = "free") +
+    facet_grid(K ~ orig.pop, scales = "free", space = "free") +
     scale_y_continuous(expand = c(0, 0)) +
     scale_x_discrete(
       breaks = unique(Q_melt$ord),
@@ -359,7 +366,7 @@ gl.plot.structure <- function(sr,
       axis.ticks.y = element_blank(),
       legend.position = "none"
     )
-
+  
   if (ind_name == FALSE) {
     p3 <- p3 + theme(
       axis.text.x = element_blank(),
@@ -368,31 +375,31 @@ gl.plot.structure <- function(sr,
   }
   
   if(den){
-   design <-  "#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#
+    design <-  "#AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#
                BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
- p3 <- p3 / p_den + 
+    p3 <- p3 / p_den + 
       plot_layout(design = design)
   }
-
+  
   if (plot.out) {
     print(p3)
   }
-
+  
   # Optionally save the plot ---------------------
-
+  
   if (!is.null(plot.file)) {
     tmp <- utils.plot.save(p3,
-      dir = plot.dir,
-      file = plot.file,
-      verbose = verbose
+                           dir = plot.dir,
+                           file = plot.file,
+                           verbose = verbose
     )
   }
-
+  
   # FLAG SCRIPT END
-
+  
   if (verbose >= 1) {
     cat(report("Completed:", funname, "\n"))
   }
-
+  
   return(invisible(Q_list))
 }
