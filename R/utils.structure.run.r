@@ -29,12 +29,33 @@
 #' run} } } }
 
 utils.structure.run <- function(g,
-                                k.range = NULL,
-                                num.k.rep = 1,
-                                label = NULL,
+                                k.range,
+                                num.k.rep,
+                                label,
                                 delete.files = TRUE,
-                                exec = "structure",
-                                ...) {
+                                exec,
+                                burnin,
+                                numreps,
+                                noadmix,
+                                freqscorr,
+                                randomize,
+                                seed,
+                                pop.prior,
+                                locpriorinit,
+                                maxlocprior,
+                                gensback,
+                                migrprior,
+                                pfrompopflagonly,
+                                popflag,
+                                inferalpha,
+                                alpha,
+                                unifprioralpha,
+                                alphamax,
+                                alphapriora,
+                                alphapriorb
+                                # ,
+                                # ...
+                                ) {
   ################################################################
 
   .structureParseQmat <- function(q.mat.txt,
@@ -409,7 +430,29 @@ utils.structure.run <- function(g,
   )
 
   out.files <- lapply(rownames(rep.df), function(x) {
-    sw.out <- structureWrite(g, label = x, maxpops = rep.df[x, "k"], ...)
+    sw.out <- structureWrite(g, 
+                             label = x, 
+                             maxpops = rep.df[x, "k"],
+                             burnin = burnin,
+                             numreps = numreps,
+                             noadmix = noadmix,
+                             freqscorr = freqscorr,
+                             randomize = randomize,
+                             seed = seed,
+                             pop.prior = pop.prior,
+                             locpriorinit = locpriorinit,
+                             maxlocprior = maxlocprior,
+                             gensback = gensback,
+                             migrprior = migrprior,
+                             pfrompopflagonly = pfrompopflagonly,
+                             popflag = popflag,
+                             inferalpha = inferalpha,
+                             alpha = alpha,
+                             unifprioralpha = unifprioralpha,
+                             alphamax = alphamax,
+                             alphapriora = alphapriora,
+                             alphapriorb = alphapriorb
+                             )
 
     files <- sw.out$files
     cmd <- paste0(

@@ -6,11 +6,31 @@
 \usage{
 gl.run.structure(
   x,
-  ...,
-  exec = ".",
+  exec = "./structure",
+  k.range = NULL,
+  num.k.rep = 1,
+  burnin = 1000,
+  numreps = 1000,
+  noadmix = TRUE,
+  freqscorr = FALSE,
+  randomize = TRUE,
+  seed = 0,
+  pop.prior = NULL,
+  locpriorinit = 1,
+  maxlocprior = 20,
+  gensback = 2,
+  migrprior = 0.05,
+  pfrompopflagonly = TRUE,
+  popflag = NULL,
+  inferalpha = FALSE,
+  alpha = 1,
+  unifprioralpha = TRUE,
+  alphamax = 20,
+  alphapriora = 0.05,
+  alphapriorb = 0.001,
   plot.out = TRUE,
   plot_theme = theme_dartR(),
-  plot.dir = NULL,
+  plot.dir = tempdir(),
   plot.file = NULL,
   verbose = NULL
 )
@@ -18,19 +38,73 @@ gl.run.structure(
 \arguments{
 \item{x}{Name of the genlight object containing the SNP data [required].}
 
-\item{...}{Parameters to specify the STRUCTURE run (check \code{structureRun}
- within strataG.
-for more details). Parameters are passed to the \code{structureRun} function.
-For example you need to set the k.range and the type of model you would like
-to run (noadmix, locprior) etc. If those parameter names do not tell you
-anything, please make sure you familiarize with the STRUCTURE program
-(Pritchard 2000).}
-
 \item{exec}{Full path and name+extension where the structure executable is
 located. E.g. \code{'c:/structure/structure.exe'} under Windows. For Mac and
 Linux it might be something like \code{'./structure/structure'} if the
 executable is in a subfolder 'structure' in your home directory
 [default working directory "."].}
+
+\item{k.range}{Range of the number of populations [required].}
+
+\item{num.k.rep}{Number of replicates [default 1].}
+
+\item{burnin}{Number of iterations for MCMC burnin [default 1000].}
+
+\item{numreps}{Number of MCMC replicates [default 1000].}
+
+\item{noadmix}{Logical. No admixture? [default TRUE].}
+
+\item{freqscorr}{Logical. Correlated frequencies? [default FALSE].}
+
+\item{randomize}{Randomize [default TRUE].}
+
+\item{seed}{Set random seed [default 0].}
+
+\item{pop.prior}{A character specifying which population prior model to use:
+"locprior" or "usepopinfo" [default NULL].}
+
+\item{locpriorinit}{Parameterizes locprior parameter r - how informative the
+populations are. Only used when pop.prior = "locprior" [default 1].}
+
+\item{maxlocprior}{Specifies range of locprior parameter r. Only used when 
+pop.prior = "locprior" [default 20].}
+
+\item{gensback}{Integer defining the number of generations back to test for 
+immigrant ancestry. Only used when pop.prior = "usepopinfo" [default 2].}
+
+\item{migrprior}{Numeric between 0 and 1 listing migration prior. Only used 
+when pop.prior = "usepopinfo" [default 0.05].}
+
+\item{pfrompopflagonly}{Logical. update allele frequencies from individuals 
+specified by popflag. Only used when pop.prior = "usepopinfo" [default TRUE].}
+
+\item{popflag}{A vector of integers (0, 1) or logicals identifiying whether 
+or not to use strata information. Only used when pop.prior = "usepopinfo"
+ [default NULL].}
+
+\item{inferalpha}{Logical. Infer the value of the model parameter # from the 
+data; otherwise is fixed at the value alpha which is chosen by the user. 
+This option is ignored under the NOADMIX model. Small alpha implies that 
+most individuals are essentially from one population or another, while 
+alpha > 1 implies that most individuals are admixed [default FALSE].}
+
+\item{alpha}{Dirichlet parameter for degree of admixture. This is the 
+initial value if inferalpha = TRUE [default 1].}
+
+\item{unifprioralpha}{Logical. Assume a uniform prior for alpha which runs 
+between 0 and alphamax. This model seems to work fine; the alternative model
+ (when unfprioralpha = 0) is to take alpha as having a Gamma prior, with 
+ mean alphapriora × alphapriorb, and variance alphapriora × alphapriorb^2 
+ [default TRUE].}
+
+\item{alphamax}{Maximum for uniform prior on alpha when 
+unifprioralpha = TRUE [default 20].}
+
+\item{alphapriora}{Parameters of Gamma prior on alpha when 
+unifprioralpha = FALSE [default 0.05].}
+
+\item{alphapriorb}{Parameters of Gamma prior on alpha when 
+unifprioralpha = FALSE [default 0.001].}
 
 \item{plot.out}{Create an Evanno plot once finished. Be aware k.range needs
 to be at least three different k steps [default TRUE].}
@@ -41,10 +115,15 @@ to be at least three different k steps [default TRUE].}
 \item{plot.dir}{Directory to save the plot RDS files [default as specified 
 by the global working directory or tempdir()]}
 
-\item{plot.file}{Name for the RDS binary file to save (base name only, exclude extension) [default NULL]}
+\item{plot.file}{Name for the RDS binary file to save (base name only, 
+exclude extension) [default NULL]}
 
 \item{verbose}{Set verbosity for this function (though structure output
-cannot be switched off currently) [default NULL]}
+cannot be switched off currently) [default NULL].}
+
+\item{...}{Parameters to specify the STRUCTURE run (check 
+\code{structureRun}
+ within strataG.}
 }
 \value{
 An sr object (structure.result list output). Each list entry is a
@@ -63,6 +142,11 @@ functions from \code{strataG}
 The function is basically a convenient wrapper around the beautiful
 strataG function \code{structureRun} (Archer et al. 2016). For a detailed
 description please refer to this package (see references below).
+
+Before running STRUCTURE, we suggest reading its manual (see link below) and 
+the literature in mentioned in the references section. 
+ 
+https://web.stanford.edu/group/pritchardlab/structure_software/release_versions/v2.3.4/structure_doc.pdf
 To make use of this function you need to download STRUCTURE for you system
 (\bold{non GUI version}) from here
 \href{https://web.stanford.edu/group/pritchardlab/structure_software/release_versions/v2.3.4/html/structure.html}{STRUCTURE}.
@@ -108,6 +192,15 @@ population structure using multilocus genotype data. Genetics 155, 945-959.
 \item Archer, F. I., Adams, P. E. and Schneiders, B. B. (2016) strataG: An R
 package for manipulating, summarizing and analysing population genetic data.
  Mol Ecol Resour. doi:10.1111/1755-0998.12559
+\item Wang, Jinliang. "The computer program structure for assigning 
+individuals to populations: easy to use but easier to misuse." Molecular
+ ecology resources 17.5 (2017): 981-990.
+\item Lawson, Daniel J., Lucy Van Dorp, and Daniel Falush. "A tutorial on 
+how not to over-interpret STRUCTURE and ADMIXTURE bar plots." Nature
+ communications 9.1 (2018): 3258.
+\item Porras-Hurtado, Liliana, et al. "An overview of STRUCTURE: 
+applications, parameter settings, and supporting software." Frontiers in
+ genetics 4 (2013): 98.
 }
 }
 \author{
