@@ -81,6 +81,7 @@
 #' gl.map.structure(qmat, K=3, bc, scalex=1, scaley=0.5)
 #' }
 #' @export
+#' @importFrom ggdendro ggdendrogram
 #' @seealso \code{gl.run.structure}, \code{gl.plot.structure}
 #' @references
 #' \itemize{

@@ -1,6 +1,37 @@
-#' Runs epos on a genlight/dartR object
-#' 
-#' This is an implementation/wrapper to run epos \url{https://github.com/EvolBioInf/epos}. It relies on a compiled version of epos, epos2plot and if a bootstrap output is required bootSfs. For more details on how to install these programs check \url{https://github.com/EvolBioInf/epos} and look out for the manual epos.pdf (in the doc folder of the repository \url{https://github.com/EvolBioInf/epos/blob/master/doc/epos.pdf}. The binaries need to be provided in a single folder and can be downloaded via the gl.install.binary function. There are compiled versions available and also the necessary dlls for windows need to be provided (Under Linux gls, blas need to be installed on your system). There is currently no binary for MacOS available.
+#' Run EPOS for Inference of Historical Population-Size Changes
+#'
+#' This function runs EPOS (based on Lynch et al. 2019) to estimate historical population-size
+#' \url{https://github.com/EvolBioInf/epos}. It relies on a compiled version of the software
+#'  epos, epos2plot and if a bootstrap output is required bootSfs. For more information on the 
+#'  approach check the publication (Lynch at al. 2019), the github repository 
+#'  \url{https://github.com/EvolBioInf/epos} and look out for the manual epos.pdf 
+#'  (\url{https://github.com/EvolBioInf/epos/blob/master/doc/epos.pdf}. 
+#' The binaries need to be provided in a single folder and can be downloaded via the 
+#' \link[dartRverse]{gl.download.binary} function (including the necessary dlls for windows; under Linux gls, blas need to be installed on your system). Please note: if you use this method, make sure you cite the original publication in your work.
+#' EPOS (Estimation of Population Size changes) is a software tool developed based on the theoretical framework outlined by Lynch et al. (2019). It is designed to infer historical changes in population size using allele-frequency data obtained from population-genomic surveys. Below is a brief summary of the main concepts of EPOS:\cr\cr
+#' EPOS (Estimation of Population Size changes) is a software tool that infers historical 
+#' changes in population size using allele-frequency data from population-genomic surveys. 
+#' The method relies on the site-frequency spectrum (SFS) of nearly neutral polymorphisms.
+#' The underlying theory uses coalescence models, which describe how gene sequences have
+#' originated from a common ancestor. By analyzing the probability distributions of the
+#' starting and ending points of branch segments over all possible coalescence trees, 
+#' EPOS can estimate historic population sizes.\cr
+#' The function uses a model-flexible approach, meaning it estimates historic population 
+#' sizes, without the necessity to provide a candidate scenario. An efficient statistical
+#' procedure is employed, to estimate historic effective population sizes.\cr
+#'  For all the possible settings, please refer to the manual of EPOS. \cr
+#'  The main parameters that are necessary to run the function are a genlight/dartR object,
+#' L (length of sequences), u (mutation rate), and the path to the epos binaries.
+#' For details check the example below.\cr
+#' Please note: There is currently not really a good way to estimate L, the length 
+#' of all sequences. Often users of dart data use the number of loci multiplied 
+#' by 69, but this is definitely an underestimate as monomorphic loci need to be 
+#' included (also the length of the restriction site should be added for each loci).
+#' For mutation rate u, the default value is set to 5e-9, but should be adapted 
+#' to the species of interest. The good news is, that settings of L and mu affects 
+#' only the axis of the inferred history, but not the shape of the history. 
+#' So users can infer the shape, but need to be careful with a temporal interpretation 
+#' as both x and y axis are affected by the mutation rate and L.
 #' @param x dartR/genlight object
 #' @param epos.path path to epos and other required programs (epos, epos2plot are always required and bootSfs in case a bootstrap and confidence estimate is required )
 #' @param sfs if no sfs is provided function gl.sfs(x, minbinsize=1, singlepop=TRUE) is used to calculate the sfs that is provided to epos 
@@ -30,16 +61,24 @@
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 #' progress log; 3, progress and results summary; 5, full report
 #' [default 2, unless specified using gl.set.verbosity].
-#' @return returns a table of the Ne over time and a ggplot using estimate of times
-#' and Ne (see epos.doc)
+#' @return returns a list with two components: 
+#' \itemize{
+#' \item{history: Ne estimates of over generations (generation, median, low and high)} 
+#' \item{plot: a ggplot of history }
+#' }
 #' @export
 #' @examples 
+#' \dontrun{
+#' #gl.download.binary("epos",os="windows")
 #' require(dartR.data)
-#' gl.epos(possums.gl[1:60,])
-#' gl.msfs(possums.gl[c(1:5,31:33),], minbinsize=1)
-#'@references Lynch M, Haubold B, Pfaffelhuber P, Maruki T. Inference of Historical
-#' Population-Size Changes with Allele-Frequency Data. G3 (Bethesda). 2020 Jan 7;10(1):211-223. doi: 10.1534/g3.119.400854. PMID: 31699776; PMCID: PMC6945023.
-#'@author Custodian: Bernd Gruber
+#' epos <- gl.run.epos(possums.gl, epos.path = file.path(tempdir(),"epos"), L=1e5, u = 1e-8)
+#' epos$history
+#' }
+#' 
+#' 
+#'@references Lynch, Michael, Bernhard Haubold, Peter Pfaffelhuber, and Takahiro Maruki. 2019. Inference of Historical Population-Size Changes with Allele-Frequency Data. G3: Genes|Genomes|Genetics 10, no. 1: 211–23. \url{https://doi.org/10.1534/g3.119.400854}.
+#'@author Custodian: Bernd Gruber -- Post to 
+#'\url{https://groups.google.com/d/forum/dartr}
 
 
 gl.run.epos <- function(x,
