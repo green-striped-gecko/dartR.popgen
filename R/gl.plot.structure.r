@@ -315,7 +315,7 @@ gl.plot.structure <- function(sr,
     hcr <- hclust(distr)
     ddr <- as.dendrogram(hcr)
     ddr <- reorderfun(ddr, TRUE)
-    p_den <- ggdendrogram(ddr)
+    p_den <- ggdendro::ggdendrogram(ddr)
     rowInd <- order.dendrogram(ddr)
     rowInd_2 <- data.frame(Label=indNames(x)[rowInd])
     rowInd_2$order_d <- 1:nInd(x)

@@ -174,7 +174,7 @@ gl.run.epos <- function(x,
     writeLines(bsdummy,file.path(tempd,"bs.sfs"))
   }
   if (os=="linux") system("chmod 777 epos")
-  epdummy <- system(eposcmd, inter=T)
+  epdummy <- system(eposcmd, intern=TRUE)
   writeLines(epdummy,file.path(tempd,"ep.dat"))
   eposplotcmd <-"epos2plot ep.dat"
   if (os=="linux") system("chmod 777 epos2plot")

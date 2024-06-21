@@ -48,7 +48,8 @@
 #' @param xspacing spacing between x values for the plot. (default=2)
 #' @param yspacing spacing between y values for the plot. (default=2)
 #' @param fontsize the font size for the plot. (default=12)
-#' @param cleanup 
+#' @param cleanup logical. If TRUE, the stairway 2 plot output files are removed. 
+#' (default=TRUE)
 #' @param plot.display Specify if plot is to be produced [default TRUE].
 #' @param plot.theme User specified theme [default theme_dartR()].
 #' @param plot.dir Directory to save the plot RDS files [default as specified 
@@ -75,8 +76,9 @@
 #' #download binary, if not already installed, to tempdir()
 #' gl.download.binary(software="stairway2",os="windows")
 #' require(dartR.data)
-#' sw<- gl.run.stairway2(possums.gl, L=1e5, mu = 1e-9, stairway2.path = file.path(tempdir(),"stairway2"), 
-#' parallel=5, nreps = 10)
+#' sw<- gl.run.stairway2(possums.gl[1:50,1:100], L=1e5, mu = 1e-9, 
+#'            stairway2.path = file.path(tempdir(),"stairway2"), 
+#'            parallel=5, nreps = 10)
 #' head(sw$history)
 #' }
 
@@ -369,7 +371,7 @@ gl.run.stairway2 <-
         if (os=="windows") ff <- readLines(paste0(blueprint, ".bat"))
         if (os=="linux" | os=="darwin") ff <- readLines(paste0(blueprint, ".sh"))
         no_cores <- min(parallel, detectCores()-1)
-        future::plan(multisession, workers = no_cores)
+        future::plan(future::multisession, workers = no_cores)
         
         index = grep("Stairway_fold_training_testing7", ff)
         
@@ -427,7 +429,7 @@ gl.run.stairway2 <-
       if (!is.null(res)) 
       {
         
-      mutation_per_site <- n_estimation <- theta_per_site_median <- theta_per_site_2.5 <- theta_per_site_97.5 <- year <- Ne_median <- low_95 <- high_95 <- low75 <- high75 <- NULL
+      mutation_per_site <- n_estimation <- theta_per_site_median <- theta_per_site_2.5 <- theta_per_site_97.5 <- year <- Ne_median <- low95 <- high95 <- low75 <- high75 <- NULL
   
       colnames(res) <- c("mutation_per_site" ,"n_estimation", "theta_per_site_median", "theta_per_site_2.5","theta_per_site_97.5", "year" , "Ne_median" ,"low95" ,"high95"," low75" ,"high75")
       

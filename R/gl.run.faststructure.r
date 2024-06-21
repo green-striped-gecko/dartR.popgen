@@ -10,6 +10,7 @@
 #' @param num.k.rep Number of replicates [default 1].
 #' @param exec Full path and name+extension where the fastStructure executable
 #' is located [default working directory "./fastStructure"].
+#' @param exec.plink path to plink executable [default working directory].
 #' @param output Path to output file [default getwd()].
 #' @param tol Convergence criterion [default 10e-6].
 #' @param prior Choice of prior: simple or logistic [default "simple"].

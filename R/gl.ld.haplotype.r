@@ -743,7 +743,7 @@ gl.ld.haplotype <- function(x,
           snp_pos <- target_snp
           snp_fin[which(snp_fin$snp %in% target_snp),"colorL"] <- "red"
         }
-        
+        y<- NA
         p_pos <- ggplot(snp_fin, aes(x = order, y = y, group = snp)) +
           geom_line(color= snp_fin$colorL) +
           theme(

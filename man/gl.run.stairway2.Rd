@@ -93,7 +93,8 @@ blueprint files are created [might be useful to run on a cluster]. (default=FALS
 
 \item{fontsize}{the font size for the plot. (default=12)}
 
-\item{cleanup}{}
+\item{cleanup}{logical. If TRUE, the stairway 2 plot output files are removed. 
+(default=TRUE)}
 
 \item{plot.display}{Specify if plot is to be produced [default TRUE].}
 
@@ -141,8 +142,9 @@ as both x and y axis are affected by the mutation rate and L.
 #download binary, if not already installed, to tempdir()
 gl.download.binary(software="stairway2",os="windows")
 require(dartR.data)
-sw<- gl.run.stairway2(possums.gl, L=1e5, mu = 1e-9, stairway2.path = file.path(tempdir(),"stairway2"), 
-parallel=5, nreps = 10)
+sw<- gl.run.stairway2(possums.gl[1:50,1:100], L=1e5, mu = 1e-9, 
+           stairway2.path = file.path(tempdir(),"stairway2"), 
+           parallel=5, nreps = 10)
 head(sw$history)
 }
 }

@@ -63,9 +63,6 @@
 #' exclude extension) [default NULL]
 #' @param verbose Set verbosity for this function (though structure output
 #' cannot be switched off currently) [default NULL].
-#' @param ... Parameters to specify the STRUCTURE run (check 
-#' \code{structureRun}
-#'  within strataG.
 #' @details The function is basically a convenient wrapper around the beautiful
 #' strataG function \code{structureRun} (Archer et al. 2016). For a detailed
 #' description please refer to this package (see references below).
