@@ -90,7 +90,7 @@ This function runs EPOS (based on Lynch et al. 2019) to estimate historical popu
  \url{https://github.com/EvolBioInf/epos} and look out for the manual epos.pdf 
  (\url{https://github.com/EvolBioInf/epos/blob/master/doc/epos.pdf}. 
 The binaries need to be provided in a single folder and can be downloaded via the 
-\link[dartRverse]{gl.download.binary} function (including the necessary dlls for windows; under Linux gls, blas need to be installed on your system). Please note: if you use this method, make sure you cite the original publication in your work.
+\code{gl.download.binary} function (including the necessary dlls for windows; under Linux gls, blas need to be installed on your system). Please note: if you use this method, make sure you cite the original publication in your work.
 EPOS (Estimation of Population Size changes) is a software tool developed based on the theoretical framework outlined by Lynch et al. (2019). It is designed to infer historical changes in population size using allele-frequency data obtained from population-genomic surveys. Below is a brief summary of the main concepts of EPOS:\cr\cr
 EPOS (Estimation of Population Size changes) is a software tool that infers historical 
 changes in population size using allele-frequency data from population-genomic surveys. 
