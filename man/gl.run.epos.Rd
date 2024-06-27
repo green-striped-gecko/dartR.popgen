@@ -127,7 +127,7 @@ epos$history
 
 }
 \references{
-Lynch, Michael, Bernhard Haubold, Peter Pfaffelhuber, and Takahiro Maruki. 2019. Inference of Historical Population-Size Changes with Allele-Frequency Data. G3: Genes|Genomes|Genetics 10, no. 1: 211–23. \url{https://doi.org/10.1534/g3.119.400854}.
+Lynch, Michael, Bernhard Haubold, Peter Pfaffelhuber, and Takahiro Maruki. 2019. Inference of Historical Population-Size Changes with Allele-Frequency Data. G3: Genes|Genomes|Genetics 10, no. 1: 211–23. \doi{10.1534/g3.119.400854}.
 }
 \author{
 Custodian: Bernd Gruber -- Post to 

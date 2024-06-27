@@ -68,7 +68,7 @@
 #' @importFrom parallel detectCores
 #' @importFrom future plan
 #' @importFrom furrr future_map
-#' @references Liu, X., Fu, YX. Stairway Plot 2: demographic history inference with folded SNP frequency spectra. Genome Biol 21, 280 (2020). https://doi.org/10.1186/s13059-020-02196-9
+#' @references Liu, X., Fu, YX. Stairway Plot 2: demographic history inference with folded SNP frequency spectra. Genome Biol 21, 280 (2020). \doi{10.1186/s13059-020-02196-9}
 
 #' @export
 #' @examples

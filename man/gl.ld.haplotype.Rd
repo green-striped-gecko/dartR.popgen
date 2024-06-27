@@ -111,8 +111,8 @@ The output of the function includes a table with the haplotypes
 require("dartR.data")
 x <- platypus.gl
 x <- gl.filter.callrate(x, threshold = 1)
-# only the first 20 individuals because of speed during tests
-x <- gl.keep.pop(x, pop.list = "TENTERFIELD")[1:20, ]
+# only the first 15 individuals because of speed during tests
+x <- gl.keep.pop(x, pop.list = "TENTERFIELD")[1:15, ]
 x$chromosome <- as.factor(x$other$loc.metrics$Chrom_Platypus_Chrom_NCBIv1)
 x$position <- x$other$loc.metrics$ChromPos_Platypus_Chrom_NCBIv1
 ld_res <- gl.ld.haplotype(x,
