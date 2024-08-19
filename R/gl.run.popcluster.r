@@ -31,6 +31,7 @@
 #' @param relatedness Compute relatedness = 0=No, 1=Wang, 2=LynchRitland
 #' @param kinship Estimate kinship: 0=N, 1=Y 
 #' @param pr_allele_freq 0=Undefined, 1=equal, 2=unequal prior allele freq
+#' @param K number of K to be saved and plotted
 #' @return The reduced genlight object, if parentals are provided; output of
 #'  PopCluster is saved to the working directory.
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
@@ -59,13 +60,15 @@
 gl.run.popcluster <- function(gl, popcluster.path, filename, minK, maxK, 
                               rep, search_relate, allele_freq,PopData,PopFlag,
                               model, location, loc_admixture, relatedness, 
-                              kinship, pr_allele_freq, cleanup=TRUE, verbose=NULL) 
+                              kinship, pr_allele_freq, K, cleanup=TRUE, 
+                             # plot.display=TRUE,
+                             # plot.out = TRUE,
+                             # plot_theme = theme_dartR(),
+                             # plot.file = NULL,
+                              verbose=NULL) 
 {
   # SET VERBOSITY
   verbose <- gl.check.verbosity(verbose)
-  
-  # SET WORKING DIRECTORY
-  #plot.dir <- gl.check.wd(plot.dir,verbose=0)
   
   # FLAG SCRIPT START
   funname <- match.call()[[1]]
@@ -140,9 +143,11 @@ gl.run.popcluster <- function(gl, popcluster.path, filename, minK, maxK,
   
   
   #create parameter file
+  create_parameter<-file(paste0(popcluster.path, "/", filename,".popcluster",".PcPjt"))
   write.table(cbind(pillar::align(parameter,align="left"), paste0("!",parameter_name)), 
               paste0(popcluster.path, "/", filename,".popcluster",".PcPjt"),sep=" ",
               quote=F, col.names = F, row.names = F)
+  close(create_parameter)
   
   # check file existence
   progs <- c(popcluster_version, paste0(filename,".popcluster.PcPjt"), paste0(filename,".popcluster.dat"))
@@ -174,8 +179,17 @@ gl.run.popcluster <- function(gl, popcluster.path, filename, minK, maxK,
   #system("export DYLD_LIBRARY_PATH=/usr/local/opt/gcc/lib/gcc/11:/usr/local/homebrew/lib/gcc/14")
   system(paste0("./",popcluster_version, " INP:", paste0(filename,".popcluster.PcPjt")))
   
-  setwd(old.path)
+  # SET WORKING DIRECTORY
+  #plot.dir <- gl.check.wd(tempd,verbose=0)
+  #res <- read.delim(file.path(tempd,paste0(filename,".popcluster_K_", maxK, "_R_", rep)))
   
+  # Select file to save and plot later
+  file.copy(file.path(tempd, paste0(filename,".popcluster_K_", maxK, "_R_", rep)),
+            to = popcluster.path,
+            overwrite = F, recursive = TRUE)
+  
+  setwd(old.path)
   if (cleanup) unlink(tempd, recursive = T)
-  return(res)
+  #RETURN
+  #return(res)
 }
