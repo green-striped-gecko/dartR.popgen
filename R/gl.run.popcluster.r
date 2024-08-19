@@ -163,7 +163,7 @@ gl.run.popcluster <- function(gl, popcluster.path, filename, minK, maxK,
   
   #SET PATH TO RUN POPCLUSTER
   #system("export DYLD_LIBRARY_PATH=/usr/local/opt/gcc/lib/gcc/11:/usr/local/homebrew/lib/gcc/14")
-  system(paste0("./",popcluster_version, " INP:", paste0(filename,".PcPjt")))
+  system(paste0("./",popcluster_version, " INP:", paste0(filename,".popcluster.PcPjt")))
   
   setwd(old.path)
   
