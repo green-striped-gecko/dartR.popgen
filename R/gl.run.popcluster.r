@@ -96,7 +96,7 @@ gl.run.popcluster <- function(gl, popcluster.path, filename, minK, maxK,
               popcluster_version <- paste0("PopCluster", "Lnx") }} 
   
   
-  #TODO: create INPUT geno FILE
+  #TODO: create INPUT FILE
   genotype <- as.matrix(gl)
   genotype[is.na(genotype)] <- 3
   sample_name <- gl@ind.names
