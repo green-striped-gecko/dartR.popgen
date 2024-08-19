@@ -20,15 +20,17 @@
 #' @param filename file name of output data 
 #' @param minK Minimum K
 #' @param maxK Maximum K 
-#' @param rep Num replicate runs per K
-#' @param search_relate 0/1=Search using assignment_prob/relatedness"
-#' @param allele_freq 1/0=Output allele frequency:YES/NO
-#' @param model 1/2/3/4=Mixture/Admixture/Hybridyzation/Migration model
-#' @param location 1/0=Individual location data available=Y/N
-#' @param loc_admixture 1/0=Infer locus admixture=Y/N
-#' @param relatedness 0/1/2: Compute relatedness = No/Wang/LynchRitland
-#' @param kinship 0/1 estimate kinship = No/Yes
-#' @param pr_allele_freq 0/1/2=Undefined/equal/unequal prior allele freq
+#' @param rep Number of replicates runs per K
+#' @param search_relate Search using assignment_prob/relatedness: 0=N, 1=Y 
+#' @param allele_freq Output allele frequency: 0=N, 1=Y
+#' @param PopData PopData available: 0=N, 1=Y
+#' @param PopFlag PopFlag available: 0=N, 1=Y
+#' @param model 1=Mixture, 2=Admixture, 3=Hybridyzation, 4=Migration model
+#' @param location Individual location data available: 0=N, 1=Y 
+#' @param loc_admixture Infer locus admixture: 0=N, 1=Y 
+#' @param relatedness Compute relatedness = 0=No, 1=Wang, 2=LynchRitland
+#' @param kinship Estimate kinship: 0=N, 1=Y 
+#' @param pr_allele_freq 0=Undefined, 1=equal, 2=unequal prior allele freq
 #' @return The reduced genlight object, if parentals are provided; output of
 #'  PopCluster is saved to the working directory.
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
@@ -55,7 +57,7 @@
 
 
 gl.run.popcluster <- function(gl, popcluster.path, filename, minK, maxK, 
-                              rep, search_relate, allele_freq,
+                              rep, search_relate, allele_freq,PopData,PopFlag,
                               model, location, loc_admixture, relatedness, 
                               kinship, pr_allele_freq, cleanup=TRUE, verbose=NULL) 
 {
@@ -97,19 +99,26 @@ gl.run.popcluster <- function(gl, popcluster.path, filename, minK, maxK,
   sample_name <- gl@ind.names
   family <- gl@pop
   rownames(genotype) <- NULL
-  names <- data.frame(id = paste0(sample_name, " ",family))
+  if (location==1){
+    lat <- gl@other$latlon$lat
+    lon <- gl@other$latlon$lon } else if (location==0) {
+      lat <- NULL
+      lon <- NULL
+    }
+  names <- data.frame(id = paste0(sample_name, " ",family, " ", lat, " ", lon))
   names2 <- apply(names, 1, paste0, collapse = " ")
   genotype2 <- apply(genotype, 1, paste0, collapse = "")
-  writeLines(capture.output(
+ 
+   writeLines(capture.output(
     for (i in 1:nInd(gl)){
-    cat(names2[i],genotype2[i],sep = "\n")}),
+    cat(names2[i],genotype2[i], sep = "\n")}),
     con=paste0(popcluster.path, filename,".popcluster.dat"))
   
   # parameter from user input
   parameter <- c(nInd(platypus.gl), nLoc(platypus.gl),1, 3, 333,paste0(filename,".popcluster.dat") , 
                  paste0(filename,".popcluster"), 
                  0, minK, maxK, 
-                 rep, search_relate, allele_freq, 0, 0, 
+                 rep, search_relate, allele_freq, PopData, PopFlag, 
                  model, 1, 1, location, 1, loc_admixture, relatedness, kinship, pr_allele_freq)
   
   ## default parameter name
