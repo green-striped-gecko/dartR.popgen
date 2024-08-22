@@ -47,9 +47,9 @@
 #' \dontrun{
 #' m <- gl.run.popcluster(testset.gl, popcluster.path,
 #'   filename, minK, maxK, 
-#'   rep, search_relate, allele_freq,
+#'   rep, search_relate, allele_freq,PopData,PopFlag,
 #'   model, location, loc_admixture, relatedness,
-#'   kinship, pr_allele_freq, cleanup=TRUE, verbose=NULL
+#'   kinship, pr_allele_freq, K, cleanup=TRUE, verbose=NULL
 #' )
 #' }
 #' Wrapper function to run PopCluster
@@ -176,8 +176,9 @@ gl.run.popcluster <- function(gl, popcluster.path, filename, minK, maxK,
   }
   
   #SET PATH TO RUN POPCLUSTER
+  #Sys.setenv(DYLD_LIBRARY_PATH="/usr/local/opt/gcc/lib/gcc/11:/usr/local/homebrew/lib/gcc/14")
   #system("export DYLD_LIBRARY_PATH=/usr/local/opt/gcc/lib/gcc/11:/usr/local/homebrew/lib/gcc/14")
-  system(paste0("./",popcluster_version, " INP:", paste0(filename,".popcluster.PcPjt")))
+  system(paste0("/Users/chingchinglau/Documents/dartR/dartR_popgen_cc/PopCluster/Bin/",popcluster_version, " INP:", paste0(filename,".popcluster.PcPjt")))
   
   # SET WORKING DIRECTORY
   #plot.dir <- gl.check.wd(tempd,verbose=0)
