@@ -108,7 +108,7 @@ gl.plot.popcluster <- function(filename=NULL,
   dir.create(tempd, showWarnings = FALSE)
   
   write.table(best[(which(startsWith(best, "Inferred ancestry of individuals"))+2):
-                     (which(startsWith(best, "Inferred ancestry of individuals"))+1+nInd(gl))], 
+                     (which(startsWith(best, "Inferred ancestry of individuals"))+1+dartR.base::nInd(gl))], 
               paste0(tempd, "/", filename,".popcluster.Qmatrix"), 
               quote = F, row.names = F, col.names = F)
   
