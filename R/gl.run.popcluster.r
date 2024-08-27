@@ -204,5 +204,8 @@ gl.run.popcluster <- function(gl, popcluster.path, output.path, filename, minK, 
   setwd(old.path)
   res <- readLines(paste0(filename,".popcluster.K"))[0:maxK+1]
   write.table(res, paste0(filename,".popcluster.best_run_summary"), quote = F, row.names = F, col.names = F)
+ 
+  ev <- read.table(paste0(filename,".popcluster.best_run_summary"), header = T)
+  print(ggplot2::ggplot(ev, aes(K, LogL_Mean)) + geom_point() + geom_line())
   if (cleanup) unlink(tempd, recursive = T)
 }
