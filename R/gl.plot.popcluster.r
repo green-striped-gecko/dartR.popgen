@@ -31,7 +31,7 @@
 #'
 #' @details The function outputs a barplot which is the typical output of
 #'  PopCluster For a Evanno plot use gl.evanno.
-#'  Plots and table are saved to the working directory specified in plot.dir (tempdir )
+#'  Plots and table are saved to the working directory specified in plot.dir (tempdir)
 #'  if plot.file is set.
 #'
 #' Examples of other themes that can be used can be consulted in \itemize{
@@ -51,7 +51,18 @@
 #'   rep, search_relate, allele_freq,PopData,PopFlag,
 #'   model, location, loc_admixture, relatedness,
 #'   kinship, pr_allele_freq, cleanup=TRUE, verbose=NULL
-#' )}
+#' )
+#'gl.plot.popcluster <- function(filename=NULL,
+#'                               ind_name=F,
+#'                               bestK_file=NULL,
+#'                               border_ind=0.25,
+#'                               plot.K = NULL,
+#'                               plot_theme=NULL,
+#'                               k_name=NULL,
+#'                               plot.out=TRUE,
+#'                               plot.file=NULL,
+#'                               plot.dir=NULL,
+#'                               cleanup=TRUE)}
 #' @export
 #' @seealso \code{gl.run.popcluster}, \code{gl.plot.popcluster}
 #' @references
@@ -70,7 +81,8 @@ gl.plot.popcluster <- function(filename=NULL,
                               k_name=NULL,
                               plot.out=TRUE,
                               plot.file=NULL,
-                              plot.dir=NULL) {
+                              plot.dir=NULL,
+                              cleanup=TRUE) {
   
   # SET WORKING DIRECTORY
   plot.dir <- gl.check.wd(plot.dir, verbose = 0)
@@ -91,12 +103,16 @@ gl.plot.popcluster <- function(filename=NULL,
   summary <- read.table(paste0(filename,".popcluster.best_run_summary"), header = T)
   best_run_file <- summary[which(summary$K == plot.K),'BestRun']
   best <- readLines(best_run_file)
+  
+  tempd <-  tempfile(pattern = "dir")
+  dir.create(tempd, showWarnings = FALSE)
+  
   write.table(best[(which(startsWith(best, "Inferred ancestry of individuals"))+2):
                      (which(startsWith(best, "Inferred ancestry of individuals"))+1+nInd(gl))], 
-              paste0(filename,".popcluster.Qmatrix"), 
+              paste0(tempd, "/", filename,".popcluster.Qmatrix"), 
               quote = F, row.names = F, col.names = F)
   
-  Q <- read.table(paste0(filename,".popcluster.Qmatrix"))[,-6]
+  Q <- read.table(paste0(tempd, "/", filename,".popcluster.Qmatrix"))[,-6]
   colnames(Q) <- c("Index", "Order", "Label", "PercentMiss", "Pop", paste0("Pop_", seq(1, plot.K, by=1)))
   #Q$Pop <- "Species"
   Q_long <- tidyr::pivot_longer(Q, cols = starts_with("Pop_"), names_to = "K", values_to = "values")
@@ -149,7 +165,8 @@ gl.plot.popcluster <- function(filename=NULL,
   if (plot.out) {
     print(p3)
   }
- 
+  
+  if (cleanup) unlink(tempd, recursive = T)
   # Optionally save the plot ---------------------
   
   if (!is.null(plot.file)) {
