@@ -40,7 +40,7 @@
 #'  \url{https://yutannihilation.github.io/allYourFigureAreBelongToUs/ggthemes/}
 #'  }
 #'
-#' @return List of Q-matrices
+#' @return Q-matrix
 #'
 #' @author Ching Ching Lau (Post to \url{https://groups.google.com/d/forum/dartr})
 #'
