@@ -76,8 +76,10 @@
 #' @seealso \code{\link{gl.run.popcluster}},  \code{clumpp},
 #' \code{\link{gl.plot.popcluster}}
 #' @references
+#' \itemize{
 #' \item Wang, J. (2022). Fast and accurate population admixture inference 
 #' from genotype data from a few microsatellites to millions of SNPs. Heredity, 129(2), 79-92.
+#' 
 #' }
 
 gl.map.popcluster <- function(gl,
