@@ -177,7 +177,6 @@ gl.run.popcluster <- function(gl, popcluster.path, output.path, filename, minK, 
         "\n")
     stop()
   }
-#  popcluster.path <- tempd
   
   old.path <- getwd()
   setwd(tempd)
@@ -194,17 +193,13 @@ gl.run.popcluster <- function(gl, popcluster.path, output.path, filename, minK, 
   system(paste0("/Users/chingchinglau/Documents/dartR/dartR_popgen_cc/PopCluster/Bin/",popcluster_version, " INP:", paste0(filename,".popcluster.PcPjt")))
   
   # SET WORKING DIRECTORY
-  #plot.dir <- gl.check.wd(tempd,verbose=0)
-  #res <- read.delim(file.path(tempd,paste0(filename,".popcluster_K_", maxK, "_R_", rep)))
-  
   # Select file to save and plot later
   list_of_files <- list.files(tempd, filename) 
   file.copy(file.path(tempd, list_of_files),
             to = output.path,
             overwrite = F, recursive = TRUE)
-  
   setwd(old.path)
-  if (cleanup) unlink(tempd, recursive = T)
-  #RETURN
-  #return(res)
+  
+  res <- readLines(paste0(filename,".popcluster.K"))[0:maxK+1]
+  write.table(res, paste0(filename,".popcluster.best_run_summary"), quote = F, row.names = F, col.names = F)
 }
