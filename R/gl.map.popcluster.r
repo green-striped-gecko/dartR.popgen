@@ -71,7 +71,7 @@
 #' gl.map.popcluster(testset.gl,qmat,K=4, movepops=mp)
 #' }
 #' @export
-#' @seealso \code{\link{gl.run.popcluster}},  \code{clumpp},
+#' @seealso \code{\link{gl.run.popcluster}},
 #' \code{\link{gl.plot.popcluster}}
 #' @references
 #' \itemize{
