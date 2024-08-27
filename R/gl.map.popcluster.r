@@ -1,8 +1,8 @@
 #' @name gl.map.popcluster
 #' @title Maps a PopCluster plot using a genlight object
 #' @description
-#' This function takes the output of gl.plot.popcluster (the q matrix) and maps the
-#' q-matrix across using the population centers from the genlight object that
+#' This function takes the output of gl.plot.popcluster (the Q matrix) and maps the
+#' Q-matrix across using the population centers from the genlight object that
 #' was used to run the PopCluster analysis via \code{\link{gl.run.popcluster}})
 #' and plots the typical PopCluster bar plots on a spatial map, providing a
 #' barplot for each subpopulation. Therefore it requires coordinates from a
@@ -51,26 +51,24 @@
 #'   model, location, loc_admixture, relatedness,
 #'   kinship, pr_allele_freq, cleanup=TRUE, verbose=NULL
 #' )
-#' ev <- gl.evanno(sr)
-#' ev
-#' qmat <- gl.plot.popcluster <- function(gl=testset.gl,
-#'                               filename=NULL,
-#'                               ind_name=F,
-#'                               bestK_file=NULL,
-#'                               border_ind=0.25,
-#'                               plot.K = NULL,
-#'                               plot_theme=NULL,
-#'                               k_name=NULL,
-#'                               plot.out=TRUE,
-#'                               plot.file=NULL,
-#'                               plot.dir=NULL,
-#'                               cleanup=TRUE)
+#' qmat <- gl.plot.popcluster(gl=testset.gl,
+#'                            filename=NULL,
+#'                            ind_name=F,
+#'                            bestK_file=NULL,
+#'                            border_ind=0.25,
+#'                            plot.K = NULL,
+#'                            plot_theme=NULL,
+#'                            k_name=NULL,
+#'                            plot.out=TRUE,
+#'                            plot.file=NULL,
+#'                            plot.dir=NULL,
+#'                              cleanup=TRUE)
 #'                               
-#' gl.map.popcluster(qmat, bc,K=4)
+#' gl.map.popcluster(testset.gl, qmat,K=4)
 #' # move population 4 (out of 5) 0.5 degrees to the right and populations 1
 #' # 0.3 degree to the north of the map.
 #' mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
-#' gl.map.popcluster(qmat, bc,K=4, movepops=mp)
+#' gl.map.popcluster(testset.gl,qmat,K=4, movepops=mp)
 #' }
 #' @export
 #' @seealso \code{\link{gl.run.popcluster}},  \code{clumpp},
