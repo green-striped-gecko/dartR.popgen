@@ -37,8 +37,11 @@
 #' [default 2 or as specified using gl.set.verbosity].
 #' @export
 #' @importFrom pillar align
-#' @references Wang, J. (2022). Fast and accurate population admixture 
-#' inference from genotype data from a few microsatellites to millions of SNPs. Heredity, 129(2), 79-92.
+#' @references
+#' \itemize{
+#' \item Wang, J. (2022). Fast and accurate population admixture inference 
+#' from genotype data from a few microsatellites to millions of SNPs. Heredity, 129(2), 79-92.
+#' }
 #' @author Custodian: Ching Ching Lau -- Post to
 #'  \url{https://groups.google.com/d/forum/dartr}
 #' @examples
