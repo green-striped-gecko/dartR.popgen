@@ -4,11 +4,11 @@
 #'
 #' @description
 #' This function takes a structure run object (output from
-#'  \code{\link{gl.plot.popcluster}}) and plots the typical structure bar
-#'   plot that visualize the q matrix of a structure run.
+#'  \code{\link{gl.run.popcluster}}) and plots the typical structure bar
+#'   plot that visualize the Q matrix of a structure run.
 #'   
 #' @param gl genlight object for PopCluster [required].
-#' @param filename prefixe of run object from \code{\link{gl.run.popcluster}} [required].
+#' @param filename prefix of run object from \code{\link{gl.run.popcluster}} [required].
 #' @param plot.K The number for K of the q matrix that should be plotted. Needs to
 #'  be within you simulated range of K's in your sr structure run object. If
 #'  NULL, all the K's are plotted [default NULL].
@@ -31,8 +31,8 @@
 #'   NULL, unless specified using gl.set.verbosity]
 #'
 #' @details The function outputs a barplot which is the typical output of
-#'  PopCluster For a Evanno plot use gl.evanno.
-#'  Plots and table are saved to the working directory specified in plot.dir (tempdir)
+#'  PopCluster.
+#'  Plots and table are saved to the working directory specified in plot.dir
 #'  if plot.file is set.
 #'
 #' Examples of other themes that can be used can be consulted in \itemize{
@@ -47,7 +47,7 @@
 #' @examples
 #' # examples need structure to be installed on the system (see above)
 #' \dontrun{
-#' m <- gl.run.popcluster(testset.gl, popcluster.path,output.path,
+#'   gl.run.popcluster(testset.gl, popcluster.path,output.path,
 #'   filename, minK, maxK, 
 #'   rep, search_relate, allele_freq,PopData,PopFlag,
 #'   model, location, loc_admixture, relatedness,
