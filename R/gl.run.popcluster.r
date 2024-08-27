@@ -202,7 +202,7 @@ gl.run.popcluster <- function(gl, popcluster.path, output.path, filename, minK, 
             to = output.path,
             overwrite = F, recursive = TRUE)
   setwd(old.path)
-  
   res <- readLines(paste0(filename,".popcluster.K"))[0:maxK+1]
   write.table(res, paste0(filename,".popcluster.best_run_summary"), quote = F, row.names = F, col.names = F)
+  if (cleanup) unlink(tempd, recursive = T)
 }
