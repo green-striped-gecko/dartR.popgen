@@ -16,7 +16,7 @@
 #' @param color_clusters A color palette for clusters (K) or a list with
 #' as many colors as there are clusters (K) [default NULL].
 #' @param ind_name Whether to plot individual names [default TRUE].
-#' @param bestK_file the summary file with best run information. Example: XXXXXX.popcluster.best_run_summary
+#' @param input.dir Directory with PopCluster output and best run summary
 #' @param k_name Name of the structure plot to plot. It should be character
 #'  [default NULL].
 #' @param border_ind The width of the border line between individuals
@@ -54,7 +54,7 @@
 #' )
 #'gl.plot.popcluster <- function(filename=NULL,
 #'                               ind_name=F,
-#'                               bestK_file=NULL,
+#'                               input.dir="/Users/Documents/PopCluster/Results"
 #'                               border_ind=0.25,
 #'                               plot.K = NULL,
 #'                               plot_theme=NULL,
@@ -74,7 +74,7 @@
 
 gl.plot.popcluster <- function(filename=NULL,
                               ind_name=F,
-                              bestK_file=NULL,
+                              input.dir=NULL,
                               border_ind=0.25,
                               plot.K = NULL,
                               plot_theme=NULL,
@@ -100,9 +100,9 @@ gl.plot.popcluster <- function(filename=NULL,
   }
   
   # extract admixture analysis from best run
-  summary <- read.table(paste0(filename,".popcluster.best_run_summary"), header = T)
+  summary <- read.table(paste0(input.dir, paste0(filename, ".popcluster.best_run_summary")), header = T)
   best_run_file <- summary[which(summary$K == plot.K),'BestRun']
-  best <- readLines(best_run_file)
+  best <- readLines(paste0(input.dir, best_run_file))
   
   tempd <-  tempfile(pattern = "dir")
   dir.create(tempd, showWarnings = FALSE)
