@@ -148,7 +148,7 @@ gl.map.popcluster <- function(gl,
     names(out)[p] <- levels(bb$Pop_name)[p]
     qmi1 <- cbind(rep(0, nrow(qmi)), qmi)
     for (xx in 1:nrow(qmi1)) {
-      qmi1[xx, ] <- cumsum(as.numeric(qmi1[xx, ]))
+      qmi1[xx, -c(ncol(qmi1))] <- cumsum(as.numeric(qmi1[xx, -c(ncol(qmi1))]))
     }
 
 
