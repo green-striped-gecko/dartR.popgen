@@ -6,7 +6,8 @@
 #' This function takes a structure run object (output from
 #'  \code{\link{gl.plot.popcluster}}) and plots the typical structure bar
 #'   plot that visualize the q matrix of a structure run.
-#'
+#'   
+#' @param gl genlight object for PopCluster [required].
 #' @param filename prefixe of run object from \code{\link{gl.run.popcluster}} [required].
 #' @param plot.K The number for K of the q matrix that should be plotted. Needs to
 #'  be within you simulated range of K's in your sr structure run object. If
@@ -52,7 +53,8 @@
 #'   model, location, loc_admixture, relatedness,
 #'   kinship, pr_allele_freq, cleanup=TRUE, verbose=NULL
 #' )
-#'gl.plot.popcluster <- function(filename=NULL,
+#'gl.plot.popcluster <- function(testset.gl, 
+#'                               filename=NULL,
 #'                               ind_name=F,
 #'                               input.dir="/Users/Documents/PopCluster/Results"
 #'                               border_ind=0.25,
@@ -72,7 +74,8 @@
 #' 
 #' }
 
-gl.plot.popcluster <- function(filename=NULL,
+gl.plot.popcluster <- function(gl,
+                              filename=NULL,
                               ind_name=F,
                               input.dir=NULL,
                               border_ind=0.25,
