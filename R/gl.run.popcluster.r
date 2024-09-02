@@ -120,7 +120,7 @@ gl.run.popcluster <- function(gl, popcluster.path, output.path, filename, minK, 
     con=paste0(output.path, filename,".popcluster.dat"))
   
   # parameter from user input
-  parameter <- c(nInd(platypus.gl), nLoc(platypus.gl),1, 0, 333,paste0(filename,".popcluster.dat") , 
+  parameter <- c(nInd(gl), nlLoc(gl),1, 0, 333,paste0(filename,".popcluster.dat") , 
                  paste0(filename,".popcluster"), 
                  0, minK, maxK, 
                  rep, search_relate, allele_freq, PopData, PopFlag, 
