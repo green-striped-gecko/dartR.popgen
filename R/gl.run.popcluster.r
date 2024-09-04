@@ -203,7 +203,26 @@ gl.run.popcluster <- function(x, popcluster.path, output.path, filename, minK, m
   res <- readLines(paste0(output.path, filename,".popcluster.K"))[0:maxK+1]
   write.table(res, paste0(output.path, filename,".popcluster.best_run_summary"), quote = F, row.names = F, col.names = F)
  
-  ev <- read.table(paste0(output.path,filename,".popcluster.best_run_summary"), header = T)
-  print(ggplot2::ggplot(ev, aes(K, LogL_Mean)) + geom_point() + geom_line())
+  best_run <- read.table(paste0(output.path,filename,".popcluster.best_run_summary"), header = T)
+  plot.list <- list()
+  plot.list[[1]] <- ggplot2::ggplot(best_run, aes(K, LogL_Mean, group=1)) + geom_line() + geom_point(fill = "white", shape = 21,
+                    size = 3) + theme(axis.title.x = element_blank())
+  plot.list[[2]] <- ggplot2::ggplot(best_run, aes(K, DLK1, group=1)) + geom_line() + geom_point(fill = "white", shape = 21,
+                    size = 3) + theme(axis.title.x = element_blank())
+  plot.list[[3]] <- ggplot2::ggplot(best_run, aes(K, DLK2, group=1)) + geom_line() + geom_point(fill = "white", shape = 21,
+                    size = 3) + theme(axis.title.x = element_blank())
+  plot.list[[4]] <- ggplot2::ggplot(best_run, aes(K, FST.FIS, group=1)) + geom_line() + geom_point(fill = "white", shape = 21,
+                    size = 3) + theme(axis.title.x = element_blank())
+  
+  p <- plot.list %>% purrr::map(function(x) {
+    ggplot2::ggplot_gtable(ggplot2::ggplot_build(x))
+  })
+  maxWidth <- do.call(grid::unit.pmax, purrr::map(p, function(x) x$widths[2:3]))
+  for (i in 1:length(p)) p[[i]]$widths[2:3] <- maxWidth
+  p$bottom <- "K"
+  p$ncol <- 2
+  do.call(gridExtra::grid.arrange, p)
+  invisible(list(df = best_run, plots = plot.list))
+
   if (cleanup) unlink(tempd, recursive = T)
 }
