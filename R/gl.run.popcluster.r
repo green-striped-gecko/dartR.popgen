@@ -78,7 +78,7 @@ gl.run.popcluster <- function(gl, popcluster.path, output.path, filename, minK, 
   #                 verbosity = verbose)
   
   # CHECK DATATYPE
-  datatype <- utils.check.datatype(gl, verbose = verbose)
+  #datatype <- dartR.base::utils.check.datatype(gl, verbose = verbose)
   
   
   #create tempdir
@@ -98,7 +98,7 @@ gl.run.popcluster <- function(gl, popcluster.path, output.path, filename, minK, 
   
   
   #TODO: create INPUT FILE
-  genotype <- as.matrix(gl)
+  genotype <- as(gl, "matrix")
   genotype[is.na(genotype)] <- 3
   sample_name <- gl@ind.names
   family <- gl@pop
@@ -120,7 +120,7 @@ gl.run.popcluster <- function(gl, popcluster.path, output.path, filename, minK, 
     con=paste0(output.path, filename,".popcluster.dat"))
   
   # parameter from user input
-  parameter <- c(nInd(gl), nlLoc(gl),1, 0, 333,paste0(filename,".popcluster.dat") , 
+  parameter <- c(nInd(gl), nLoc(gl),1, 0, 333,paste0(filename,".popcluster.dat") , 
                  paste0(filename,".popcluster"), 
                  0, minK, maxK, 
                  rep, search_relate, allele_freq, PopData, PopFlag, 
@@ -202,10 +202,10 @@ gl.run.popcluster <- function(gl, popcluster.path, output.path, filename, minK, 
             to = output.path,
             overwrite = F, recursive = TRUE)
   setwd(old.path)
-  res <- readLines(paste0(filename,".popcluster.K"))[0:maxK+1]
-  write.table(res, paste0(filename,".popcluster.best_run_summary"), quote = F, row.names = F, col.names = F)
+  res <- readLines(paste0(output.path, filename,".popcluster.K"))[0:maxK+1]
+  write.table(res, paste0(output.path, filename,".popcluster.best_run_summary"), quote = F, row.names = F, col.names = F)
  
-  ev <- read.table(paste0(filename,".popcluster.best_run_summary"), header = T)
+  ev <- read.table(paste0(output.path,filename,".popcluster.best_run_summary"), header = T)
   print(ggplot2::ggplot(ev, aes(K, LogL_Mean)) + geom_point() + geom_line())
   if (cleanup) unlink(tempd, recursive = T)
 }
