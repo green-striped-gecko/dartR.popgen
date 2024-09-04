@@ -12,7 +12,7 @@
 #' -- ##########################################
 #'
 #'
-#'@param gl Name of the genlight object containing the SNP data [required].
+#'@param x Name of the genlight object containing the SNP data [required].
 # @param outfile Name of the file that will be the input file for PopCluster
 # [default popcluster.txt].
 #' @param popcluster.path absolute path to the directory that contain the PopCluster program 
@@ -46,11 +46,10 @@
 #'  \url{https://groups.google.com/d/forum/dartr}
 #' @examples
 #' \dontrun{
-#' m <- gl.run.popcluster(testset.gl, popcluster.path,output.path,
-#'   filename, minK, maxK, 
-#'   rep, search_relate, allele_freq,PopData,PopFlag,
-#'   model, location, loc_admixture, relatedness,
-#'   kinship, pr_allele_freq, cleanup=TRUE, verbose=NULL
+#' m <- gl.run.popcluster(x=testset.gl, popcluster.path="/User/PopCluster/Bin/",
+#' output.path=/User/Documents/Output/,
+#'   filename="prefix", minK=1, maxK=3, 
+#'   rep=10, PopDate=1, location=1
 #' )
 #' }
 #' Wrapper function to run PopCluster
@@ -58,7 +57,7 @@
 #' @export 
 
 
-gl.run.popcluster <- function(gl, popcluster.path, output.path, filename, minK, maxK, 
+gl.run.popcluster <- function(x, popcluster.path, output.path, filename, minK, maxK, 
                               rep, search_relate=0, allele_freq=1,PopData, PopFlag=0,
                               model=2, location, loc_admixture, relatedness=0, 
                               kinship=0, pr_allele_freq=2, cleanup=TRUE, 
@@ -78,7 +77,7 @@ gl.run.popcluster <- function(gl, popcluster.path, output.path, filename, minK, 
   #                 verbosity = verbose)
   
   # CHECK DATATYPE
-  #datatype <- dartR.base::utils.check.datatype(gl, verbose = verbose)
+  datatype <- dartR.base::utils.check.datatype(x, verbose = verbose)
   
   
   #create tempdir
@@ -98,14 +97,14 @@ gl.run.popcluster <- function(gl, popcluster.path, output.path, filename, minK, 
   
   
   #TODO: create INPUT FILE
-  genotype <- as(gl, "matrix")
+  genotype <- as(x, "matrix")
   genotype[is.na(genotype)] <- 3
-  sample_name <- gl@ind.names
-  family <- gl@pop
+  sample_name <- x@ind.names
+  family <- x@pop
   rownames(genotype) <- NULL
   if (location==1){
-    lat <- gl@other$latlon$lat
-    lon <- gl@other$latlon$lon 
+    lat <- x@other$latlon$lat
+    lon <- x@other$latlon$lon 
     names <- data.frame(id = paste0(sample_name, " ",family, " ",PopFlag, " ", lat, " ", lon))} else if (location==0) {
       lat <- NULL
       lon <- NULL
@@ -115,12 +114,12 @@ gl.run.popcluster <- function(gl, popcluster.path, output.path, filename, minK, 
   genotype2 <- apply(genotype, 1, paste0, collapse = "")
  
    writeLines(capture.output(
-    for (i in 1:nInd(gl)){
+    for (i in 1:nInd(x)){
     cat(names2[i],genotype2[i], sep = "\n")}),
     con=paste0(output.path, filename,".popcluster.dat"))
   
   # parameter from user input
-  parameter <- c(nInd(gl), nLoc(gl),1, 0, 333,paste0(filename,".popcluster.dat") , 
+  parameter <- c(nInd(x), nLoc(x),1, 0, 333,paste0(filename,".popcluster.dat") , 
                  paste0(filename,".popcluster"), 
                  0, minK, maxK, 
                  rep, search_relate, allele_freq, PopData, PopFlag, 
@@ -191,9 +190,8 @@ gl.run.popcluster <- function(gl, popcluster.path, output.path, filename, minK, 
   }
   
   #SET PATH TO RUN POPCLUSTER
-  #Sys.setenv(DYLD_LIBRARY_PATH="/usr/local/opt/gcc/lib/gcc/11:/usr/local/homebrew/lib/gcc/14")
   #system("export DYLD_LIBRARY_PATH=/usr/local/opt/gcc/lib/gcc/11:/usr/local/homebrew/lib/gcc/14")
-  system(paste0("/Users/chingchinglau/Documents/dartR/dartR_popgen_cc/PopCluster/Bin/",popcluster_version, " INP:", paste0(filename,".popcluster.PcPjt")))
+  system(paste0(popcluster.path,popcluster_version, " INP:", paste0(filename,".popcluster.PcPjt")))
   
   # SET WORKING DIRECTORY
   # Select file to save and plot later
