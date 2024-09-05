@@ -47,24 +47,14 @@
 #' @examples
 #' # examples need structure to be installed on the system (see above)
 #' \dontrun{
-#'   gl.run.popcluster(testset.gl, popcluster.path,output.path,
-#'   filename, minK, maxK, 
-#'   rep, search_relate, allele_freq,PopData,PopFlag,
-#'   model, location, loc_admixture, relatedness,
-#'   kinship, pr_allele_freq, cleanup=TRUE, verbose=NULL
+#' m <- gl.run.popcluster(x=testset.gl, popcluster.path="/User/PopCluster/Bin/",
+#' output.path=/User/Documents/Output/,
+#'   filename="prefix", minK=1, maxK=3, 
+#'   rep=10, PopData=1, location=1
 #' )
-#'gl.plot.popcluster <- function(testset.gl, 
-#'                               filename=NULL,
-#'                               ind_name=F,
-#'                               input.dir="/Users/Documents/PopCluster/Results"
-#'                               border_ind=0.25,
-#'                               plot.K = NULL,
-#'                               plot_theme=NULL,
-#'                               k_name=NULL,
-#'                               plot.out=TRUE,
-#'                               plot.file=NULL,
-#'                               plot.dir=NULL,
-#'                               cleanup=TRUE)}
+#'gl.plot.popcluster(testset.gl, filename=NULL, ind_name=F, input.dir="/Users/Documents/PopCluster/Results"
+#'                               border_ind=0.25, plot.K = NULL, plot_theme=NULL, color_clusters=NULL,
+#'                               k_name=NULL, plot.out=TRUE, plot.file=NULL, plot.dir=NULL, cleanup=TRUE)}
 #' @export
 #' @seealso \code{gl.run.popcluster}, \code{gl.plot.popcluster}
 #' @references
