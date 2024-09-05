@@ -88,16 +88,15 @@ gl.run.popcluster <- function(x, popcluster.path, output.path, filename, minK, m
   # check OS
   os <- Sys.info()['sysname'] 
   if (os == "Windows") {
-    if (verbose == 2) {
-      popcluster_version <- paste0("PopCluster", "Win")}} else if (os == "Darwin"){
-        if (verbose == 2) {
-          popcluster_version <- paste0("PopCluster", "Mac")}} else if (os == "Linux") {
-            if (verbose == 2) {
-              popcluster_version <- paste0("PopCluster", "Lnx") }} 
+    
+      popcluster_version <- paste0("PopCluster", "Win.exe")} else if (os == "Darwin"){
+    
+          popcluster_version <- paste0("PopCluster", "Mac")} else if (os == "Linux") {
+              popcluster_version <- paste0("PopCluster", "Lnx") }
   
   
   #TODO: create INPUT FILE
-  genotype <- as(x, "matrix")
+  genotype <- as.matrix.genlight(x)
   genotype[is.na(genotype)] <- 3
   sample_name <- x@ind.names
   family <- x@pop
@@ -116,7 +115,7 @@ gl.run.popcluster <- function(x, popcluster.path, output.path, filename, minK, m
    writeLines(capture.output(
     for (i in 1:nInd(x)){
     cat(names2[i],genotype2[i], sep = "\n")}),
-    con=paste0(output.path, filename,".popcluster.dat"))
+    con=file.path(output.path, paste0(filename,".popcluster.dat")))
   
   # parameter from user input
   parameter <- c(nInd(x), nLoc(x),1, 0, 333,paste0(filename,".popcluster.dat") , 
@@ -155,7 +154,7 @@ gl.run.popcluster <- function(x, popcluster.path, output.path, filename, minK, m
   #create parameter file
   create_parameter<-file(paste0(output.path, filename,".popcluster",".PcPjt"))
   write.table(cbind(pillar::align(parameter,align="left"), paste0("!",parameter_name)), 
-              paste0(output.path, filename,".popcluster",".PcPjt"),sep=" ",
+              file.path(output.path, paste0(filename,".popcluster",".PcPjt")),sep=" ",
               quote=F, col.names = F, row.names = F)
   close(create_parameter)
   
@@ -169,8 +168,8 @@ gl.run.popcluster <- function(x, popcluster.path, output.path, filename, minK, m
               to = tempd,
               overwrite = TRUE, recursive = TRUE)
     file.copy(file.path(output.path, input_file),
-              to = tempd,
-              overwrite = TRUE, recursive = TRUE)
+             to = tempd,
+          overwrite = TRUE, recursive = TRUE)
   } else{
     cat("  Cannot find",
         progs[!fex],
@@ -200,10 +199,10 @@ gl.run.popcluster <- function(x, popcluster.path, output.path, filename, minK, m
             to = output.path,
             overwrite = F, recursive = TRUE)
   setwd(old.path)
-  res <- readLines(paste0(output.path, filename,".popcluster.K"))[0:maxK+1]
-  write.table(res, paste0(output.path, filename,".popcluster.best_run_summary"), quote = F, row.names = F, col.names = F)
+  res <- readLines(file.path(output.path, paste0(filename,".popcluster.K")))[0:maxK+1]
+  write.table(res, file.path(output.path, paste0(filename,".popcluster.best_run_summary")), quote = F, row.names = F, col.names = F)
  
-  best_run <- read.table(paste0(output.path,filename,".popcluster.best_run_summary"), header = T)
+  best_run <- read.table(file.path(output.path,paste0(filename,".popcluster.best_run_summary")), header = T)
   plot.list <- list()
   plot.list[[1]] <- ggplot2::ggplot(best_run, aes(K, LogL_Mean, group=1)) + geom_line() + geom_point(fill = "white", shape = 21,
                     size = 3) + theme(axis.title.x = element_blank())
@@ -213,6 +212,7 @@ gl.run.popcluster <- function(x, popcluster.path, output.path, filename, minK, m
                     size = 3) + theme(axis.title.x = element_blank())
   plot.list[[4]] <- ggplot2::ggplot(best_run, aes(K, FST.FIS, group=1)) + geom_line() + geom_point(fill = "white", shape = 21,
                     size = 3) + theme(axis.title.x = element_blank())
+  names(plot.list) <- c("LogL_Mean", "DLK1", "DLK2", "FST.FIS")
   
   p <- plot.list %>% purrr::map(function(x) {
     ggplot2::ggplot_gtable(ggplot2::ggplot_build(x))
@@ -222,7 +222,7 @@ gl.run.popcluster <- function(x, popcluster.path, output.path, filename, minK, m
   p$bottom <- "K"
   p$ncol <- 2
   do.call(gridExtra::grid.arrange, p)
-  invisible(list(df = best_run, plots = plot.list))
+  return(list(df = best_run, plots = plot.list))
 
   if (cleanup) unlink(tempd, recursive = T)
 }

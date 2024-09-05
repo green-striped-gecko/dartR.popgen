@@ -103,19 +103,19 @@ gl.plot.popcluster <- function(gl,
   }
   
   # extract admixture analysis from best run
-  summary <- read.table(paste0(input.dir, paste0(filename, ".popcluster.best_run_summary")), header = T)
+  summary <- read.table(file.path(input.dir, paste0(filename, ".popcluster.best_run_summary")), header = T)
   best_run_file <- summary[which(summary$K == plot.K),'BestRun']
-  best <- readLines(paste0(input.dir, best_run_file))
+  best <- readLines(file.path(input.dir, best_run_file))
   
   tempd <-  tempfile(pattern = "dir")
   dir.create(tempd, showWarnings = FALSE)
   
   write.table(best[(which(startsWith(best, "Inferred ancestry of individuals"))+2):
                      (which(startsWith(best, "Inferred ancestry of individuals"))+1+nInd(gl))], 
-              paste0(tempd, "/", filename,".popcluster.Qmatrix"), 
+              file.path(tempd, paste0(filename,".popcluster.Qmatrix")), 
               quote = F, row.names = F, col.names = F)
   
-  Q <- read.table(paste0(tempd, "/", filename,".popcluster.Qmatrix"))[,-6]
+  Q <- read.table(file.path(tempd, paste0( filename,".popcluster.Qmatrix")))[,-6]
   colnames(Q) <- c("Index", "Order", "Label", "PercentMiss", "Pop", paste0("Pop_", seq(1, plot.K, by=1)))
   #Q$Pop <- "Species"
   Q_long <- tidyr::pivot_longer(Q, cols = starts_with("Pop_"), names_to = "K", values_to = "values")
