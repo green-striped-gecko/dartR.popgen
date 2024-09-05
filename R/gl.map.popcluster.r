@@ -51,20 +51,11 @@
 #'   model, location, loc_admixture, relatedness,
 #'   kinship, pr_allele_freq, cleanup=TRUE, verbose=NULL
 #' )
-#' qmat <- gl.plot.popcluster(gl=testset.gl,
-#'                            filename=NULL,
-#'                            ind_name=F,
-#'                            bestK_file=NULL,
-#'                            border_ind=0.25,
-#'                            plot.K = NULL,
-#'                            plot_theme=NULL,
-#'                            k_name=NULL,
-#'                            plot.out=TRUE,
-#'                            plot.file=NULL,
-#'                            plot.dir=NULL,
-#'                              cleanup=TRUE)
+#' Q <- #'gl.plot.popcluster(testset.gl, filename=NULL, ind_name=F, input.dir="/Users/Documents/PopCluster/Results"
+#'                               border_ind=0.25, plot.K = NULL, plot_theme=NULL, color_clusters=NULL,
+#'                               k_name=NULL, plot.out=TRUE, plot.file=NULL, plot.dir=NULL, cleanup=TRUE)
 #'                               
-#' gl.map.popcluster(testset.gl, qmat,K=4)
+#' gl.map.popcluster(testset.gl, Q,K=4)
 #' # move population 4 (out of 5) 0.5 degrees to the right and populations 1
 #' # 0.3 degree to the north of the map.
 #' mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
