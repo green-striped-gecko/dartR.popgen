@@ -91,7 +91,7 @@ gl.map.popcluster <- function(gl,
                              pop.labels = TRUE,
                              pop.labels.cex = 12) {
 
-  ff <- Q[, which(grepl("Pop_", colnames(Q)))]
+  ff <- qmat[, which(grepl("Pop_", colnames(qmat)))]
 
   df <- gl@other$latlon
   centers <-
@@ -111,7 +111,7 @@ gl.map.popcluster <- function(gl,
     centers[, 2] <- centers[, 2] + movepops[, 2]
   }
   
-  Q_name <- left_join(Q, data.frame(Label=gl$ind.names, Pop_name=gl$pop))
+  Q_name <- left_join(qmat, data.frame(Label=gl$ind.names, Pop_name=gl$pop))
   
   sc <-
     match(rownames(centers), levels(factor(Q_name$Pop_name)))
