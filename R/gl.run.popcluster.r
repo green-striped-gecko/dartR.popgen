@@ -49,7 +49,7 @@
 #' m <- gl.run.popcluster(x=testset.gl, popcluster.path="/User/PopCluster/Bin/",
 #' output.path=/User/Documents/Output/,
 #'   filename="prefix", minK=1, maxK=3, 
-#'   rep=10, PopDate=1, location=1
+#'   rep=10, PopData=1, location=1
 #' )
 #' }
 #' Wrapper function to run PopCluster
@@ -59,7 +59,7 @@
 
 gl.run.popcluster <- function(x, popcluster.path, output.path, filename, minK, maxK, 
                               rep, search_relate=0, allele_freq=1,PopData, PopFlag=0,
-                              model=2, location, loc_admixture, relatedness=0, 
+                              model=2, location, loc_admixture=1, relatedness=0, 
                               kinship=0, pr_allele_freq=2, cleanup=TRUE, 
                              # plot.display=TRUE,
                              # plot.out = TRUE,
