@@ -110,6 +110,7 @@ gl.plot.popcluster <- function(gl,
   
   Q <- read.table(file.path(tempd, paste0( filename,".popcluster.Qmatrix")))[,-6]
   colnames(Q) <- c("Index", "Order", "Label", "PercentMiss", "Pop", paste0("Pop_", seq(1, plot.K, by=1)))
+  Q$Label <- as.character(Q$Label)
   #Q$Pop <- "Species"
   Q_long <- tidyr::pivot_longer(Q, cols = starts_with("Pop_"), names_to = "K", values_to = "values")
   
