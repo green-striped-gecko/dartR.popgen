@@ -88,9 +88,7 @@ gl.run.popcluster <- function(x, popcluster.path, output.path, filename, minK, m
   # check OS
   os <- Sys.info()['sysname'] 
   if (os == "Windows") {
-    
       popcluster_version <- paste0("PopCluster", "Win.exe")} else if (os == "Darwin"){
-    
           popcluster_version <- paste0("PopCluster", "Mac")} else if (os == "Linux") {
               popcluster_version <- paste0("PopCluster", "Lnx") }
   
