@@ -152,7 +152,7 @@ gl.run.popcluster <- function(x, popcluster.path, output.path, filename, minK, m
   
   
   #create parameter file
-  create_parameter<-file(paste0(output.path, filename,".popcluster",".PcPjt"))
+  create_parameter<-file(file.path(output.path, paste0(filename,".popcluster",".PcPjt")))
   write.table(cbind(pillar::align(parameter,align="left"), paste0("!",parameter_name)), 
               file.path(output.path, paste0(filename,".popcluster",".PcPjt")),sep=" ",
               quote=F, col.names = F, row.names = F)
