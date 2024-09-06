@@ -75,7 +75,8 @@ gl.plot.popcluster <- function(gl,
                               plot.out=TRUE,
                               plot.file=NULL,
                               #plot.dir=NULL,
-                              cleanup=TRUE) {
+                              cleanup=TRUE,
+                              verbose=5) {
   
   # SET WORKING DIRECTORY
   #plot.dir <- gl.check.wd(plot.dir, verbose = 0)
