@@ -9,13 +9,11 @@
 #'  genlight object. This kind of plots should support the interpretation of the
 #'   spatial PopCluster of a population, but in principle is not different from
 #'   \code{\link{gl.plot.popcluster}}
-#' @param gl genlight object for PopCluster [required].
+#' @param x Name of the genlight object containing the coordinates in the
+#'  \code{\@other$latlon} slot to calculate the population centers [required].
 #' @param qmat Q-matrix from a gl.plot.popcluster
 #' [from \code{\link{gl.run.popcluster}} and \code{\link{gl.plot.popcluster}}]
 #'  [required].
-#' @param x Name of the genlight object containing the coordinates in the
-#'  \code{\@other$latlon} slot to calculate the population centers [required].
-#' @param plot.K The number for K to be plotted [required].
 #' @param provider Provider	passed to leaflet. Check \link[leaflet]{providers}
 #' for a list of possible backgrounds [default "Esri.NatGeoWorldMap"].
 #' @param scalex Scaling factor to determine the size of the bars in x direction
@@ -45,21 +43,17 @@
 #' @examples
 #' # examples need popcluster to be installed on the system
 #' \dontrun{
-#' m <- gl.run.popcluster(testset.gl, popcluster.path,output.path,
-#'   filename, minK, maxK, 
-#'   rep, search_relate, allele_freq,PopData,PopFlag,
-#'   model, location, loc_admixture, relatedness,
-#'   kinship, pr_allele_freq, cleanup=TRUE, verbose=NULL
-#' )
-#' Q <- #'gl.plot.popcluster(testset.gl, filename=NULL, ind_name=F, input.dir="/Users/Documents/PopCluster/Results"
-#'                               border_ind=0.25, plot.K = NULL, plot_theme=NULL, color_clusters=NULL,
-#'                               k_name=NULL, plot.out=TRUE, plot.file=NULL, plot.dir=NULL, cleanup=TRUE)
-#'                               
-#' gl.map.popcluster(testset.gl, Q,K=4)
+#' m <- gl.run.popcluster(x=testset.gl, popcluster.path="/User/PopCluster/Bin/",
+#' output.path=/User/Documents/Output/,
+#'   filename="prefix", minK=1, maxK=3, 
+#'   rep=10, PopData=1, location=1)
+#' Q <- gl.plot.popcluster(x=testset.gl, filename="prefix", input.dir="/Users/Documents/PopCluster/Results"
+#'                               plot.K = NULL, color_clusters=NULL)
+#' gl.map.popcluster(x = testset.gl, qmat = Q)
 #' # move population 4 (out of 5) 0.5 degrees to the right and populations 1
 #' # 0.3 degree to the north of the map.
 #' mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
-#' gl.map.popcluster(testset.gl,qmat,K=4, movepops=mp)
+#' gl.map.popcluster(testset.gl, qmat=Q ,K=4, movepops=mp)
 #' }
 #' @export
 #' @seealso \code{\link{gl.run.popcluster}},
@@ -71,10 +65,8 @@
 #' 
 #' }
 
-gl.map.popcluster <- function(gl,
+gl.map.popcluster <- function(x,
                              qmat,
-                             x,
-                             K,
                              provider = "Esri.NatGeoWorldMap",
                              scalex = 1,
                              scaley = 1,
@@ -84,10 +76,10 @@ gl.map.popcluster <- function(gl,
 
   ff <- qmat[, which(grepl("Pop_", colnames(qmat)))]
 
-  df <- gl@other$latlon
+  df <- x@other$latlon
   centers <-
     apply(df, 2, function(xx) {
-      tapply(xx, pop(gl), mean, na.rm = TRUE)
+      tapply(xx, pop(x), mean, na.rm = TRUE)
     })
 
   if (!is.null(movepops)) {
@@ -102,7 +94,7 @@ gl.map.popcluster <- function(gl,
     centers[, 2] <- centers[, 2] + movepops[, 2]
   }
   
-  Q_name <- left_join(qmat, data.frame(Label=gl$ind.names, Pop_name=gl$pop))
+  Q_name <- left_join(qmat, data.frame(Label=x$ind.names, Pop_name=x$pop))
   
   sc <-
     match(rownames(centers), levels(factor(Q_name$Pop_name)))
