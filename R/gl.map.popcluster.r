@@ -94,7 +94,7 @@ gl.map.popcluster <- function(x,
     centers[, 2] <- centers[, 2] + movepops[, 2]
   }
   
-  Q_name <- left_join(qmat, data.frame(Label=x$ind.names, Pop_name=x$pop))
+  Q_name <- left_join(qmat, data.frame(Label=as.character(x$ind.names), as.character(Pop_name=x$pop)))
   
   sc <-
     match(rownames(centers), levels(factor(Q_name$Pop_name)))
