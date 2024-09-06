@@ -52,9 +52,8 @@
 #'   filename="prefix", minK=1, maxK=3, 
 #'   rep=10, PopData=1, location=1
 #' )
-#'gl.plot.popcluster(testset.gl, filename=NULL, ind_name=F, input.dir="/Users/Documents/PopCluster/Results"
-#'                               border_ind=0.25, plot.K = NULL, plot_theme=NULL, color_clusters=NULL,
-#'                               k_name=NULL, plot.out=TRUE, plot.file=NULL, plot.dir=NULL, cleanup=TRUE)}
+#'gl.plot.popcluster(testset.gl, filename=NULL, input.dir="/Users/Documents/PopCluster/Results",
+#'                               plot.K = NULL, color_clusters=NULL)}
 #' @export
 #' @seealso \code{gl.run.popcluster}, \code{gl.plot.popcluster}
 #' @references
@@ -72,14 +71,17 @@ gl.plot.popcluster <- function(gl,
                               plot.K = NULL,
                               plot_theme=NULL,
                               k_name=NULL,
+                              color_clusters=NULL,
                               plot.out=TRUE,
                               plot.file=NULL,
-                              plot.dir=NULL,
+                              #plot.dir=NULL,
                               cleanup=TRUE) {
   
   # SET WORKING DIRECTORY
-  plot.dir <- gl.check.wd(plot.dir, verbose = 0)
+  #plot.dir <- gl.check.wd(plot.dir, verbose = 0)
   
+  # SET VERBOSITY
+  verbose <- gl.check.verbosity(verbose)
   # FLAG SCRIPT START
   funname <- match.call()[[1]]
   utils.flag.start(
