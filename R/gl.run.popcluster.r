@@ -161,20 +161,30 @@ gl.run.popcluster <- function(x, popcluster.path, output.path, filename, minK, m
   fex <- file.exists(file.path(popcluster.path, popcluster_version))
   fex2 <- file.exists(file.path(output.path, input_file))
   
-  if (all(fex) & all(fex2)) {
+  if (all(fex)) {
     file.copy(file.path(popcluster.path, popcluster_version),
               to = tempd,
               overwrite = TRUE, recursive = TRUE)
-    file.copy(file.path(output.path, input_file),
-             to = tempd,
-          overwrite = TRUE, recursive = TRUE)
-  } else{
+  } else {
     cat("  Cannot find",
-        progs[!fex],
+        popcluster_version[!fex],
         "in the specified folder given by popcluster.path:",
         popcluster.path,
         "\n")
     stop()
+  }
+  
+  if (all(fex2)) { 
+    file.copy(file.path(output.path, input_file),
+              to = tempd,
+              overwrite = TRUE, recursive = TRUE)
+  } else {
+      cat("  Cannot find",
+          input_file,
+          "in the specified folder given by output.path:",
+          output.path,
+          "\n")
+      stop()
   }
   
   old.path <- getwd()
@@ -182,13 +192,13 @@ gl.run.popcluster <- function(x, popcluster.path, output.path, filename, minK, m
   on.exit(setwd(old.path))
   if (os=="Linux"|os=="Darwin") {
     system(paste0("chmod 777", " ", popcluster_version))
-    system(paste0("chmod 777", " ", paste0(filename,".popcluster.Pcpjt")))
-           system(paste0("chmod 777", " ", paste0(filename,".popcluster.dat")))
+    system(paste0("chmod 777", " ", paste0(filename,".popcluster.PcPjt")))
+    system(paste0("chmod 777", " ", paste0(filename,".popcluster.dat")))
   }
   
   #SET PATH TO RUN POPCLUSTER
   #system("export DYLD_LIBRARY_PATH=/usr/local/opt/gcc/lib/gcc/11:/usr/local/homebrew/lib/gcc/14")
-  system(paste0(file.path(popcluster.path,popcluster_version), " INP:", paste0(filename,".popcluster.PcPjt")))
+  system(paste0(file.path(tempd,popcluster_version), " INP:", paste0(filename,".popcluster.PcPjt")))
   
   # SET WORKING DIRECTORY
   # Select file to save and plot later
