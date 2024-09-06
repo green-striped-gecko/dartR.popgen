@@ -198,7 +198,7 @@ gl.run.popcluster <- function(x, popcluster.path, output.path, filename, minK, m
   
   #SET PATH TO RUN POPCLUSTER
   #system("export DYLD_LIBRARY_PATH=/usr/local/opt/gcc/lib/gcc/11:/usr/local/homebrew/lib/gcc/14")
-  system(paste0(file.path(tempd,popcluster_version), " INP:", file.path(tempd, paste0(filename,".popcluster.PcPjt"))))
+  system(paste0(file.path(tempd,popcluster_version), " INP:", paste0(filename,".popcluster.PcPjt")))
   
   # SET WORKING DIRECTORY
   # Select file to save and plot later
