@@ -65,7 +65,7 @@ gl.run.popcluster <- function(x, popcluster.path, output.path, filename, minK, m
                              # plot.out = TRUE,
                              # plot_theme = theme_dartR(),
                              # plot.file = NULL,
-                              verbose=NULL) 
+                              verbose=5) 
 {
   # SET VERBOSITY
   verbose <- gl.check.verbosity(verbose)
@@ -180,7 +180,7 @@ gl.run.popcluster <- function(x, popcluster.path, output.path, filename, minK, m
               overwrite = TRUE, recursive = TRUE)
   } else {
       cat("  Cannot find",
-          input_file,
+          input_file[!fex2],
           "in the specified folder given by output.path:",
           output.path,
           "\n")
@@ -198,7 +198,7 @@ gl.run.popcluster <- function(x, popcluster.path, output.path, filename, minK, m
   
   #SET PATH TO RUN POPCLUSTER
   #system("export DYLD_LIBRARY_PATH=/usr/local/opt/gcc/lib/gcc/11:/usr/local/homebrew/lib/gcc/14")
-  system(paste0(file.path(tempd,popcluster_version), " INP:", paste0(filename,".popcluster.PcPjt")))
+  system(paste0(file.path(tempd,popcluster_version), " INP:", file.path(tempd, paste0(filename,".popcluster.PcPjt"))))
   
   # SET WORKING DIRECTORY
   # Select file to save and plot later
