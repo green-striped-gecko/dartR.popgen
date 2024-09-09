@@ -261,6 +261,9 @@ gl.run.popcluster <- function(x, popcluster.path=NULL, output.path=NULL, filenam
         Q_final <- Q[,-6]
         colnames(Q_final) <- c("Index", "Order", "Label", "PercentMiss", "Pop", 
                                paste0("Pop_", seq(1, ncol(Q_final)-5, by=1)))
+        Q_final$Label <- as.character(Q_final$Label)
+        Q_final$Pop <- as.character(Q_final$Pop)
+        Q_final$Pop <- "Species"
         Q_matrices$i <- Q_final
       }
     }
