@@ -243,8 +243,7 @@ gl.run.popcluster <- function(x, popcluster.path=NULL, output.path=NULL, filenam
     p$bottom <- "K"
     p$ncol <- 2
     do.call(gridExtra::grid.arrange, p)
-    return(list(path=output.path, df = best_run_file, plots = plot.list))
-    
+    names(plot.list) <- c("LogL_Mean", "DLK1", "DLK2", "FST.FIS")
     #extract admixture analysis from best run
     #best_run <- best_run_file[which(best_run_file$K == plot.K),'BestRun']
     for (i in best_run_file$BestRun){
@@ -261,11 +260,9 @@ gl.run.popcluster <- function(x, popcluster.path=NULL, output.path=NULL, filenam
       }
       Q_matrices$i <- Q_final
     }
-  ########################
-  
-  return(list(df = best_run_file, plots = plot.list), Q_matrices)
-  
-  ####################
+
+  # reture all Q matrices and best run summary  
+  return(list(output_path=output.path, best_run = best_run_file, plots = plot.list, matrix=Q_matrices))
   setwd(old.path)
   if (cleanup) unlink(tempd, recursive = T)
 }
