@@ -121,7 +121,7 @@ gl.plot.popcluster <- function(gl,
   }
   
   p3 <- ggplot(Q_long, aes_(x = ~ factor(Order), y = ~values, fill = ~K)) +
-    geom_col(color = "black", size = 0.15, width = 1, position = "fill") +
+    geom_col(size = 0.15, width = 1, position = "fill")+
     facet_grid( ~ Pop, scales = "free", space = "free") +
     scale_y_continuous(expand = c(0, 0)) +
     scale_x_discrete(
