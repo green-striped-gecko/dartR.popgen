@@ -57,9 +57,9 @@
 #' @export 
 
 
-gl.run.popcluster <- function(x, popcluster.path, output.path, filename, minK, maxK, 
-                              rep, search_relate=0, allele_freq=1,PopData, PopFlag=0,
-                              model=2, location, loc_admixture=1, relatedness=0, 
+gl.run.popcluster <- function(x, popcluster.path=NULL, output.path=NULL, filename=NULL, minK=NULL, maxK=NULL, 
+                              rep=NULL, search_relate=0, allele_freq=1,PopData=NULL, PopFlag=0,
+                              model=2, location=NULL, loc_admixture=1, relatedness=0, 
                               kinship=0, pr_allele_freq=2, cleanup=TRUE, 
                              # plot.display=TRUE,
                              # plot.out = TRUE,
