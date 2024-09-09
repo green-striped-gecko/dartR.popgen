@@ -107,6 +107,7 @@ gl.run.popcluster <- function(x, popcluster.path=NULL, output.path=NULL, filenam
       lon <- NULL
       names <- data.frame(id = paste0(sample_name, " ",family, " ",PopFlag))
     }
+  
   names2 <- apply(names, 1, paste0, collapse = " ")
   genotype2 <- apply(genotype, 1, paste0, collapse = "")
  
@@ -115,7 +116,7 @@ gl.run.popcluster <- function(x, popcluster.path=NULL, output.path=NULL, filenam
     cat(names2[i],genotype2[i], sep = "\n")}),
     con=file.path(output.path, paste0(filename,".popcluster.dat")))
   
-  # parameter from user input
+  # PARAMETER from user input
   parameter <- c(nInd(x), nLoc(x),1, 0, 333,paste0(filename,".popcluster.dat") , 
                  paste0(filename,".popcluster"), 
                  0, minK, maxK, 
@@ -149,14 +150,14 @@ gl.run.popcluster <- function(x, popcluster.path=NULL, output.path=NULL, filenam
                       "Integer, 0/1/2=Undefined/equal/unequal prior allele freq")
   
   
-  #create parameter file
+  #create PARAMETER FILE
   create_parameter<-file(file.path(output.path, paste0(filename,".popcluster",".PcPjt")))
   write.table(cbind(pillar::align(parameter,align="left"), paste0("!",parameter_name)), 
               file.path(output.path, paste0(filename,".popcluster",".PcPjt")),sep=" ",
               quote=F, col.names = F, row.names = F)
   close(create_parameter)
   
-  # check file existence
+  # check input files existence
   input_file <- c(paste0(filename,".popcluster.PcPjt"), paste0(filename,".popcluster.dat"))
   fex <- file.exists(file.path(popcluster.path, popcluster_version))
   fex2 <- file.exists(file.path(output.path, input_file))
@@ -196,41 +197,75 @@ gl.run.popcluster <- function(x, popcluster.path=NULL, output.path=NULL, filenam
     system(paste0("chmod 777", " ", paste0(filename,".popcluster.dat")))
   }
   
-  #SET PATH TO RUN POPCLUSTER
+  #RUN POPCLUSTER
   #system("export DYLD_LIBRARY_PATH=/usr/local/opt/gcc/lib/gcc/11:/usr/local/homebrew/lib/gcc/14")
   system(paste0(file.path(tempd,popcluster_version), " INP:", paste0(filename,".popcluster.PcPjt")))
   
-  # SET WORKING DIRECTORY
-  # Select file to save and plot later
-  list_of_files <- list.files(tempd, filename) 
-  file.copy(file.path(tempd, list_of_files),
-            to = output.path,
-            overwrite = F, recursive = TRUE)
-  setwd(old.path)
-  res <- readLines(file.path(output.path, paste0(filename,".popcluster.K")))[0:maxK+1]
-  write.table(res, file.path(output.path, paste0(filename,".popcluster.best_run_summary")), quote = F, row.names = F, col.names = F)
- 
-  best_run <- read.table(file.path(output.path,paste0(filename,".popcluster.best_run_summary")), header = T)
-  plot.list <- list()
-  plot.list[[1]] <- ggplot2::ggplot(best_run, aes(K, LogL_Mean, group=1)) + geom_line() + geom_point(fill = "white", shape = 21,
-                    size = 3) + theme(axis.title.x = element_blank())
-  plot.list[[2]] <- ggplot2::ggplot(best_run, aes(K, DLK1, group=1)) + geom_line() + geom_point(fill = "white", shape = 21,
-                    size = 3) + theme(axis.title.x = element_blank())
-  plot.list[[3]] <- ggplot2::ggplot(best_run, aes(K, DLK2, group=1)) + geom_line() + geom_point(fill = "white", shape = 21,
-                    size = 3) + theme(axis.title.x = element_blank())
-  plot.list[[4]] <- ggplot2::ggplot(best_run, aes(K, FST.FIS, group=1)) + geom_line() + geom_point(fill = "white", shape = 21,
-                    size = 3) + theme(axis.title.x = element_blank())
-  names(plot.list) <- c("LogL_Mean", "DLK1", "DLK2", "FST.FIS")
-  
-  p <- plot.list %>% purrr::map(function(x) {
-    ggplot2::ggplot_gtable(ggplot2::ggplot_build(x))
-  })
-  maxWidth <- do.call(grid::unit.pmax, purrr::map(p, function(x) x$widths[2:3]))
-  for (i in 1:length(p)) p[[i]]$widths[2:3] <- maxWidth
-  p$bottom <- "K"
-  p$ncol <- 2
-  do.call(gridExtra::grid.arrange, p)
-  return(list(df = best_run, plots = plot.list))
+  # Summarise best run and likelihood
+  res <- readLines(con <- file(file.path(output.path, paste0(filename,".popcluster.K"))), n=maxK+1)[-1]
+  close(con)
+  res2 <- str_split(gsub('\"', "", res)," ")
+  for (i in 1:length(res2)) {
+    res2[[i]][which(res2[[i]]=="")] <- NA
+    res2[[i]] <- na.omit(res2[[i]])
+  }
 
+  K <- BestRun <- LogL_Mean <- LogL_Min <- LogL_Max <- DLK1 <- DLK2 <- FST.FIS <- c()
+  for (i in 1:length(res2)) {
+    K <- append(K, values = res2[[i]][1], after = length(K))
+    BestRun <- append(BestRun, values = res2[[i]][2], after = length(BestRun))
+    LogL_Mean <- append(LogL_Mean, values = res2[[i]][3], after = length(LogL_Mean))
+    LogL_Min <- append(LogL_Min, values = res2[[i]][4], after = length(LogL_Min))
+    LogL_Max <- append(LogL_Max, values = res2[[i]][5], after = length(LogL_Max))
+    DLK1 <- append(DLK1, values = res2[[i]][6], after = length(DLK1))
+    DLK2 <- append(DLK2, values = res2[[i]][7], after = length(DLK2))
+    FST.FIS <- append(FST.FIS, values = res2[[i]][8], after = length(FST.FIS))
+    }
+    best_run_file <- data.frame(K, BestRun, LogL_Mean, LogL_Min, LogL_Max, DLK1, DLK2, FST.FIS)
+    #write.table(best_run_file, file.path(output.path, paste0(filename,".popcluster.best_run_summary")), quote = F, row.names = F, col.names = T)
+   
+    plot.list <- list()
+    plot.list[[1]] <- ggplot2::ggplot(best_run_file, aes(K, LogL_Mean, group=1)) + geom_line() + geom_point(fill = "white", shape = 21,
+                                                                                                       size = 3) + theme(axis.title.x = element_blank())
+    plot.list[[2]] <- ggplot2::ggplot(best_run_file, aes(K, DLK1, group=1)) + geom_line() + geom_point(fill = "white", shape = 21,
+                                                                                                  size = 3) + theme(axis.title.x = element_blank())
+    plot.list[[3]] <- ggplot2::ggplot(best_run_file, aes(K, DLK2, group=1)) + geom_line() + geom_point(fill = "white", shape = 21,
+                                                                                                  size = 3) + theme(axis.title.x = element_blank())
+    plot.list[[4]] <- ggplot2::ggplot(best_run_file, aes(K, FST.FIS, group=1)) + geom_line() + geom_point(fill = "white", shape = 21,
+                                                                                                     size = 3) + theme(axis.title.x = element_blank())
+    names(plot.list) <- c("LogL_Mean", "DLK1", "DLK2", "FST.FIS")
+    
+    p <- plot.list %>% purrr::map(function(x) {
+      ggplot2::ggplot_gtable(ggplot2::ggplot_build(x))
+    })
+    maxWidth <- do.call(grid::unit.pmax, purrr::map(p, function(x) x$widths[2:3]))
+    for (i in 1:length(p)) p[[i]]$widths[2:3] <- maxWidth
+    p$bottom <- "K"
+    p$ncol <- 2
+    do.call(gridExtra::grid.arrange, p)
+    return(list(path=output.path, df = best_run_file, plots = plot.list))
+    
+    #extract admixture analysis from best run
+    #best_run <- best_run_file[which(best_run_file$K == plot.K),'BestRun']
+    for (i in best_run_file$BestRun){
+      best <- readLines(con <- file(file.path(input.dir, i)))
+      close(con)
+      Q_raw <- str_split(best[(which(startsWith(best, "Inferred ancestry of individuals"))+2):
+           (which(startsWith(best, "Inferred ancestry of individuals"))+1+nInd(x))], " ")
+      for (i in 1:length(Q_raw)) {
+        Q_raw[[i]][which(Q_raw[[i]]=="")] <- NA
+        Q_raw[[i]] <- na.omit(Q_raw[[i]])
+        Q <- data.frame(rbind(Q, Q_raw[[i]]))
+        Q_final <- Q[,-6]
+        colnames(Q_final) <- c("Index", "Order", "Label", "PercentMiss", "Pop", paste0("Pop_", seq(1, ncol(Q_final)-5, by=1)))
+      }
+      Q_matrices$i <- Q_final
+    }
+  ########################
+  
+  return(list(df = best_run_file, plots = plot.list), Q_matrices)
+  
+  ####################
+  setwd(old.path)
   if (cleanup) unlink(tempd, recursive = T)
 }
