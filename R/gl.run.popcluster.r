@@ -253,7 +253,7 @@ gl.run.popcluster <- function(x, popcluster.path=NULL, output.path=NULL, filenam
       best <- readLines(con <- file(file.path(input.dir, i)))
       close(con)
       Q_raw <- str_split(best[(which(startsWith(best, "Inferred ancestry of individuals"))+2):
-           (which(startsWith(best, "Inferred ancestry of individuals"))+1+nInd(x))], " ")
+      (which(startsWith(best, "Inferred ancestry of individuals"))+1+nInd(x))], " ")
       for (j in 1:length(Q_raw)) {
         Q_raw[[j]][which(Q_raw[[j]]=="")] <- NA
         Q_raw[[j]] <- na.omit(Q_raw[[j]])
@@ -261,8 +261,7 @@ gl.run.popcluster <- function(x, popcluster.path=NULL, output.path=NULL, filenam
         Q_final <- Q[,-6]
         colnames(Q_final) <- c("Index", "Order", "Label", "PercentMiss", "Pop", 
                                paste0("Pop_", seq(1, ncol(Q_final)-5, by=1)))
-        Q_name <- as.character(sub(paste0(filename, ".popcluster_"),"", i))
-        Q_matrices$Q_name <- Q_final
+        Q_matrices$i <- Q_final
       }
     }
 
