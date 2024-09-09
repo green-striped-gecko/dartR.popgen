@@ -52,8 +52,7 @@
 #'   filename="prefix", minK=1, maxK=3, 
 #'   rep=10, PopData=1, location=1
 #' )
-#'gl.plot.popcluster(testset.gl, filename=NULL, input.dir="/Users/Documents/PopCluster/Results",
-#'                               plot.K = NULL, color_clusters=NULL)}
+#'gl.plot.popcluster(pop_cluster_result=m, plot.K = 3)}
 #' @export
 #' @seealso \code{gl.run.popcluster}, \code{gl.plot.popcluster}
 #' @references
@@ -63,10 +62,7 @@
 #' 
 #' }
 
-gl.plot.popcluster <- function(gl,
-                              filename=NULL,
-                              ind_name=F,
-                              input.dir=NULL,
+gl.plot.popcluster <- function(pop_cluster_result=NULL,
                               border_ind=0.25,
                               plot.K = NULL,
                               plot_theme=NULL,
@@ -96,26 +92,9 @@ gl.plot.popcluster <- function(gl,
   }
   
   # extract admixture analysis from best run
-  summary <- read.table(file.path(input.dir, paste0(filename, ".popcluster.best_run_summary")), header = T)
-  best_run_file <- summary[which(summary$K == plot.K),'BestRun']
-  best <- readLines(file.path(input.dir, best_run_file))
-  
-  tempd <-  tempfile(pattern = "dir")
-  dir.create(tempd, showWarnings = FALSE)
-  
-  write.table(best[(which(startsWith(best, "Inferred ancestry of individuals"))+2):
-                     (which(startsWith(best, "Inferred ancestry of individuals"))+1+nInd(gl))], 
-              file.path(tempd, paste0(filename,".popcluster.Qmatrix")), 
-              quote = F, row.names = F, col.names = F)
-  
-  Q <- read.table(file.path(tempd, paste0( filename,".popcluster.Qmatrix")))[,-6]
-  colnames(Q) <- c("Index", "Order", "Label", "PercentMiss", "Pop", paste0("Pop_", seq(1, plot.K, by=1)))
-  Q$Label <- as.character(Q$Label)
-  Q$Pop <- as.character(Q$Pop)
-  #Q$Pop <- "Species"
+  best_run <- pop_cluster_result$best_run[which(pop_cluster_result$best_run$K == plot.K),'BestRun']
+  Q <- pop_cluster_result$matrix$best_run
   Q_long <- tidyr::pivot_longer(Q, cols = starts_with("Pop_"), names_to = "K", values_to = "values")
-  
-  
   if (is.null(color_clusters)) {
     color_clusters <- gl.select.colors(ncolors = max(plot.K), verbose = 0)
   }
