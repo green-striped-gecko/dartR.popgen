@@ -209,8 +209,8 @@ gl.run.popcluster <- function(x, popcluster.path=NULL, output.path=NULL, filenam
     res2[[i]][which(res2[[i]]=="")] <- NA
     res2[[i]] <- na.omit(res2[[i]])
   }
-
-  K <- BestRun <- LogL_Mean <- LogL_Min <- LogL_Max <- DLK1 <- DLK2 <- FST.FIS <- c()
+  
+  K <- BestRun <- LogL_Mean <- LogL_Min <- LogL_Max <- DLK1 <- DLK2 <- FST.FIS <- NULL
   for (i in 1:length(res2)) {
     K <- append(K, values = res2[[i]][1], after = length(K))
     BestRun <- append(BestRun, values = res2[[i]][2], after = length(BestRun))
@@ -224,6 +224,7 @@ gl.run.popcluster <- function(x, popcluster.path=NULL, output.path=NULL, filenam
     best_run_file <- data.frame(K, BestRun, LogL_Mean, LogL_Min, LogL_Max, DLK1, DLK2, FST.FIS)
     #write.table(best_run_file, file.path(output.path, paste0(filename,".popcluster.best_run_summary")), quote = F, row.names = F, col.names = T)
    
+    # plot likelihood
     plot.list <- list()
     plot.list[[1]] <- ggplot2::ggplot(best_run_file, aes(K, LogL_Mean, group=1)) + geom_line() + geom_point(fill = "white", shape = 21,
                                                                                                        size = 3) + theme(axis.title.x = element_blank())
@@ -244,21 +245,25 @@ gl.run.popcluster <- function(x, popcluster.path=NULL, output.path=NULL, filenam
     p$ncol <- 2
     do.call(gridExtra::grid.arrange, p)
     names(plot.list) <- c("LogL_Mean", "DLK1", "DLK2", "FST.FIS")
+    
     #extract admixture analysis from best run
     #best_run <- best_run_file[which(best_run_file$K == plot.K),'BestRun']
+    Q_matrices <- NULL
     for (i in best_run_file$BestRun){
       best <- readLines(con <- file(file.path(input.dir, i)))
       close(con)
       Q_raw <- str_split(best[(which(startsWith(best, "Inferred ancestry of individuals"))+2):
            (which(startsWith(best, "Inferred ancestry of individuals"))+1+nInd(x))], " ")
-      for (i in 1:length(Q_raw)) {
-        Q_raw[[i]][which(Q_raw[[i]]=="")] <- NA
-        Q_raw[[i]] <- na.omit(Q_raw[[i]])
-        Q <- data.frame(rbind(Q, Q_raw[[i]]))
+      for (j in 1:length(Q_raw)) {
+        Q_raw[[j]][which(Q_raw[[j]]=="")] <- NA
+        Q_raw[[j]] <- na.omit(Q_raw[[j]])
+        Q <- data.frame(rbind(Q, Q_raw[[j]]))
         Q_final <- Q[,-6]
-        colnames(Q_final) <- c("Index", "Order", "Label", "PercentMiss", "Pop", paste0("Pop_", seq(1, ncol(Q_final)-5, by=1)))
+        colnames(Q_final) <- c("Index", "Order", "Label", "PercentMiss", "Pop", 
+                               paste0("Pop_", seq(1, ncol(Q_final)-5, by=1)))
+        Q_name <- as.character(sub(paste0(filename, ".popcluster_"),"", i))
+        Q_matrices$Q_name <- Q_final
       }
-      Q_matrices$i <- Q_final
     }
 
   # reture all Q matrices and best run summary  
