@@ -65,8 +65,8 @@
 #' 
 #' }
 
-gl.map.popcluster <- function(x,
-                             qmat,
+gl.map.popcluster <- function(x=NULL,
+                             qmat=NULL,
                              provider = "Esri.NatGeoWorldMap",
                              scalex = 1,
                              scaley = 1,
