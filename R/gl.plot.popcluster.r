@@ -52,7 +52,7 @@
 #'   filename="prefix", minK=1, maxK=3, 
 #'   rep=10, PopData=1, location=1
 #' )
-#'gl.plot.popcluster(pop_cluster_result=m, plot.K = 3)}
+#'gl.plot.popcluster(pop_cluster_result=m, plot.K = 3, ind_name=T)}
 #' @export
 #' @seealso \code{gl.run.popcluster}, \code{gl.plot.popcluster}
 #' @references
@@ -68,6 +68,7 @@ gl.plot.popcluster <- function(pop_cluster_result=NULL,
                               plot_theme=NULL,
                               k_name=NULL,
                               color_clusters=NULL,
+                              ind_name=T,
                               plot.out=TRUE,
                               plot.file=NULL,
                               #plot.dir=NULL,
@@ -93,7 +94,7 @@ gl.plot.popcluster <- function(pop_cluster_result=NULL,
   
   # extract admixture analysis from best run
   best_run <- pop_cluster_result$best_run[which(pop_cluster_result$best_run$K == plot.K),'BestRun']
-  Q <- pop_cluster_result$matrix$best_run
+  Q <- pop_cluster_result$matrix[best_run][[1]]
   Q_long <- tidyr::pivot_longer(Q, cols = starts_with("Pop_"), names_to = "K", values_to = "values")
   if (is.null(color_clusters)) {
     color_clusters <- gl.select.colors(ncolors = max(plot.K), verbose = 0)
