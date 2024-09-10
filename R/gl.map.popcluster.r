@@ -44,7 +44,7 @@
 #' # examples need popcluster to be installed on the system
 #' \dontrun{
 #' m <- gl.run.popcluster(x=testset.gl, popcluster.path="/User/PopCluster/Bin/",
-#' output.path=/User/Documents/Output/,
+#' output.path="/User/Documents/Output/",
 #'   filename="prefix", minK=1, maxK=3, 
 #'   rep=10, PopData=1, location=1)
 #' Q <- gl.plot.popcluster(x=testset.gl, filename="prefix", input.dir="/Users/Documents/PopCluster/Results"
