@@ -209,21 +209,12 @@ gl.run.popcluster <- function(x=NULL, popcluster.path=NULL, output.path=NULL, fi
     res2[[i]][which(res2[[i]]=="")] <- NA
     res2[[i]] <- na.omit(res2[[i]])
   }
+  best_run_file <- NULL
+  for (j in 1:length(res2)) {
+    best_run_file <- data.frame(rbind(best_run_file, res2[[j]]))
+  }
+  colnames(best_run_file) <- c("K", "BestRun", "LogL_Mean", "LogL_Min", "LogL_Max", "DLK1", "DLK2", "FST.FIS")
   
-  K <- BestRun <- LogL_Mean <- LogL_Min <- LogL_Max <- DLK1 <- DLK2 <- FST.FIS <- NULL
-  for (i in 1:length(res2)) {
-    K <- append(K, values = res2[[i]][1], after = length(K))
-    BestRun <- append(BestRun, values = res2[[i]][2], after = length(BestRun))
-    LogL_Mean <- append(LogL_Mean, values = res2[[i]][3], after = length(LogL_Mean))
-    LogL_Min <- append(LogL_Min, values = res2[[i]][4], after = length(LogL_Min))
-    LogL_Max <- append(LogL_Max, values = res2[[i]][5], after = length(LogL_Max))
-    DLK1 <- append(DLK1, values = res2[[i]][6], after = length(DLK1))
-    DLK2 <- append(DLK2, values = res2[[i]][7], after = length(DLK2))
-    FST.FIS <- append(FST.FIS, values = res2[[i]][8], after = length(FST.FIS))
-    }
-    best_run_file <- data.frame(K, BestRun, LogL_Mean, LogL_Min, LogL_Max, DLK1, DLK2, FST.FIS)
-    #write.table(best_run_file, file.path(output.path, paste0(filename,".popcluster.best_run_summary")), quote = F, row.names = F, col.names = T)
-   
     # plot likelihood
     plot.list <- list()
     plot.list[[1]] <- ggplot2::ggplot(best_run_file, aes(K, LogL_Mean, group=1)) + geom_line() + geom_point(fill = "white", shape = 21,
