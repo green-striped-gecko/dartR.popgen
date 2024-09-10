@@ -31,12 +31,17 @@
 #' @param relatedness Compute relatedness = 0=No, 1=Wang, 2=LynchRitland [default 0]
 #' @param kinship Estimate kinship: 0=N, 1=Y [default 0]
 #' @param pr_allele_freq 0=Undefined, 1=equal, 2=unequal prior allele freq [default 2]
-#' @return The results of PopCluster
+#' @param plot.out Specify if plot is to be produced [default TRUE].
+#' @param plot.dir Directory in which to save files [default = working directory]
+#' @param plot.file Name for the RDS binary file to save (base name only, exclude
+#' extension) [default NULL]
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 #' progress log; 3, progress and results summary; 5, full report
 #' [default 2 or as specified using gl.set.verbosity].
+#' @param plot_theme Theme of the plot [default theme_dartR()]
+#' @return The plot of likelihood, DLK1, DLK2, FST.FIS, best run, Q-matrices of PopCluster, 
 #' @export
-#' @importFrom pillar align
+#' @importFrom pillar align, stringr str_split
 #' @references
 #' \itemize{
 #' \item Wang, J. (2022). Fast and accurate population admixture inference 
@@ -61,10 +66,10 @@ gl.run.popcluster <- function(x=NULL, popcluster.path=NULL, output.path=NULL, fi
                               rep=NULL, search_relate=0, allele_freq=1,PopData=NULL, PopFlag=0,
                               model=2, location=NULL, loc_admixture=1, relatedness=0, 
                               kinship=0, pr_allele_freq=2, cleanup=TRUE, 
-                             # plot.display=TRUE,
-                             # plot.out = TRUE,
-                             # plot_theme = theme_dartR(),
-                             # plot.file = NULL,
+                              plot.dir=NULL,
+                              plot.out = TRUE,
+                              plot.file = NULL,
+                              plot_theme = theme_dartR(),
                               verbose=5) 
 {
   # SET VERBOSITY
@@ -234,7 +239,9 @@ gl.run.popcluster <- function(x=NULL, popcluster.path=NULL, output.path=NULL, fi
     for (i in 1:length(p)) p[[i]]$widths[2:3] <- maxWidth
     p$bottom <- "K"
     p$ncol <- 2
-    do.call(gridExtra::grid.arrange, p)
+    if (plot.out) {
+      do.call(gridExtra::grid.arrange, p)
+    }
     names(plot.list) <- c("LogL_Mean", "DLK1", "DLK2", "FST.FIS")
     
     #extract admixture analysis from best run
@@ -263,7 +270,14 @@ gl.run.popcluster <- function(x=NULL, popcluster.path=NULL, output.path=NULL, fi
       Q_matrices[[i]] <- Q
       Q <- NULL
     }
-
+    
+    if (!is.null(plot.file)) {
+      tmp <- utils.plot.save(plot.list,
+                             dir = plot.dir,
+                             file = plot.file,
+                             verbose = verbose
+      )
+    }
   # reture all Q matrices and best run summary  
   return(list(output_path=output.path, best_run = best_run_file, plots = plot.list, matrix=Q_matrices))
   setwd(old.path)
