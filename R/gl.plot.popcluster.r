@@ -48,7 +48,7 @@
 #' # examples need structure to be installed on the system (see above)
 #' \dontrun{
 #' m <- gl.run.popcluster(x=testset.gl, popcluster.path="/User/PopCluster/Bin/",
-#' output.path=/User/Documents/Output/,
+#' output.path="/User/Documents/Output/",
 #'   filename="prefix", minK=1, maxK=3, 
 #'   rep=10, PopData=1, location=1
 #' )
