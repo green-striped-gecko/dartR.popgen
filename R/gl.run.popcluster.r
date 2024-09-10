@@ -248,7 +248,7 @@ gl.run.popcluster <- function(x=NULL, popcluster.path=NULL, output.path=NULL, fi
     
     #extract admixture analysis from best run
     Q_matrices <- NULL
-    Q <- list()
+    Q <- NULL
     for (i in best_run_file$BestRun){
       best <- readLines(con <- file(file.path(tempd, i)))
       close(con)
@@ -267,7 +267,7 @@ gl.run.popcluster <- function(x=NULL, popcluster.path=NULL, output.path=NULL, fi
       Q$Pop <- "Species"
       assign(i, Q)
       Q_matrices[[i]] <- Q
-      Q <- list()
+      Q <- NULL
     }
 
   # reture all Q matrices and best run summary  
