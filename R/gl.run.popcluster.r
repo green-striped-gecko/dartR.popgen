@@ -256,7 +256,10 @@ gl.run.popcluster <- function(x=NULL, popcluster.path=NULL, output.path=NULL, fi
                        paste0("Pop_", seq(1, (ncol(Q)-5), by=1)))
       Q$Label <- as.character(Q$Label)
       Q$Pop <- as.character(Q$Pop)
-      Q[,paste0("Pop_", seq(1, (ncol(Q)-5), by=1))] <- lapply(Q[,paste0("Pop_", seq(1, (ncol(Q)-5), by=1))], as.numeric)
+      Q <- Q %>%
+        mutate_at(paste0("Pop_", seq(1, (ncol(Q)-5), by=1)), as.numeric)
+      #Q[,paste0("Pop_", seq(1, (ncol(Q)-5), by=1))] <- 
+      #lapply(Q[,paste0("Pop_", seq(1, (ncol(Q)-5), by=1))], as.numeric)
       Q_matrices[[i]] <- Q
       Q <- NULL
     }
