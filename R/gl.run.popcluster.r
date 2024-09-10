@@ -41,7 +41,8 @@
 #' @param plot_theme Theme of the plot [default theme_dartR()]
 #' @return The plot of likelihood, DLK1, DLK2, FST.FIS, best run, Q-matrices of PopCluster, 
 #' @export
-#' @importFrom pillar align, stringr str_split
+#' @importFrom pillar align
+#' @importFrom stringr str_split
 #' @references
 #' \itemize{
 #' \item Wang, J. (2022). Fast and accurate population admixture inference 
