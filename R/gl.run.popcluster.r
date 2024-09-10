@@ -248,16 +248,15 @@ gl.run.popcluster <- function(x=NULL, popcluster.path=NULL, output.path=NULL, fi
       for (j in 1:length(Q_raw)) {
         Q_raw[[j]][which(Q_raw[[j]]=="")] <- NA
         Q_raw[[j]][which(Q_raw[[j]]==":")] <- NA
+        #Q_raw[[j]][which(Q_raw[[j]]=="0")] <- 0.000001 # prevent error from zero
         Q_raw[[j]] <- na.omit(Q_raw[[j]])
         Q <- data.frame(rbind(Q, Q_raw[[j]]))
       }
       colnames(Q) <- c("Index", "Order", "Label", "PercentMiss", "Pop", 
                        paste0("Pop_", seq(1, (ncol(Q)-5), by=1)))
       Q$Label <- as.character(Q$Label)
-      #Q$Pop <- as.character(Q$Pop)
-      Q$Pop <- "Species"
+      Q$Pop <- as.character(Q$Pop)
       Q[,paste0("Pop_", seq(1, (ncol(Q)-5), by=1))] <- lapply(Q[,paste0("Pop_", seq(1, (ncol(Q)-5), by=1))], as.numeric)
-      #assign(i, Q)
       Q_matrices[[i]] <- Q
       Q <- NULL
     }
