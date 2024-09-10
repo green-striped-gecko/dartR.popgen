@@ -57,7 +57,7 @@
 #' @export 
 
 
-gl.run.popcluster <- function(x, popcluster.path=NULL, output.path=NULL, filename=NULL, minK=NULL, maxK=NULL, 
+gl.run.popcluster <- function(x=NULL, popcluster.path=NULL, output.path=NULL, filename=NULL, minK=NULL, maxK=NULL, 
                               rep=NULL, search_relate=0, allele_freq=1,PopData=NULL, PopFlag=0,
                               model=2, location=NULL, loc_admixture=1, relatedness=0, 
                               kinship=0, pr_allele_freq=2, cleanup=TRUE, 
@@ -202,9 +202,9 @@ gl.run.popcluster <- function(x, popcluster.path=NULL, output.path=NULL, filenam
   system(paste0(file.path(tempd,popcluster_version), " INP:", paste0(filename,".popcluster.PcPjt")))
   
   # Summarise best run and likelihood
-  res <- readLines(con <- file(file.path(output.path, paste0(filename,".popcluster.K"))), n=maxK+1)[-1]
+  res <- readLines(con <- file(file.path(tempd, paste0(filename,".popcluster.K"))), n=maxK+1)[-1]
   close(con)
-  res2 <- str_split(gsub('\"', "", res)," ")
+  res2 <- stringr::str_split(gsub('\"', "", res)," ")
   for (i in 1:length(res2)) {
     res2[[i]][which(res2[[i]]=="")] <- NA
     res2[[i]] <- na.omit(res2[[i]])
@@ -247,25 +247,27 @@ gl.run.popcluster <- function(x, popcluster.path=NULL, output.path=NULL, filenam
     names(plot.list) <- c("LogL_Mean", "DLK1", "DLK2", "FST.FIS")
     
     #extract admixture analysis from best run
-    #best_run <- best_run_file[which(best_run_file$K == plot.K),'BestRun']
     Q_matrices <- NULL
+    Q <- list()
     for (i in best_run_file$BestRun){
-      best <- readLines(con <- file(file.path(input.dir, i)))
+      best <- readLines(con <- file(file.path(tempd, i)))
       close(con)
-      Q_raw <- str_split(best[(which(startsWith(best, "Inferred ancestry of individuals"))+2):
+      Q_raw <- stringr::str_split(best[(which(startsWith(best, "Inferred ancestry of individuals"))+2):
       (which(startsWith(best, "Inferred ancestry of individuals"))+1+nInd(x))], " ")
       for (j in 1:length(Q_raw)) {
         Q_raw[[j]][which(Q_raw[[j]]=="")] <- NA
+        Q_raw[[j]][which(Q_raw[[j]]==":")] <- NA
         Q_raw[[j]] <- na.omit(Q_raw[[j]])
         Q <- data.frame(rbind(Q, Q_raw[[j]]))
-        Q_final <- Q[,-6]
-        colnames(Q_final) <- c("Index", "Order", "Label", "PercentMiss", "Pop", 
-                               paste0("Pop_", seq(1, ncol(Q_final)-5, by=1)))
-        Q_final$Label <- as.character(Q_final$Label)
-        Q_final$Pop <- as.character(Q_final$Pop)
-        Q_final$Pop <- "Species"
-        Q_matrices$i <- Q_final
       }
+      colnames(Q) <- c("Index", "Order", "Label", "PercentMiss", "Pop", 
+                       paste0("Pop_", seq(1, (ncol(Q)-5), by=1)))
+      Q$Label <- as.character(Q$Label)
+      #Q$Pop <- as.character(Q$Pop)
+      Q$Pop <- "Species"
+      assign(i, Q)
+      Q_matrices[[i]] <- Q
+      Q <- list()
     }
 
   # reture all Q matrices and best run summary  
