@@ -71,7 +71,7 @@ gl.plot.popcluster <- function(pop_cluster_result=NULL,
                               ind_name=T,
                               plot.out=TRUE,
                               plot.file=NULL,
-                              #plot.dir=NULL,
+                              plot.dir=NULL,
                               cleanup=TRUE,
                               verbose=5) {
   
@@ -144,7 +144,6 @@ gl.plot.popcluster <- function(pop_cluster_result=NULL,
     print(p3)
   }
   
-  if (cleanup) unlink(tempd, recursive = T)
   # Optionally save the plot ---------------------
   
   if (!is.null(plot.file)) {
