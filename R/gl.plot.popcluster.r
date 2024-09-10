@@ -76,7 +76,7 @@ gl.plot.popcluster <- function(pop_cluster_result=NULL,
                               verbose=5) {
   
   # SET WORKING DIRECTORY
-  #plot.dir <- gl.check.wd(plot.dir, verbose = 0)
+  plot.dir <- gl.check.wd(plot.dir, verbose = 0)
   
   # SET VERBOSITY
   verbose <- gl.check.verbosity(verbose)
