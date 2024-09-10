@@ -52,7 +52,7 @@
 #'   filename="prefix", minK=1, maxK=3, 
 #'   rep=10, PopData=1, location=1
 #' )
-#'gl.plot.popcluster(pop_cluster_result=m, plot.K = 3, ind_name=T)}
+#'Q <- gl.plot.popcluster(pop_cluster_result=m, plot.K = 3, ind_name=T)}
 #' @export
 #' @seealso \code{gl.run.popcluster}, \code{gl.plot.popcluster}
 #' @references
