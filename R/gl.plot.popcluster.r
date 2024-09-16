@@ -3,7 +3,7 @@
 #' @title Plots PopCluster analysis results (Admixture Model)
 #'
 #' @description
-#' This function takes a structure run object (output from
+#' This function takes a Q matrix (output from
 #'  \code{\link{gl.run.popcluster}}) and plots the typical structure bar
 #'   plot that visualize the Q matrix of a structure run.
 #'   
