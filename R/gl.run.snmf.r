@@ -93,8 +93,11 @@ gl.run.snmf <- function(x=NULL, filename="output", minK=NULL, maxK=NULL, rep=NUL
   colnames(Q) <- paste0("Pop_",seq(1, K_range[i]))
   Q$Label <- as.character(x$ind.names)
   Q$Order <- 1:nInd(x)
-  Q$Pop <- as.character(x$pop)
+  for (j in 1:nrow(Q)){
+    Q$Pop[j] <- names(which.max(Q[j,paste0("Pop_",seq(1, K_range[i]))]))
+  }
   Q_matrices[[i]] <- Q
+  Q <- NULL
   }
   names(Q_matrices) <- paste0("K", K_range)
   
