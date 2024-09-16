@@ -92,6 +92,8 @@ gl.run.snmf <- function(x=NULL, filename="output", minK=NULL, maxK=NULL, rep=NUL
   Q <- read.table(list.files(best_run_path[i], pattern = ".Q", full.names = T))
   colnames(Q) <- paste0("Pop_",seq(1, K_range[i]))
   Q$Label <- as.character(x$ind.names)
+  Q$Order <- 1:nInd(x)
+  Q$Pop <- as.character(x$pop)
   Q_matrices[[i]] <- Q
   }
   names(Q_matrices) <- paste0("K", K_range)
