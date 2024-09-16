@@ -101,9 +101,9 @@ gl.plot.faststructure <- function(sr,
   res <- list()
 
   for (i in k.range) {
-    eq.k <- which(names(sr) == as.character(i))
+    eq.k <- which(names(sr$q_list) == as.character(i))
 
-    sr_tmp <- sr[[eq.k]]
+    sr_tmp <- sr$q_list[[eq.k]]
 
     Q_list_tmp <- lapply(sr_tmp, function(x) {
       # x <- x[[1]]
@@ -205,10 +205,10 @@ gl.plot.faststructure <- function(sr,
 
   for (i in 1:length(Q_list)) {
     Q_list_tmp <- data.frame(
-      Label = sr[[1]][[1]]$id,
+      Label = sr$q_list[[1]][[1]]$id,
       Q_list[[i]],
       K = rep(Ks[[i]], nrow(Q_list[[i]])),
-      orig.pop = sr[[1]][[1]]$orig.pop
+      orig.pop = sr$q_list[[1]][[1]]$orig.pop
     )
     n_col <- ncol(Q_list_tmp) - 3
     colnames(Q_list_tmp) <-
