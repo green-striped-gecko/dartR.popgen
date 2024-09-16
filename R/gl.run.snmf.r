@@ -92,9 +92,9 @@ gl.run.snmf <- function(x=NULL, filename="output", minK=NULL, maxK=NULL, rep=NUL
   Q <- read.table(list.files(best_run_path[i], pattern = ".Q", full.names = T))
   colnames(Q) <- paste0("Pop_",seq(1, K_range[i]))
   Q_matrices[[i]] <- Q
-  names(Q_matrices) <- K_range
   }
-
+  names(Q_matrices) <- paste0("K", K_range)
+  
   # plot cross-entropy
   plot.list=list()
   plot(ss, cex = 1.2, col = "lightblue", pch = 19)
