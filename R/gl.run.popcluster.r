@@ -71,7 +71,7 @@ gl.run.popcluster <- function(x=NULL, popcluster.path=NULL, output.path=NULL, fi
                               plot.out = TRUE,
                               plot.file = NULL,
                               plot_theme = theme_dartR(),
-                              verbose=5) 
+                              verbose=2) 
 {
   # SET VERBOSITY
   verbose <- gl.check.verbosity(verbose)
