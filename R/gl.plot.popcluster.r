@@ -7,8 +7,7 @@
 #'  \code{\link{gl.run.popcluster}}) and plots the typical structure bar
 #'   plot that visualize the Q matrix of a structure run.
 #'   
-#' @param gl genlight object for PopCluster [required].
-#' @param filename prefix of run object from \code{\link{gl.run.popcluster}} [required].
+#' @param pop_cluster_result run object from \code{\link{gl.run.popcluster}} [required].
 #' @param plot.K The number for K of the q matrix that should be plotted. Needs to
 #'  be within you simulated range of K's in your sr structure run object. If
 #'  NULL, all the K's are plotted [default NULL].
@@ -17,9 +16,6 @@
 #' @param color_clusters A color palette for clusters (K) or a list with
 #' as many colors as there are clusters (K) [default NULL].
 #' @param ind_name Whether to plot individual names [default TRUE].
-#' @param input.dir Directory with PopCluster output and best run summary
-#' @param k_name Name of the structure plot to plot. It should be character
-#'  [default NULL].
 #' @param border_ind The width of the border line between individuals
 #' [default 0.25].
 #' @param plot.out Specify if plot is to be produced [default TRUE].
@@ -28,7 +24,7 @@
 #' extension) [default NULL]
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 #'  progress log ; 3, progress and results summary; 5, full report [default
-#'   NULL, unless specified using gl.set.verbosity]
+#'   2, unless specified using gl.set.verbosity]
 #'
 #' @details The function outputs a barplot which is the typical output of
 #'  PopCluster.
@@ -66,14 +62,13 @@ gl.plot.popcluster <- function(pop_cluster_result=NULL,
                               border_ind=0.25,
                               plot.K = NULL,
                               plot_theme=NULL,
-                              k_name=NULL,
                               color_clusters=NULL,
                               ind_name=T,
                               plot.out=TRUE,
                               plot.file=NULL,
                               plot.dir=NULL,
                               cleanup=TRUE,
-                              verbose=5) {
+                              verbose=2) {
   
   # SET WORKING DIRECTORY
   plot.dir <- gl.check.wd(plot.dir, verbose = 0)
