@@ -34,8 +34,8 @@
 #'  \url{https://groups.google.com/d/forum/dartr}
 #' @examples
 #' \dontrun{
-#' m <- gl.run.snmf(x=NULL, minK=NULL, 
-#' maxK=NULL, rep=NULL) 
+#' m <- gl.run.snmf(x=testset.gl, minK=1, 
+#' maxK=5, rep=10)
 #' }
 #' Wrapper function to run snmf from LEA
 #' 
