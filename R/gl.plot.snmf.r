@@ -42,8 +42,8 @@
 #' @examples
 #' # examples need structure to be installed on the system (see above)
 #' \dontrun{
-#' m <- gl.run.snmf(x=NULL, minK=NULL, 
-#' maxK=NULL, rep=NULL) 
+#' m <- gl.run.snmf(x=testset.gl, minK=1, 
+#' maxK=5, rep=10) 
 #'Q <- gl.plot.snmf(snmf_result=m, plot.K = 3, ind_name=T)}
 #' @export
 #' @seealso \code{gl.run.snmf}, \code{gl.plot.snmf}
