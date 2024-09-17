@@ -92,9 +92,9 @@ gl.plot.snmf <- function(snmf_result=NULL,
     color_clusters <- gl.select.colors(ncolors = max(plot.K), verbose = 0)
   }
   
-  p3 <- ggplot(Q_long, aes_(x = ~ factor(Order), y = ~values, fill = ~K)) +
+  p3 <- ggplot(Q_long, aes_(x = ~factor(Order), y = ~values, fill = ~K)) +
     geom_col(size = 0.15, width = 1, position = "fill")+
-    facet_grid( ~ Pop, scales = "free", space = "free") +
+    facet_grid( ~factor(Pop, levels=unique(Q_long$Pop)), scales = "free", space = "free") +
     scale_y_continuous(expand = c(0, 0)) +
     scale_x_discrete(
       breaks = unique(Q_long$Order),
