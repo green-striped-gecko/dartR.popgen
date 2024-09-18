@@ -265,6 +265,9 @@ gl.run.popcluster <- function(x=NULL, popcluster.path=NULL, output.path=NULL, fi
       Q$Label <- as.character(Q$Label)
       Q$Cluster <- as.character(Q$Cluster)
       Q$Pop <- as.character(x$pop)
+      # change the Order
+      Q <- Q[with(Q, order(Q$Pop,as.numeric(Q$Cluster))),]
+      Q$Order <- 1:nrow(Q)
       Q <- Q %>%
         mutate_at(paste0("Pop_", seq(1, (ncol(Q)-6), by=1)), as.numeric)
       #Q[,paste0("Pop_", seq(1, (ncol(Q)-5), by=1))] <- 
