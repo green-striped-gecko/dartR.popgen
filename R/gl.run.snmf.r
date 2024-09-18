@@ -96,7 +96,7 @@ gl.run.snmf <- function(x=NULL, filename="output", minK=NULL, maxK=NULL, rep=NUL
   for (j in 1:nrow(Q)){
     Q$Cluster[j] <- sub("Pop_", "", names(which.max(Q[j,paste0("Pop_",seq(1, K_range[i]))])))
   }
-  Q <- Q[order(as.numeric(Q$Cluster)), ]
+  Q <- Q[with(Q, order(Q$Pop,as.numeric(Q$Cluster))),]
   Q$Order <- 1:nrow(Q)
   Q_matrices[[i]] <- Q
   }
