@@ -42,7 +42,7 @@
 #' @export 
 
 
-gl.run.snmf <- function(x=NULL, filename="output", minK=NULL, maxK=NULL, rep=NULL, regularization=10,
+gl.run.snmf <- function(x, filename="output", minK, maxK, rep, regularization=10,
                         ploidy_lv=2, plot.out=TRUE, plot.dir=NULL,
                         plot.file=NULL, verbose =2) 
 {
@@ -90,13 +90,19 @@ gl.run.snmf <- function(x=NULL, filename="output", minK=NULL, maxK=NULL, rep=NUL
   Q_matrices <- NULL
   for (i in 1:length(K_range)){
   Q <- read.table(list.files(best_run_path[i], pattern = ".Q", full.names = T))
+  
+  
+  #apply(Q, 1, which.max)
+  
   colnames(Q) <- paste0("Pop_",seq(1, K_range[i]))
-  Q$Label <- as.character(x$ind.names)
+  Q$Cluster <- apply(Q, 1, which.max)
   Q$Pop <- as.character(x$pop)
-  for (j in 1:nrow(Q)){
-    Q$Cluster[j] <- sub("Pop_", "", names(which.max(Q[j,paste0("Pop_",seq(1, K_range[i]))])))
-  }
-  Q <- Q[with(Q, order(Q$Pop,as.numeric(Q$Cluster))),]
+  Q$Label <- as.character(x$ind.names)
+  #for (j in 1:nrow(Q)){
+  #  Q$Cluster[j] <- sub("Pop_", "", names(which.max(Q[j, paste0("Pop_",seq(1, 1))])))
+  #}
+  Q <- Q[with(Q, order(Q$Pop, as.numeric(Q$Cluster))),]
+  #Q <- Q[with(Q, order(as.numeric(Q$Cluster))),]
   Q$Order <- 1:nrow(Q)
   Q_matrices[[i]] <- Q
   }
