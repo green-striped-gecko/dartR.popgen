@@ -43,8 +43,8 @@
 #' @examples
 #' # examples need snmf to be installed on the system
 #' \dontrun{
-#' m <- gl.run.snmf(x=NULL, minK=NULL, 
-#' maxK=NULL, rep=NULL) 
+#' m <- gl.run.snmf(x=testset.gl, minK=1, 
+#' maxK=5, rep=10)
 #' Q <- gl.plot.snmf(snmf_result=m, plot.K = 3, ind_name=T)
 #' gl.map.snmf(x = testset.gl, qmat = Q)
 #' # move population 4 (out of 5) 0.5 degrees to the right and populations 1
