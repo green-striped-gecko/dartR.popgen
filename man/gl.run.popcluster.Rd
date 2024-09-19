@@ -6,25 +6,29 @@
 PopCluster is installed (can be installed at: https://www.zsl.org/about-zsl/resources/software/popcluster)}
 \usage{
 gl.run.popcluster(
-  x,
-  popcluster.path,
-  output.path,
-  filename,
-  minK,
-  maxK,
-  rep,
+  x = NULL,
+  popcluster.path = NULL,
+  output.path = NULL,
+  filename = NULL,
+  minK = NULL,
+  maxK = NULL,
+  rep = NULL,
   search_relate = 0,
   allele_freq = 1,
-  PopData,
+  PopData = NULL,
   PopFlag = 0,
   model = 2,
-  location,
-  loc_admixture,
+  location = NULL,
+  loc_admixture = 1,
   relatedness = 0,
   kinship = 0,
   pr_allele_freq = 2,
   cleanup = TRUE,
-  verbose = NULL
+  plot.dir = NULL,
+  plot.out = TRUE,
+  plot.file = NULL,
+  plot_theme = theme_dartR(),
+  verbose = 2
 )
 }
 \arguments{
@@ -61,12 +65,21 @@ gl.run.popcluster(
 
 \item{pr_allele_freq}{0=Undefined, 1=equal, 2=unequal prior allele freq [default 2]}
 
+\item{plot.dir}{Directory in which to save files [default = working directory]}
+
+\item{plot.out}{Specify if plot is to be produced [default TRUE].}
+
+\item{plot.file}{Name for the RDS binary file to save (base name only, exclude
+extension) [default NULL]}
+
+\item{plot_theme}{Theme of the plot [default theme_dartR()]}
+
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 progress log; 3, progress and results summary; 5, full report
 [default 2 or as specified using gl.set.verbosity].}
 }
 \value{
-The results of PopCluster
+The plot of likelihood, DLK1, DLK2, FST.FIS, best run, Q-matrices of PopCluster,
 }
 \description{
 This function infers the population admixture
@@ -81,9 +94,9 @@ set
 \examples{
 \dontrun{
 m <- gl.run.popcluster(x=testset.gl, popcluster.path="/User/PopCluster/Bin/",
-output.path=/User/Documents/Output/,
+output.path="/User/Documents/Output/",
   filename="prefix", minK=1, maxK=3, 
-  rep=10, PopDate=1, location=1
+  rep=10, PopData=1, location=1
 )
 }
 Wrapper function to run PopCluster

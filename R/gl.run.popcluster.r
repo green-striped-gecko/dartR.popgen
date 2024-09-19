@@ -94,7 +94,7 @@ gl.run.popcluster <- function(x=NULL, popcluster.path=NULL, output.path=NULL, fi
   # check OS
   os <- Sys.info()['sysname'] 
   if (os == "Windows") {
-      popcluster_version <- paste0("PopCluster", "Win.exe")} else if (os == "Darwin"){
+      popcluster_version <- c(paste0("PopCluster", "Win.exe"),"impi.dll", "libiomp5md.dll")} else if (os == "Darwin"){
           popcluster_version <- paste0("PopCluster", "Mac")} else if (os == "Linux") {
               popcluster_version <- paste0("PopCluster", "Lnx") }
   
@@ -205,7 +205,7 @@ gl.run.popcluster <- function(x=NULL, popcluster.path=NULL, output.path=NULL, fi
   
   #RUN POPCLUSTER
   #system("export DYLD_LIBRARY_PATH=/usr/local/opt/gcc/lib/gcc/11:/usr/local/homebrew/lib/gcc/14")
-  system(paste0(file.path(tempd,popcluster_version), " INP:", paste0(filename,".popcluster.PcPjt")))
+  system(paste0(file.path(tempd,popcluster_version[1]), " INP:", paste0(filename,".popcluster.PcPjt")))
   
   # Summarise best run and likelihood
   res <- readLines(con <- file(file.path(tempd, paste0(filename,".popcluster.K"))), n=maxK+1)[-1]
