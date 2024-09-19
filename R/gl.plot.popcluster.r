@@ -8,25 +8,24 @@
 #'   plot that visualize the Q matrix of a structure run.
 #'   
 #' @param pop_cluster_result run object from \code{\link{gl.run.popcluster}} [required].
+#' @param border_ind The width of the border line between individuals
+#' [default 0.25].
 #' @param plot.K The number for K of the q matrix that should be plotted. Needs to
-#'  be within you simulated range of K's in your sr structure run object. If
-#'  NULL, all the K's are plotted [default NULL].
+#'  be within you simulated range of K's in your PopCluster run object. [required]
 #' @param plot_theme Theme for the plot. See Details for options
 #' [default NULL].
 #' @param color_clusters A color palette for clusters (K) or a list with
 #' as many colors as there are clusters (K) [default NULL].
 #' @param ind_name Whether to plot individual names [default TRUE].
-#' @param border_ind The width of the border line between individuals
-#' [default 0.25].
 #' @param plot.out Specify if plot is to be produced [default TRUE].
-#' @param plot.dir Directory in which to save files [default = working directory]
 #' @param plot.file Name for the RDS binary file to save (base name only, exclude
 #' extension) [default NULL]
+#' @param plot.dir Directory in which to save files [default = working directory]
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 #'  progress log ; 3, progress and results summary; 5, full report [default
 #'   2, unless specified using gl.set.verbosity]
 #'
-#' @details The function outputs a barplot which is the typical output of
+#' @details The function outputs a barplot and Q matrix which is the typical output of
 #'  PopCluster.
 #'  Plots and table are saved to the working directory specified in plot.dir
 #'  if plot.file is set.
@@ -36,7 +35,7 @@
 #'  \url{https://yutannihilation.github.io/allYourFigureAreBelongToUs/ggthemes/}
 #'  }
 #'
-#' @return Q-matrix
+#' @return Q-matrix and structure plot
 #'
 #' @author Ching Ching Lau (Post to \url{https://groups.google.com/d/forum/dartr})
 #'
@@ -45,8 +44,8 @@
 #' \dontrun{
 #' m <- gl.run.popcluster(x=testset.gl, popcluster.path="/User/PopCluster/Bin/",
 #' output.path="/User/Documents/Output/",
-#'   filename="prefix", minK=1, maxK=3, 
-#'   rep=10, PopData=1, location=1
+#' minK=1, maxK=3, 
+#' rep=10, PopData=1, location=1
 #' )
 #'Q <- gl.plot.popcluster(pop_cluster_result=m, plot.K = 3, ind_name=T)}
 #' @export
@@ -58,16 +57,15 @@
 #' 
 #' }
 
-gl.plot.popcluster <- function(pop_cluster_result=NULL,
+gl.plot.popcluster <- function(pop_cluster_result,
                               border_ind=0.25,
-                              plot.K = NULL,
+                              plot.K,
                               plot_theme=NULL,
                               color_clusters=NULL,
                               ind_name=T,
                               plot.out=TRUE,
                               plot.file=NULL,
                               plot.dir=NULL,
-                              cleanup=TRUE,
                               verbose=2) {
   
   # SET WORKING DIRECTORY
