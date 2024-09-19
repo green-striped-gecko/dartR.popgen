@@ -6,21 +6,20 @@
 #' This function takes a Q matrix (output from
 #'  \code{\link{gl.run.snmf}}) and plots the typical structure bar
 #'   plot that visualize the Q matrix of a structure run.
-#'  @param snmf_result run object from \code{\link{gl.run.snmf}} [required].
-#' @param plot.K The number for K of the q matrix that should be plotted. Needs to
-#'  be within you simulated range of K's in your sr structure run object. If
-#'  NULL, all the K's are plotted [default NULL].
-#' @param plot_theme Theme for the plot. See Details for options
-#' [default NULL].
-#' @param color_clusters A color palette for clusters (K) or a list with
-#' as many colors as there are clusters (K) [default NULL].
-#' @param ind_name Whether to plot individual names [default TRUE].
+#' @param snmf_result run object from \code{\link{gl.run.snmf}} [required]
 #' @param border_ind The width of the border line between individuals
-#' [default 0.25].
-#' @param plot.out Specify if plot is to be produced [default TRUE].
-#' @param plot.dir Directory in which to save files [default = working directory]
+#' [default 0.25]
+#' @param plot.K The number for K of the Q matrix that should be plotted. Needs to
+#'  be within you simulated range of K's in your snmf run object [required]
+#' @param plot_theme Theme for the plot. See Details for options
+#' [default NULL]
+#' @param color_clusters A color palette for clusters (K) or a list with
+#' as many colors as there are clusters (K) [default NULL]
+#' @param ind_name Whether to plot individual names [default TRUE]
+#' @param plot.out Specify if plot is to be produced [default TRUE]
 #' @param plot.file Name for the RDS binary file to save (base name only, exclude
 #' extension) [default NULL]
+#' @param plot.dir Directory in which to save files [default = working directory]
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 #'  progress log ; 3, progress and results summary; 5, full report [default
 #'   2, unless specified using gl.set.verbosity]
@@ -54,9 +53,9 @@
 #' 
 #' }
 
-gl.plot.snmf <- function(snmf_result=NULL,
+gl.plot.snmf <- function(snmf_result,
                               border_ind=0.25,
-                              plot.K = NULL,
+                              plot.K,
                               plot_theme=NULL,
                               k_name=NULL,
                               color_clusters=NULL,
@@ -64,7 +63,6 @@ gl.plot.snmf <- function(snmf_result=NULL,
                               plot.out=TRUE,
                               plot.file=NULL,
                               plot.dir=NULL,
-                              cleanup=TRUE,
                               verbose=2) {
   
   # SET WORKING DIRECTORY
