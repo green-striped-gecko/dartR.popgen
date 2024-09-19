@@ -5,9 +5,9 @@
 \title{Plots ancestry coefficient from snmf}
 \usage{
 gl.plot.snmf(
-  snmf_result = NULL,
+  snmf_result,
   border_ind = 0.25,
-  plot.K = NULL,
+  plot.K,
   plot_theme = NULL,
   k_name = NULL,
   color_clusters = NULL,
@@ -15,27 +15,27 @@ gl.plot.snmf(
   plot.out = TRUE,
   plot.file = NULL,
   plot.dir = NULL,
-  cleanup = TRUE,
   verbose = 2
 )
 }
 \arguments{
-\item{border_ind}{The width of the border line between individuals
-[default 0.25].}
+\item{snmf_result}{run object from \code{\link{gl.run.snmf}} [required]}
 
-\item{plot.K}{The number for K of the q matrix that should be plotted. Needs to
-be within you simulated range of K's in your sr structure run object. If
-NULL, all the K's are plotted [default NULL].}
+\item{border_ind}{The width of the border line between individuals
+[default 0.25]}
+
+\item{plot.K}{The number for K of the Q matrix that should be plotted. Needs to
+be within you simulated range of K's in your snmf run object [required]}
 
 \item{plot_theme}{Theme for the plot. See Details for options
-[default NULL].}
+[default NULL]}
 
 \item{color_clusters}{A color palette for clusters (K) or a list with
-as many colors as there are clusters (K) [default NULL].}
+as many colors as there are clusters (K) [default NULL]}
 
-\item{ind_name}{Whether to plot individual names [default TRUE].}
+\item{ind_name}{Whether to plot individual names [default TRUE]}
 
-\item{plot.out}{Specify if plot is to be produced [default TRUE].}
+\item{plot.out}{Specify if plot is to be produced [default TRUE]}
 
 \item{plot.file}{Name for the RDS binary file to save (base name only, exclude
 extension) [default NULL]}
@@ -53,7 +53,6 @@ Q-matrix
 This function takes a Q matrix (output from
  \code{\link{gl.run.snmf}}) and plots the typical structure bar
   plot that visualize the Q matrix of a structure run.
- @param snmf_result run object from \code{\link{gl.run.snmf}} [required].
 }
 \details{
 The function outputs a barplot which is the typical output of

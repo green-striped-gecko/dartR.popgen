@@ -5,8 +5,8 @@
 \title{Maps a snmf plot using a genlight object}
 \usage{
 gl.map.snmf(
-  x = NULL,
-  qmat = NULL,
+  x,
+  qmat,
   provider = "Esri.NatGeoWorldMap",
   scalex = 1,
   scaley = 1,
@@ -17,32 +17,32 @@ gl.map.snmf(
 }
 \arguments{
 \item{x}{Name of the genlight object containing the coordinates in the
-\code{\@other$latlon} slot to calculate the population centers [required].}
+\code{\@other$latlon} slot to calculate the population centers [required]}
 
-\item{qmat}{Q-matrix from a gl.plot.snmf
+\item{qmat}{Q-matrix from a gl.plot.snmf [required]
 [from \code{\link{gl.run.snmf}} and \code{\link{gl.plot.snmf}}]
- [required].}
+ [required]}
 
-\item{provider}{Provider    passed to leaflet. Check \link[leaflet]{providers}
+\item{provider}{Provider passed to leaflet. Check \link[leaflet]{providers}
 for a list of possible backgrounds [default "Esri.NatGeoWorldMap"].}
 
 \item{scalex}{Scaling factor to determine the size of the bars in x direction
-[default 1].}
+[default 1]}
 
 \item{scaley}{Scaling factor to determine the size of the bars in y direction
-[default 1].}
+[default 1]}
 
 \item{movepops}{A two-dimensional data frame that allows to move the center of
 the barplots manually in case they overlap. Often if populations are
 horizontally close to each other. This needs to be a data.frame of the
 dimensions [rows=number of populations, columns = 2 (lon/lat)]. For each
 population you have to specify the x and y (lon and lat) units you want to
-move the center of the plot, (see example for details) [default NULL].}
+move the center of the plot, (see example for details) [default NULL]}
 
 \item{pop.labels}{Switch for population labels below the parplots
-[default TRUE].}
+[default TRUE]}
 
-\item{pop.labels.cex}{Size of population labels [default 12].}
+\item{pop.labels.cex}{Size of population labels [default 12]}
 }
 \value{
 An interactive map that shows the PopCluster plots broken down by
@@ -54,12 +54,12 @@ returns the map and a list of the qmat split into sorted matrices per
 \description{
 This function takes the output of gl.plot.snmf (the Q matrix) and maps the
 Q-matrix across using the population centers from the genlight object that
-was used to run the snmf analysis via \code{\link{gl.run.snmf}})
+was used to run the snmf analysis via (\code{\link{gl.run.snmf}})
 and plots the typical snmf bar plots on a spatial map, providing a
 barplot for each subpopulation. Therefore it requires coordinates from a
  genlight object. This kind of plots should support the interpretation of the
   spatial snmf of a population, but in principle is not different from
-  \code{\link{gl.plot.snmf}}
+  (\code{\link{gl.plot.snmf}})
 }
 \details{
 Creates a mapped version of snmf plots. For possible background maps
@@ -71,14 +71,14 @@ depends on the scale of the map and the position of the populations.
 \examples{
 # examples need snmf to be installed on the system
 \dontrun{
-m <- gl.run.snmf(x=NULL, minK=NULL, 
-maxK=NULL, rep=NULL) 
+m <- gl.run.snmf(x=testset.gl, minK=1, 
+maxK=5, rep=10)
 Q <- gl.plot.snmf(snmf_result=m, plot.K = 3, ind_name=T)
 gl.map.snmf(x = testset.gl, qmat = Q)
 # move population 4 (out of 5) 0.5 degrees to the right and populations 1
 # 0.3 degree to the north of the map.
 mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
-gl.map.snmf(testset.gl, qmat=Q ,K=4, movepops=mp)
+gl.map.snmf(testset.gl, qmat=Q, movepops=mp)
 }
 }
 \references{

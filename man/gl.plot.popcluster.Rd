@@ -5,16 +5,15 @@
 \title{Plots PopCluster analysis results (Admixture Model)}
 \usage{
 gl.plot.popcluster(
-  pop_cluster_result = NULL,
+  pop_cluster_result,
   border_ind = 0.25,
-  plot.K = NULL,
+  plot.K,
   plot_theme = NULL,
   color_clusters = NULL,
   ind_name = T,
   plot.out = TRUE,
   plot.file = NULL,
   plot.dir = NULL,
-  cleanup = TRUE,
   verbose = 2
 )
 }
@@ -25,8 +24,7 @@ gl.plot.popcluster(
 [default 0.25].}
 
 \item{plot.K}{The number for K of the q matrix that should be plotted. Needs to
-be within you simulated range of K's in your sr structure run object. If
-NULL, all the K's are plotted [default NULL].}
+be within you simulated range of K's in your PopCluster run object. [required]}
 
 \item{plot_theme}{Theme for the plot. See Details for options
 [default NULL].}
@@ -48,7 +46,7 @@ progress log ; 3, progress and results summary; 5, full report [default
  2, unless specified using gl.set.verbosity]}
 }
 \value{
-Q-matrix
+Q-matrix and structure plot
 }
 \description{
 This function takes a Q matrix (output from
@@ -56,7 +54,7 @@ This function takes a Q matrix (output from
   plot that visualize the Q matrix of a structure run.
 }
 \details{
-The function outputs a barplot which is the typical output of
+The function outputs a barplot and Q matrix which is the typical output of
  PopCluster.
  Plots and table are saved to the working directory specified in plot.dir
  if plot.file is set.
@@ -71,8 +69,8 @@ Examples of other themes that can be used can be consulted in \itemize{
 \dontrun{
 m <- gl.run.popcluster(x=testset.gl, popcluster.path="/User/PopCluster/Bin/",
 output.path="/User/Documents/Output/",
-  filename="prefix", minK=1, maxK=3, 
-  rep=10, PopData=1, location=1
+minK=1, maxK=3, 
+rep=10, PopData=1, location=1
 )
 Q <- gl.plot.popcluster(pop_cluster_result=m, plot.K = 3, ind_name=T)}
 }

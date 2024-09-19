@@ -6,19 +6,19 @@
 PopCluster is installed (can be installed at: https://www.zsl.org/about-zsl/resources/software/popcluster)}
 \usage{
 gl.run.popcluster(
-  x = NULL,
-  popcluster.path = NULL,
-  output.path = NULL,
-  filename = NULL,
-  minK = NULL,
-  maxK = NULL,
-  rep = NULL,
+  x,
+  popcluster.path,
+  output.path,
+  filename = "output",
+  minK,
+  maxK,
+  rep,
   search_relate = 0,
   allele_freq = 1,
-  PopData = NULL,
+  PopData,
   PopFlag = 0,
   model = 2,
-  location = NULL,
+  location,
   loc_admixture = 1,
   relatedness = 0,
   kinship = 0,
@@ -32,30 +32,32 @@ gl.run.popcluster(
 )
 }
 \arguments{
-\item{x}{Name of the genlight object containing the SNP data [required].}
+\item{x}{Name of the genlight object containing the SNP data [required]}
 
 \item{popcluster.path}{absolute path to the directory that contain the PopCluster program 
-(eg: c:/User/bin/PopCluster/)}
+(eg: c:/User/bin/PopCluster/) [required]}
 
-\item{filename}{file name of output data}
+\item{output.path}{Path to store the parameter file and input data [required]}
 
-\item{minK}{Minimum K}
+\item{filename}{Prefix of all the files that will be produced [default “output”]}
 
-\item{maxK}{Maximum K}
+\item{minK}{Minimum K [required]}
 
-\item{rep}{Number of replicates runs per K}
+\item{maxK}{Maximum K [required]}
+
+\item{rep}{Number of replicates runs per K [required]}
 
 \item{search_relate}{Search using assignment_prob/relatedness: 0=N, 1=Y [default 0]}
 
 \item{allele_freq}{Output allele frequency: 0=N, 1=Y [default 1]}
 
-\item{PopData}{PopData available: 0=N, 1=Y}
+\item{PopData}{PopData available: 0=N, 1=Y [required]}
 
 \item{PopFlag}{PopFlag available: 0=N, 1=Y. [default 0]}
 
 \item{model}{1=Mixture, 2=Admixture, 3=Hybridyzation, 4=Migration model [default 2]}
 
-\item{location}{Individual location data available: 0=N, 1=Y}
+\item{location}{Individual location data available: 0=N, 1=Y [required]}
 
 \item{loc_admixture}{Infer locus admixture: 0=N, 1=Y [default 1]}
 
@@ -64,6 +66,8 @@ gl.run.popcluster(
 \item{kinship}{Estimate kinship: 0=N, 1=Y [default 0]}
 
 \item{pr_allele_freq}{0=Undefined, 1=equal, 2=unequal prior allele freq [default 2]}
+
+\item{cleanup}{clean data in tmp [default  TRUE]}
 
 \item{plot.dir}{Directory in which to save files [default = working directory]}
 
@@ -95,9 +99,8 @@ set
 \dontrun{
 m <- gl.run.popcluster(x=testset.gl, popcluster.path="/User/PopCluster/Bin/",
 output.path="/User/Documents/Output/",
-  filename="prefix", minK=1, maxK=3, 
-  rep=10, PopData=1, location=1
-)
+minK=1, maxK=3, 
+rep=10, PopData=1, location=1)
 }
 Wrapper function to run PopCluster
 

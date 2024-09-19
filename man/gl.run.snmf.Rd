@@ -6,11 +6,11 @@
 LEA is installed}
 \usage{
 gl.run.snmf(
-  x = NULL,
+  x,
   filename = "output",
-  minK = NULL,
-  maxK = NULL,
-  rep = NULL,
+  minK,
+  maxK,
+  rep,
   regularization = 10,
   ploidy_lv = 2,
   plot.out = TRUE,
@@ -20,15 +20,15 @@ gl.run.snmf(
 )
 }
 \arguments{
-\item{x}{Name of the genlight object containing the SNP data [required].}
+\item{x}{Name of the genlight object containing the SNP data [required]}
 
 \item{filename}{file name of output data  [default = "output"]}
 
-\item{minK}{Minimum K}
+\item{minK}{Minimum K [required]}
 
-\item{maxK}{Maximum K}
+\item{maxK}{Maximum K [required]}
 
-\item{rep}{Number of replicates runs per K}
+\item{rep}{Number of replicates runs per K [required]}
 
 \item{regularization}{alpha value for regularization when analyzing small dataset [default=10]}
 
@@ -43,10 +43,10 @@ extension) [default NULL]}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 progress log; 3, progress and results summary; 5, full report
-[default 2 or as specified using gl.set.verbosity].}
+[default 2 or as specified using gl.set.verbosity]}
 }
 \value{
-The plot of likelihood, DLK1, DLK2, FST.FIS, best run, Q-matrices of PopCluster,
+The file list of best run, plot of cross-entropy across different number of K and Q matrices,
 }
 \description{
 Refer to the LEA manual for further information on the parameters to
