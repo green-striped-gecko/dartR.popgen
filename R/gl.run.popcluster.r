@@ -13,13 +13,12 @@
 #'
 #'
 #'@param x Name of the genlight object containing the SNP data [required].
-# @param outfile Name of the file that will be the input file for PopCluster
-# [default popcluster.txt].
 #' @param popcluster.path absolute path to the directory that contain the PopCluster program 
 #' (eg: c:/User/bin/PopCluster/)
-#' @param filename file name of output data 
+#' @param output.path Path to store the parameter file and input data
+#' @param filename Prefix of all the files that will be produced [default “output”]
 #' @param minK Minimum K
-#' @param maxK Maximum K 
+#' @param maxK Maximum K
 #' @param rep Number of replicates runs per K
 #' @param search_relate Search using assignment_prob/relatedness: 0=N, 1=Y [default 0]
 #' @param allele_freq Output allele frequency: 0=N, 1=Y [default 1]
@@ -31,14 +30,15 @@
 #' @param relatedness Compute relatedness = 0=No, 1=Wang, 2=LynchRitland [default 0]
 #' @param kinship Estimate kinship: 0=N, 1=Y [default 0]
 #' @param pr_allele_freq 0=Undefined, 1=equal, 2=unequal prior allele freq [default 2]
-#' @param plot.out Specify if plot is to be produced [default TRUE].
+#' @param cleanup clean data in tmp [default  TRUE]
 #' @param plot.dir Directory in which to save files [default = working directory]
+#' @param plot.out Specify if plot is to be produced [default TRUE].
 #' @param plot.file Name for the RDS binary file to save (base name only, exclude
 #' extension) [default NULL]
+#' @param plot_theme Theme of the plot [default theme_dartR()]
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 #' progress log; 3, progress and results summary; 5, full report
 #' [default 2 or as specified using gl.set.verbosity].
-#' @param plot_theme Theme of the plot [default theme_dartR()]
 #' @return The plot of likelihood, DLK1, DLK2, FST.FIS, best run, Q-matrices of PopCluster, 
 #' @export
 #' @importFrom pillar align
@@ -54,18 +54,17 @@
 #' \dontrun{
 #' m <- gl.run.popcluster(x=testset.gl, popcluster.path="/User/PopCluster/Bin/",
 #' output.path="/User/Documents/Output/",
-#'   filename="prefix", minK=1, maxK=3, 
-#'   rep=10, PopData=1, location=1
-#' )
+#' minK=1, maxK=3, 
+#' rep=10, PopData=1, location=1)
 #' }
 #' Wrapper function to run PopCluster
 #' 
 #' @export 
 
 
-gl.run.popcluster <- function(x=NULL, popcluster.path=NULL, output.path=NULL, filename=NULL, minK=NULL, maxK=NULL, 
-                              rep=NULL, search_relate=0, allele_freq=1,PopData=NULL, PopFlag=0,
-                              model=2, location=NULL, loc_admixture=1, relatedness=0, 
+gl.run.popcluster <- function(x, popcluster.path, output.path, filename="output", minK, maxK, 
+                              rep, search_relate=0, allele_freq=1, PopData, PopFlag=0,
+                              model=2, location, loc_admixture=1, relatedness=0, 
                               kinship=0, pr_allele_freq=2, cleanup=TRUE, 
                               plot.dir=NULL,
                               plot.out = TRUE,
