@@ -7,11 +7,11 @@
 #' -- ##########################################
 #'
 #'
-#'@param x Name of the genlight object containing the SNP data [required].
+#' @param x Name of the genlight object containing the SNP data [required]
 #' @param filename file name of output data  [default = "output"]
-#' @param minK Minimum K
-#' @param maxK Maximum K 
-#' @param rep Number of replicates runs per K
+#' @param minK Minimum K [required]
+#' @param maxK Maximum K [required]
+#' @param rep Number of replicates runs per K [required]
 #' @param regularization alpha value for regularization when analyzing small dataset [default=10]
 #' @param ploidy_lv ploidy level of dataset [default=2]
 #' @param plot.out Specify if plot is to be produced [default TRUE].
@@ -20,8 +20,8 @@
 #' extension) [default NULL]
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 #' progress log; 3, progress and results summary; 5, full report
-#' [default 2 or as specified using gl.set.verbosity].
-#' @return The plot of likelihood, DLK1, DLK2, FST.FIS, best run, Q-matrices of PopCluster, 
+#' [default 2 or as specified using gl.set.verbosity]
+#' @return The file list of best run, plot of cross-entropy across different number of K and Q matrices, 
 #' @export
 #' @importFrom LEA snmf
 #' @importFrom LEA cross.entropy
