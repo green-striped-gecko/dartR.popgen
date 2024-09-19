@@ -3,32 +3,32 @@
 #' @description
 #' This function takes the output of gl.plot.snmf (the Q matrix) and maps the
 #' Q-matrix across using the population centers from the genlight object that
-#' was used to run the snmf analysis via \code{\link{gl.run.snmf}})
+#' was used to run the snmf analysis via (\code{\link{gl.run.snmf}})
 #' and plots the typical snmf bar plots on a spatial map, providing a
 #' barplot for each subpopulation. Therefore it requires coordinates from a
 #'  genlight object. This kind of plots should support the interpretation of the
 #'   spatial snmf of a population, but in principle is not different from
-#'   \code{\link{gl.plot.snmf}}
+#'   (\code{\link{gl.plot.snmf}})
 #' @param x Name of the genlight object containing the coordinates in the
-#'  \code{\@other$latlon} slot to calculate the population centers [required].
-#' @param qmat Q-matrix from a gl.plot.snmf
+#'  \code{\@other$latlon} slot to calculate the population centers [required]
+#' @param qmat Q-matrix from a gl.plot.snmf [required]
 #' [from \code{\link{gl.run.snmf}} and \code{\link{gl.plot.snmf}}]
-#'  [required].
-#' @param provider Provider	passed to leaflet. Check \link[leaflet]{providers}
+#'  [required]
+#' @param provider Provider passed to leaflet. Check \link[leaflet]{providers}
 #' for a list of possible backgrounds [default "Esri.NatGeoWorldMap"].
 #' @param scalex Scaling factor to determine the size of the bars in x direction
-#' [default 1].
+#' [default 1]
 #' @param scaley Scaling factor to determine the size of the bars in y direction
-#'  [default 1].
+#'  [default 1]
 #' @param movepops A two-dimensional data frame that allows to move the center of
 #' the barplots manually in case they overlap. Often if populations are
 #' horizontally close to each other. This needs to be a data.frame of the
 #' dimensions [rows=number of populations, columns = 2 (lon/lat)]. For each
 #' population you have to specify the x and y (lon and lat) units you want to
-#' move the center of the plot, (see example for details) [default NULL].
+#' move the center of the plot, (see example for details) [default NULL]
 #' @param pop.labels Switch for population labels below the parplots
-#' [default TRUE].
-#' @param pop.labels.cex Size of population labels [default 12].
+#' [default TRUE]
+#' @param pop.labels.cex Size of population labels [default 12]
 #' @return An interactive map that shows the PopCluster plots broken down by
 #' population.
 #' @author Ching Ching Lau (Post to \url{https://groups.google.com/d/forum/dartr})
@@ -50,7 +50,7 @@
 #' # move population 4 (out of 5) 0.5 degrees to the right and populations 1
 #' # 0.3 degree to the north of the map.
 #' mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
-#' gl.map.snmf(testset.gl, qmat=Q ,K=4, movepops=mp)
+#' gl.map.snmf(testset.gl, qmat=Q, movepops=mp)
 #' }
 #' @export
 #' @seealso \code{\link{gl.run.snmf}},
@@ -62,14 +62,14 @@
 #' 
 #' }
 
-gl.map.snmf <- function(x=NULL,
-                             qmat=NULL,
-                             provider = "Esri.NatGeoWorldMap",
-                             scalex = 1,
-                             scaley = 1,
-                             movepops = NULL,
-                             pop.labels = TRUE,
-                             pop.labels.cex = 12) {
+gl.map.snmf <- function(x,
+                        qmat,
+                        provider = "Esri.NatGeoWorldMap",
+                        scalex = 1,
+                        scaley = 1,
+                        movepops = NULL,
+                        pop.labels = TRUE,
+                        pop.labels.cex = 12) {
 
   ff <- qmat[, which(grepl("Pop_", colnames(qmat)))]
 
