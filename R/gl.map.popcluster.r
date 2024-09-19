@@ -133,6 +133,8 @@ gl.map.popcluster <- function(x=NULL,
     for (xx in 1:nrow(qmi1)) {
       qmi1[xx, -c(ncol(qmi1))] <- cumsum(as.numeric(qmi1[xx, -c(ncol(qmi1))]))
     }
+    
+    qmi1$Pop_name <- NULL
 
 
     for (ii in 1:nrow(qmi1)) {
