@@ -12,20 +12,20 @@
 #' -- ##########################################
 #'
 #'
-#'@param x Name of the genlight object containing the SNP data [required].
+#'@param x Name of the genlight object containing the SNP data [required]
 #' @param popcluster.path absolute path to the directory that contain the PopCluster program 
-#' (eg: c:/User/bin/PopCluster/)
-#' @param output.path Path to store the parameter file and input data
+#' (eg: c:/User/bin/PopCluster/) [required]
+#' @param output.path Path to store the parameter file and input data [required]
 #' @param filename Prefix of all the files that will be produced [default “output”]
-#' @param minK Minimum K
-#' @param maxK Maximum K
-#' @param rep Number of replicates runs per K
+#' @param minK Minimum K [required]
+#' @param maxK Maximum K [required]
+#' @param rep Number of replicates runs per K [required]
 #' @param search_relate Search using assignment_prob/relatedness: 0=N, 1=Y [default 0]
 #' @param allele_freq Output allele frequency: 0=N, 1=Y [default 1]
-#' @param PopData PopData available: 0=N, 1=Y
+#' @param PopData PopData available: 0=N, 1=Y [required]
 #' @param PopFlag PopFlag available: 0=N, 1=Y. [default 0]
 #' @param model 1=Mixture, 2=Admixture, 3=Hybridyzation, 4=Migration model [default 2]
-#' @param location Individual location data available: 0=N, 1=Y 
+#' @param location Individual location data available: 0=N, 1=Y [required]
 #' @param loc_admixture Infer locus admixture: 0=N, 1=Y [default 1]
 #' @param relatedness Compute relatedness = 0=No, 1=Wang, 2=LynchRitland [default 0]
 #' @param kinship Estimate kinship: 0=N, 1=Y [default 0]
