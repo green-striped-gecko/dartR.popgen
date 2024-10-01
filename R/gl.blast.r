@@ -129,7 +129,7 @@
 #'  (“homology”) searching. Current protocols in bioinformatics, 42(1), 3-1.
 #'  }
 #'
-#' @seealso \code{\link{gl.print.history}}
+#' @seealso \code{\link[dartR.base]{gl.print.history}}
 #'
 #' @family reference genomes
 #'

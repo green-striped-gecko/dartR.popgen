@@ -120,10 +120,6 @@ exclude extension) [default NULL]}
 
 \item{verbose}{Set verbosity for this function (though structure output
 cannot be switched off currently) [default NULL].}
-
-\item{...}{Parameters to specify the STRUCTURE run (check 
-\code{structureRun}
- within strataG.}
 }
 \value{
 An sr object (structure.result list output). Each list entry is a

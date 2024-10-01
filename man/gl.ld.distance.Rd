@@ -18,7 +18,7 @@ gl.ld.distance(
 )
 }
 \arguments{
-\item{ld.report}{Output from function \code{\link{gl.report.ld.map}}
+\item{ld.report}{Output from function \code{\link[dartR.base]{gl.report.ld.map}}
 [required].}
 
 \item{ld.resolution}{Resolution at which LD should be reported in number of

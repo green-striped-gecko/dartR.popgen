@@ -67,6 +67,7 @@
 #' gl.map.structure(qmat, K = 2, t1, scalex = 1, scaley = 0.5)
 #' }
 #' @export
+#' @importFrom stats as.dendrogram dist hclust order.dendrogram reorder runif
 #' @seealso \code{gl.run.faststructure}
 #' @references
 #' \itemize{
@@ -265,7 +266,7 @@ gl.plot.faststructure <- function(sr,
     
     res <- gl.dist.ind(x,method = "Manhattan",plot.display = FALSE,verbose = 0)
     
-    reorderfun <- function(d, w) reorder(d, w, agglo.FUN = mean)
+    reorderfun <- function(d, w) stats::reorder(d, w, agglo.FUN = mean)
     
     distr <- dist(res)
     hcr <- hclust(distr)
