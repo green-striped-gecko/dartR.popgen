@@ -16,6 +16,8 @@ gl.ld.haplotype(
   haplo_id = FALSE,
   min_snps = 10,
   ld_threshold_haplo = 0.5,
+  plot_het = TRUE,
+  snp_pos = TRUE,
   target_snp = NULL,
   coordinates = NULL,
   color_haplo = "viridis",
@@ -56,6 +58,10 @@ it [default 10].}
 
 \item{ld_threshold_haplo}{Minimum LD between adjacent SNPs to call a
 haplotype [default 0.5].}
+
+\item{plot_het}{Whether to plot heterozygosity [default TRUE].}
+
+\item{snp_pos}{Whether to plot SNP position [default TRUE].}
 
 \item{target_snp}{Position of target SNP [default NULL].}
 

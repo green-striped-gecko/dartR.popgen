@@ -34,6 +34,8 @@
 #' it [default 10].
 #' @param ld_threshold_haplo Minimum LD between adjacent SNPs to call a
 #' haplotype [default 0.5].
+#' @param plot_het Whether to plot heterozygosity [default TRUE].
+#' @param snp_pos Whether to plot SNP position [default TRUE].
 #' @param target_snp Position of target SNP [default NULL].
 #' @param coordinates A vector of two elements with the start and end
 #' coordinates in base pairs to which restrict the
@@ -89,6 +91,8 @@ gl.ld.haplotype <- function(x,
                             haplo_id = FALSE,
                             min_snps = 10,
                             ld_threshold_haplo = 0.5,
+                            plot_het = TRUE,
+                            snp_pos = TRUE, 
                             target_snp = NULL,
                             coordinates = NULL,
                             color_haplo = "viridis",
@@ -623,13 +627,6 @@ gl.ld.haplotype <- function(x,
             ),
             color = "Haplotypes limits"
           ), linewidth = 1) +
-          geom_line(
-            data = snp_het_alone,
-            aes(x = position, y = het, color = "Heterozygosity"),
-            inherit.aes = FALSE,
-            linewidth = 1 / 2,
-            alpha = 1
-          ) +
           annotate(
             "text",
             x = locations_temp_2$midpoint_ld_plot,
@@ -668,6 +665,17 @@ gl.ld.haplotype <- function(x,
             axis.text.x = element_blank()
           ) +
           coord_fixed(ratio = 1 / 1)
+        
+        if(plot_het){
+          p_temp <- p_temp +
+            geom_line(
+              data = snp_het_alone,
+              aes(x = position, y = het, color = "Heterozygosity"),
+              inherit.aes = FALSE,
+              linewidth = 1 / 2,
+              alpha = 1
+            )
+        }
 
         # p <- c(p,p_temp)
 
@@ -693,13 +701,6 @@ gl.ld.haplotype <- function(x,
             )
           ) +
           viridis::scale_fill_viridis(name = ld_stat, option = color_haplo) +
-          geom_line(
-            data = snp_het_alone,
-            aes(x = position, y = het, color = "Heterozygosity"),
-            inherit.aes = FALSE,
-            linewidth = 1 / 2,
-            alpha = 1
-          ) +
           labs(
             x = "Chromosome location (Mbp)",
             y = "Het",
@@ -719,6 +720,17 @@ gl.ld.haplotype <- function(x,
             axis.text.x = element_blank()
           ) +
           coord_fixed(ratio = 1 / 1)
+        
+        if(plot_het){
+        p_temp <- p_temp +
+        geom_line(
+          data = snp_het_alone,
+          aes(x = position, y = het, color = "Heterozygosity"),
+          inherit.aes = FALSE,
+          linewidth = 1 / 2,
+          alpha = 1
+        ) 
+        }
         
         snp <- pop_ld$position
         snp <- snp[order(snp)]
@@ -743,6 +755,8 @@ gl.ld.haplotype <- function(x,
           snp_pos <- target_snp
           snp_fin[which(snp_fin$snp %in% target_snp),"colorL"] <- "red"
         }
+        
+        if(snp_pos){
         y<- NA
         p_pos <- ggplot(snp_fin, aes(x = order, y = y, group = snp)) +
           geom_line(color= snp_fin$colorL) +
@@ -770,6 +784,7 @@ gl.ld.haplotype <- function(x,
         )
         p_temp  <- p_temp / p_pos + 
           plot_layout(design = layout)
+        }
         # p <- c(p,p_temp)
         # p[[pop_n]][[chrom]] <- p_temp
 
