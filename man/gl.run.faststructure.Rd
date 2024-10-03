@@ -27,6 +27,8 @@ gl.run.faststructure(
 \item{exec}{Full path and name+extension where the fastStructure executable
 is located [default working directory "./fastStructure"].}
 
+\item{exec.plink}{path to plink executable [default working directory].}
+
 \item{output}{Path to output file [default getwd()].}
 
 \item{tol}{Convergence criterion [default 10e-6].}

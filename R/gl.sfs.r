@@ -68,10 +68,10 @@ gl.sfs <- function(x,
 
   # FUNCTION SPECIFIC ERROR CHECKING
 
-  if (sum(is.na(as.matrix(x))) > 0) {
+  if (sum(is.na(as.matrix(x))) > 0 & verbose>1) {
     cat(
       warn(
-        "Your data contains missing data, better to use gl.impute to fill those gaps meaningful!\n"
+        "Your data contains missing data, better filter stronger or use gl.impute to fill those gaps meaningful!\n"
       )
     )
   }
