@@ -69,8 +69,9 @@ haplotype [default 0.5].}
 coordinates in base pairs to which restrict the
 analysis e.g. c(1,1000000) [default NULL].}
 
-\item{color_haplo}{Color palette for haplotype plot. See details
-[default "viridis"].}
+\item{color_haplo}{Color palette for haplotype plot. Options are: "magma", 
+"inferno", "plasma", "viridis", "cividis", "rocket", "mako" and "turbo" 
+ [default "viridis"].}
 
 \item{color_het}{Color for heterozygosity [default "deeppink"].}
 

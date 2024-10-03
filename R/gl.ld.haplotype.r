@@ -40,7 +40,8 @@
 #' @param coordinates A vector of two elements with the start and end
 #' coordinates in base pairs to which restrict the
 #' analysis e.g. c(1,1000000) [default NULL].
-#' @param color_haplo Color palette for haplotype plot. See details
+#' @param color_haplo Color palette for haplotype plot. Options are: "magma", 
+#' "inferno", "plasma", "viridis", "cividis", "rocket", "mako" and "turbo" 
 #'  [default "viridis"].
 #' @param color_het Color for heterozygosity [default "deeppink"].
 #' @param plot.out Specify if heatmap plot is to be produced [default TRUE].
