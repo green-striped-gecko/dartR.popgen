@@ -41,9 +41,13 @@
 #' @examples
 #' # examples need structure to be installed on the system (see above)
 #' \dontrun{
-#' m <- gl.run.snmf(x=testset.gl, minK=1, 
-#' maxK=5, rep=10) 
-#'Q <- gl.plot.snmf(snmf_result=m, plot.K = 3, ind_name=T)}
+#' m <- gl.run.snmf(x=bandicoot.gl, minK=1, 
+#' maxK=5, rep=10)
+#' Q <- gl.plot.snmf(snmf_result=m, plot.K = 3, ind_name=T)
+#' # move population 4 (out of 5) 0.5 degrees to the right and populations 1
+#' # 0.3 degree to the north of the map.
+#' mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
+#' gl.map.snmf(bandicoot.gl, qmat=Q, movepops=mp)}
 #' @export
 #' @seealso \code{gl.run.snmf}, \code{gl.plot.snmf}
 #' @references
