@@ -97,10 +97,16 @@ set
 }
 \examples{
 \dontrun{
-m <- gl.run.popcluster(x=testset.gl, popcluster.path="/User/PopCluster/Bin/",
+m <- gl.run.popcluster(x=bandicoot.gl, popcluster.path="/User/PopCluster/Bin/",
 output.path="/User/Documents/Output/",
 minK=1, maxK=3, 
 rep=10, PopData=1, location=1)
+Q <- gl.plot.popcluster(pop_cluster_result=m, plot.K = 3, ind_name=T)
+gl.map.popcluster(x = bandicoot.gl, qmat = Q)
+# move population 4 (out of 5) 0.5 degrees to the right and populations 1
+# 0.3 degree to the north of the map.
+mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
+gl.map.popcluster(bandicoot.gl, qmat=Q, movepops=mp)
 }
 Wrapper function to run PopCluster
 
