@@ -306,7 +306,7 @@ gl.plot.faststructure <- function(sr,
         size = 1
       ),
       strip.background = element_blank(),
-      strip.text.x = element_text(size = 12, angle = 90),
+      strip.text.x = element_text(size = label.size, angle = 90),
       axis.title.x = element_blank(),
       axis.text.x = element_text(
         size = 8,
