@@ -22,6 +22,7 @@
 #' @param colors_clusters A color palette for clusters (K) or a list with
 #' as many colors as there are clusters (K) [default NULL].
 #' @param ind_name Whether to plot individual names [default TRUE].
+#' @param label.size Specify the size of the population labels [default 12].
 #' @param border_ind The width of the border line between individuals
 #' [default 0.25].
 #' @param den Whether to include a dendrogram. It is necessary to include the 
@@ -95,6 +96,7 @@ gl.plot.faststructure <- function(sr,
                                   plot_theme = NULL,
                                   colors_clusters = NULL,
                                   ind_name = TRUE,
+                                  label.size = 12,
                                   border_ind = 0.15,
                                   den = FALSE,
                                   x = NULL) {
@@ -239,7 +241,8 @@ gl.plot.faststructure <- function(sr,
   }
 
   if (is.null(colors_clusters)) {
-    colors_clusters <- gl.select.colors(ncolors = max(k.range))
+    colors_clusters <- gl.select.colors(ncolors = max(k.range),
+                                        verbose = 0)
   }
 
   if (is(colors_clusters, "function")) {
@@ -282,7 +285,7 @@ gl.plot.faststructure <- function(sr,
   }
 
   Q_melt$orig.pop <-
-    factor(Q_melt$orig.pop, levels = unique(sr[[1]][[1]]$orig.pop))
+    factor(Q_melt$orig.pop, levels = unique(sr[[1]][[1]][[1]]$orig.pop))
 
   p3 <- ggplot(Q_melt, aes_(x = ~ factor(ord), y = ~value, fill = ~Cluster)) +
     geom_col(color = "black", size = border_ind, width = 1) +
