@@ -58,9 +58,11 @@
 #' @param plot_theme Theme for the plot. See details for options
 #' [default theme_dartR()].
 #' @param plot.dir Directory to save the plot RDS files [default as specified 
-#' by the global working directory or tempdir()]
+#' by the global working directory or tempdir()].
 #' @param plot.file Name for the RDS binary file to save (base name only, 
-#' exclude extension) [default NULL]
+#' exclude extension) [default NULL].
+#' @param delete.files logical. Delete all files when STRUCTURE is finished? 
+#' [default TRUE].
 #' @param verbose Set verbosity for this function (though structure output
 #' cannot be switched off currently) [default NULL].
 #' @details The function is basically a convenient wrapper around the beautiful
@@ -166,6 +168,7 @@ gl.run.structure <- function(x,
                              plot_theme = theme_dartR(),
                              plot.dir = tempdir(),
                              plot.file = NULL,
+                             delete.files = TRUE,
                              verbose = NULL
                              # ,
                              # ...
@@ -241,7 +244,8 @@ parameter to locate it."
                             unifprioralpha = unifprioralpha,
                             alphamax = alphamax,
                             alphapriora = alphapriora,
-                            alphapriorb = alphapriorb
+                            alphapriorb = alphapriorb,
+                            delete.files = delete.files
                             # ...
                             )
 
