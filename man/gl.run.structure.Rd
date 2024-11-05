@@ -32,6 +32,7 @@ gl.run.structure(
   plot_theme = theme_dartR(),
   plot.dir = tempdir(),
   plot.file = NULL,
+  delete.files = TRUE,
   verbose = NULL
 )
 }
@@ -113,10 +114,13 @@ to be at least three different k steps [default TRUE].}
 [default theme_dartR()].}
 
 \item{plot.dir}{Directory to save the plot RDS files [default as specified 
-by the global working directory or tempdir()]}
+by the global working directory or tempdir()].}
 
 \item{plot.file}{Name for the RDS binary file to save (base name only, 
-exclude extension) [default NULL]}
+exclude extension) [default NULL].}
+
+\item{delete.files}{logical. Delete all files when STRUCTURE is finished? 
+[default TRUE].}
 
 \item{verbose}{Set verbosity for this function (though structure output
 cannot be switched off currently) [default NULL].}
