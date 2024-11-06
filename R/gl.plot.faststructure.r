@@ -286,6 +286,11 @@ gl.plot.faststructure <- function(sr,
 
   Q_melt$orig.pop <-
     factor(Q_melt$orig.pop, levels = unique(sr[[1]][[1]][[1]]$orig.pop))
+  
+  if(den){
+    Q_melt$orig.pop <- ""
+  }
+  
 
   p3 <- ggplot(Q_melt, aes_(x = ~ factor(ord), y = ~value, fill = ~Cluster)) +
     geom_col(color = "black", size = border_ind, width = 1) +
