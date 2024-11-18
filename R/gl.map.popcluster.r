@@ -55,6 +55,7 @@
 #' gl.map.popcluster(bandicoot.gl, qmat=Q, movepops=mp)
 #' }
 #' @export
+#' @importFrom dplyr left_join
 #' @seealso \code{\link{gl.run.popcluster}},
 #' \code{\link{gl.plot.popcluster}}
 #' @references

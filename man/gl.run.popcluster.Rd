@@ -108,7 +108,7 @@ gl.map.popcluster(x = bandicoot.gl, qmat = Q)
 mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
 gl.map.popcluster(bandicoot.gl, qmat=Q, movepops=mp)
 }
-Wrapper function to run PopCluster
+#Wrapper function to run PopCluster
 
 }
 \references{

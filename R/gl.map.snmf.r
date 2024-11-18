@@ -91,7 +91,7 @@ gl.map.snmf <- function(x,
     centers[, 2] <- centers[, 2] + movepops[, 2]
   }
   
-  Q_name <- left_join(qmat, data.frame(Label=as.character(x$ind.names), Pop_name=as.character(x$pop)))
+  Q_name <- dplyr::left_join(qmat, data.frame(Label=as.character(x$ind.names), Pop_name=as.character(x$pop)))
   
   sc <-
     match(rownames(centers), levels(factor(Q_name$Pop_name)))

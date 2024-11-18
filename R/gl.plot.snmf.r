@@ -48,7 +48,8 @@
 #' # move population 4 (out of 5) 0.5 degrees to the right and populations 1
 #' # 0.3 degree to the north of the map.
 #' mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
-#' gl.map.snmf(bandicoot.gl, qmat=Q, movepops=mp)}
+#' gl.map.snmf(bandicoot.gl, qmat=Q, movepops=mp)
+#' }
 #' @export
 #' @seealso \code{gl.run.snmf}, \code{gl.plot.snmf}
 #' @references
@@ -62,7 +63,6 @@ gl.plot.snmf <- function(snmf_result,
                               border_ind=0.25,
                               plot.K,
                               plot_theme=NULL,
-                              k_name=NULL,
                               color_clusters=NULL,
                               ind_name=T,
                               plot.out=TRUE,

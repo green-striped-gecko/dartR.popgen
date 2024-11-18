@@ -13,6 +13,7 @@ gl.run.snmf(
   rep,
   regularization = 10,
   ploidy_lv = 2,
+  cleanup = TRUE,
   plot.out = TRUE,
   plot.dir = NULL,
   plot.file = NULL,
@@ -33,6 +34,8 @@ gl.run.snmf(
 \item{regularization}{alpha value for regularization when analyzing small dataset [default=10]}
 
 \item{ploidy_lv}{ploidy level of dataset [default=2]}
+
+\item{cleanup}{clean data in tmp [default  TRUE]}
 
 \item{plot.out}{Specify if plot is to be produced [default TRUE].}
 
@@ -64,7 +67,7 @@ gl.map.snmf(bandicoot.gl, qmat=Q)
 mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
 gl.map.snmf(bandicoot.gl, qmat=Q, movepops=mp)
 }
-Wrapper function to run snmf from LEA
+#Wrapper function to run snmf from LEA
 
 }
 \references{
