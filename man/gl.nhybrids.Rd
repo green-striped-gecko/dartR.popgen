@@ -103,9 +103,7 @@ of NewHybids.
 If you specify a directory for the NewHybrids executable file, then the
 script will create the input file from the SNP data then run NewHybrids. If
 the directory is set to NULL, the execution will stop once the input file
-(default='nhyb.txt') has been written to disk. Note: the executable option
-will not work on a Mac; Mac users should generate the NewHybrids input file
-and run this on their local installation of NewHybrids.
+(default='nhyb.txt') has been written to disk.
 
 Refer to the New Hybrids manual for further information on the parameters to
 set
