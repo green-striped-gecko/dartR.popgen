@@ -7,6 +7,7 @@
 gl.map.snmf(
   x,
   qmat,
+  color_clusters = NULL,
   provider = "Esri.NatGeoWorldMap",
   scalex = 1,
   scaley = 1,
@@ -22,6 +23,8 @@ gl.map.snmf(
 \item{qmat}{Q-matrix from a gl.plot.snmf [required]
 [from \code{\link{gl.run.snmf}} and \code{\link{gl.plot.snmf}}]
  [required]}
+
+\item{color_clusters}{A color palette for clusters (K) or a list with}
 
 \item{provider}{Provider passed to leaflet. Check \link[leaflet]{providers}
 for a list of possible backgrounds [default "Esri.NatGeoWorldMap"].}
