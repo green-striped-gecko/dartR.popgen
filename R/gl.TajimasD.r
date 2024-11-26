@@ -258,18 +258,18 @@ gl.TajimasD <- function(x, ms.path=NULL,
   if (!is.null(plot.file) & exists("plot.list")) {
     tmp <- utils.plot.save(plot.list,
                            dir = plot.dir,
-                           file = plot.file,
+                           file = paste0(plot.file, "_distribution"),
                            verbose = verbose
     )
     tmp2 <- utils.plot.save(p1,
                            dir = plot.dir,
-                           file = paste0(plot.file, "_2"),
+                           file = paste0(plot.file, "_TajimasD"),
                            verbose = verbose
     )
   } else if (!is.null(plot.file) & exists("plot.list")==F) {
     tmp <- utils.plot.save(p1,
                             dir = plot.dir,
-                            file = plot.file,
+                            file = paste0(plot.file, "_TajimasD"),
                             verbose = verbose
     )
   }
