@@ -13,7 +13,7 @@
 #' @param ms.path absolute path that stores the ms program 
 #' (eg: /User/msdir/) [default  NULL]
 #' @param simulation.out Directory in which to save simulated summary statsitics from MS, given ms.path is provided  [default  NULL]
-#' @param rep Number of replicates runs [required]
+#' @param rep Number of replicates runs [default  NULL, required for simulation]
 #' @param cleanup clean data in tmp [default  TRUE]
 #' @param plot.dir Directory in which to save files [default = working directory]
 #' @param plot.out Specify if plot is to be produced [default TRUE].
@@ -43,7 +43,7 @@
 
 gl.TajimasD <- function(x, ms.path=NULL,
                         simulation.out=NULL,
-                        rep, 
+                        rep=NULL, 
                         cleanup=TRUE, 
                         plot.dir=NULL,
                         plot.out = TRUE,
