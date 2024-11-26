@@ -26,7 +26,7 @@ gl.TajimasD(
 
 \item{simulation.out}{Directory in which to save simulated summary statsitics from MS, given ms.path is provided  [default  NULL]}
 
-\item{rep}{Number of replicates runs [default  NULL, required for simulation]}
+\item{rep}{Number of replicates in ms [default  NULL, required for simulation]}
 
 \item{cleanup}{clean data in tmp [default  TRUE]}
 
