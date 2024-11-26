@@ -21,8 +21,8 @@ gl.TajimasD(
 \arguments{
 \item{x}{Name of the genlight object containing the SNP data [required]}
 
-\item{ms.path}{absolute path to the ms program 
-(eg: /User/msdir/ms) [default  NULL]}
+\item{ms.path}{absolute path that stores the ms program 
+(eg: /User/msdir/) [default  NULL]}
 
 \item{simulation.out}{Directory in which to save simulated summary statsitics from MS, given ms.path is provided  [default  NULL]}
 

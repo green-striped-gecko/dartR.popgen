@@ -10,8 +10,8 @@
 #'
 #'
 #'@param x Name of the genlight object containing the SNP data [required]
-#' @param ms.path absolute path to the ms program 
-#' (eg: /User/msdir/ms) [default  NULL]
+#' @param ms.path absolute path that stores the ms program 
+#' (eg: /User/msdir/) [default  NULL]
 #' @param simulation.out Directory in which to save simulated summary statsitics from MS, given ms.path is provided  [default  NULL]
 #' @param rep Number of replicates runs [required]
 #' @param cleanup clean data in tmp [default  TRUE]
