@@ -23,7 +23,7 @@
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 #' progress log; 3, progress and results summary; 5, full report
 #' [default 2 or as specified using gl.set.verbosity].
-#' @return The plot of Tajima's D and p-values (results from MS can be return if ms.path is provided) 
+#' @return The plot and table of Tajima's D (results from MS and plot of simulated Tajima's D can be return if ms.path is provided) 
 #' @export
 #' @importFrom stringr str_split_fixed
 #' @importFrom terra split
@@ -36,8 +36,10 @@
 #' @author Renee Catullo (Custodian: Ching Ching Lau) -- Post to
 #'  \url{https://groups.google.com/d/forum/dartr}
 #' @examples
-#' Tajima <- gl.TajimasD(x=bandicoot.gl, rep=10)
-#' 
+#' # To run without ms simulation
+#' Tajima <- gl.TajimasD(x=bandicoot.gl)
+#' #' # To run with ms simulation
+#' Tajima <- gl.TajimasD(x=bandicoot.gl, rep=10, ms.path="/User/msdir/")
 #' @export 
 
 

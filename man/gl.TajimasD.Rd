@@ -44,7 +44,7 @@ progress log; 3, progress and results summary; 5, full report
 [default 2 or as specified using gl.set.verbosity].}
 }
 \value{
-The plot of Tajima's D and p-values (results from MS can be return if ms.path is provided)
+The plot and table of Tajima's D (results from MS and plot of simulated Tajima's D can be return if ms.path is provided)
 }
 \description{
 This function calculate Tajima's D
@@ -54,8 +54,10 @@ set
 -- ##########################################
 }
 \examples{
-Tajima <- gl.TajimasD(x=bandicoot.gl, rep=10)
-
+# To run without ms simulation
+Tajima <- gl.TajimasD(x=bandicoot.gl)
+#' # To run with ms simulation
+Tajima <- gl.TajimasD(x=bandicoot.gl, rep=10, ms.path="/User/msdir/")
 }
 \references{
 \itemize{
