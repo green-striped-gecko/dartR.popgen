@@ -14,6 +14,7 @@
 #' @param qmat Q-matrix from a gl.plot.popcluster [required]
 #' [from \code{\link{gl.run.popcluster}} and \code{\link{gl.plot.popcluster}}]
 #'  [required].
+#' @param color_clusters A color palette for clusters (K) or a list with
 #' @param provider Provider	passed to leaflet. Check \link[leaflet]{providers}
 #' for a list of possible backgrounds [default "Esri.NatGeoWorldMap"].
 #' @param scalex Scaling factor to determine the size of the bars in x direction
@@ -67,6 +68,7 @@
 
 gl.map.popcluster <- function(x,
                              qmat,
+                             color_clusters=NULL,
                              provider = "Esri.NatGeoWorldMap",
                              scalex = 1,
                              scaley = 1,
@@ -136,24 +138,43 @@ gl.map.popcluster <- function(x,
     
     qmi1$Pop_name <- NULL
 
-
-    for (ii in 1:nrow(qmi1)) {
-      for (i in 1:(ncol(qmi1) - 1)) {
-        oo <- (ii - nrow(qmi) / 2) * sx
-
-        m1 <- m1 %>%
-          leaflet::addRectangles(
-            cx[p] + oo,
-            cy[p] + qmi1[ii, i] * sy,
-            cx[p] + oo + sx,
-            cy[p] + qmi1[ii, i + 1] * sy,
-            opacity = 0,
-            color = rainbow(ncol(ff))[i],
-            fillOpacity = 0.8
-          )
+    if (is.null(color_clusters)) {
+      for (ii in 1:nrow(qmi1)) {
+        for (i in 1:(ncol(qmi1) - 1)) {
+          oo <- (ii - nrow(qmi) / 2) * sx
+          
+          m1 <- m1 %>%
+            leaflet::addRectangles(
+              cx[p] + oo,
+              cy[p] + qmi1[ii, i] * sy,
+              cx[p] + oo + sx,
+              cy[p] + qmi1[ii, i + 1] * sy,
+              opacity = 0,
+              color = rainbow(ncol(ff))[i],
+              fillOpacity = 0.8
+            )
+        }
+      }
+    } else {
+      for (ii in 1:nrow(qmi1)) {
+        for (i in 1:(ncol(qmi1) - 1)) {
+          oo <- (ii - nrow(qmi) / 2) * sx
+          
+          m1 <- m1 %>%
+            leaflet::addRectangles(
+              cx[p] + oo,
+              cy[p] + qmi1[ii, i] * sy,
+              cx[p] + oo + sx,
+              cy[p] + qmi1[ii, i + 1] * sy,
+              opacity = 0,
+              color = color_clusters[i],
+              fillOpacity = 0.8
+            )
+        }
       }
     }
   }
+  
   if (pop.labels) {
     m1 <- m1 %>%
       leaflet::addLabelOnlyMarkers(
