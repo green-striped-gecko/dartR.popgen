@@ -18,6 +18,8 @@ gl.run.epos(
   method = "greedy",
   depth = 2,
   other.options = "",
+  outfile = "epos.out",
+  outpath = NULL,
   cleanup = TRUE,
   plot.display = TRUE,
   plot.theme = theme_dartR(),
@@ -59,6 +61,11 @@ run, otherwise boot number of bootstraps are run (option -i in bootSfs)}
 \item{depth}{if method="exhaustive" then this parameter is used to set the search depth, default is 2. If method is set to greedy this is setting is ignored.}
 
 \item{other.options}{additional options for epos (e.g -m, -x etc.)}
+
+\item{outfile}{File name of the output file [default 'genepop.gen'].}
+
+\item{outpath}{Path where to save the output file [default global working 
+directory or if not specified, tempdir()].}
 
 \item{cleanup}{if set to true intermediate tempfiles are deleted after the run}
 
