@@ -7,6 +7,7 @@
 gl.map.popcluster(
   x,
   qmat,
+  color_clusters = NULL,
   provider = "Esri.NatGeoWorldMap",
   scalex = 1,
   scaley = 1,
@@ -22,6 +23,8 @@ gl.map.popcluster(
 \item{qmat}{Q-matrix from a gl.plot.popcluster [required]
 [from \code{\link{gl.run.popcluster}} and \code{\link{gl.plot.popcluster}}]
  [required].}
+
+\item{color_clusters}{A color palette for clusters (K) or a list with}
 
 \item{provider}{Provider    passed to leaflet. Check \link[leaflet]{providers}
 for a list of possible backgrounds [default "Esri.NatGeoWorldMap"].}
