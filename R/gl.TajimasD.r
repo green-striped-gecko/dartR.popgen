@@ -145,7 +145,7 @@ gl.TajimasD <- function(x, ms.path=NULL,
     }
   
   tmp_tajD <- get_tajima_D(x)
-  tmp_tajD$theta <- tmp_tajD$pi/tmp_tajD$S
+  tmp_tajD$theta_per_site <- tmp_tajD$pi/x@n.loc
   
 
   
@@ -191,7 +191,7 @@ gl.TajimasD <- function(x, ms.path=NULL,
        assign(paste0("sim_", p),system(paste0(file.path(tempd, "ms")," ",
        tmp_tajD[which(tmp_tajD$population==p), 'N'], 
        " ", rep, " ", "-t ", 
-       tmp_tajD[which(tmp_tajD$population==p), 'theta'], " -seed 1 2 3 ", "-s ", 
+       tmp_tajD[which(tmp_tajD$population==p), 'theta_per_site'], " -seed 1 2 3 ", "-s ", 
        tmp_tajD[which(tmp_tajD$population==p), 'S'], " | ", 
        file.path(tempd, "sample_stats") ),intern=TRUE))
       write.table(get(paste0("sim_", p)), file.path(tempd, paste0("MS_sim_", p, ".txt")), row.names = F, col.names = F, quote = F)
