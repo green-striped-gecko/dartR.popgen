@@ -34,13 +34,14 @@
 #'  \item \url{https://ggplot2.tidyverse.org/reference/ggtheme.html} and \item
 #'  \url{https://yutannihilation.github.io/allYourFigureAreBelongToUs/ggthemes/}
 #'  }
-#'
+#'The Q matrices can be input to other R packages for plotting ancestry proportion, e.g. FSTruct
+#'\url{https://github.com/MaikeMorrison/FSTruct}
 #' @return Q-matrix and structure plot
 #'
 #' @author Ching Ching Lau (Post to \url{https://groups.google.com/d/forum/dartr})
 #'
 #' @examples
-#' # examples need structure to be installed on the system (see above)
+#' # examples need popcluster to be installed on the system (see above)
 #' \dontrun{
 #' m <- gl.run.popcluster(x=bandicoot.gl, popcluster.path="/User/PopCluster/Bin/",
 #' output.path="/User/Documents/Output/",
