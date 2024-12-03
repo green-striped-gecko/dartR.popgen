@@ -64,9 +64,12 @@ Examples of other themes that can be used can be consulted in \itemize{
  \item \url{https://ggplot2.tidyverse.org/reference/ggtheme.html} and \item
  \url{https://yutannihilation.github.io/allYourFigureAreBelongToUs/ggthemes/}
  }
+
+The Q matrices can be input to other R packages for plotting ancestry proportion, e.g. FSTruct
+\url{https://github.com/MaikeMorrison/FSTruct}
 }
 \examples{
-# examples need structure to be installed on the system (see above)
+# examples need LEA to be installed on the system (see above)
 \dontrun{
 m <- gl.run.snmf(x=bandicoot.gl, minK=1, 
 maxK=5, rep=10)
