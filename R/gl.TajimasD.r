@@ -2,17 +2,16 @@
 #' @title Calculation of Tajima's D
 #' simulation results can only be output if ms and sample_stats are compiled (can be installed at: https://uchicago.app.box.com/s/l3e5uf13tikfjm7e1il1eujitlsjdx13)
 #' @description
-#' This function calculate Tajima's D
+#' This function calculate Tajima's D, with p-values from beta distribution, standard normal distribution and simulation from ms (Hudson, 2002)
 #'
-#' Refer to the ms manual for further information on the parameters to
-#' set
-#' -- ##########################################
+#' Refer to the ms manual for further information on the parameters to set
+#' ##########################################
 #'
 #'
 #'@param x Name of the genlight object containing the SNP data [required]
 #' @param ms.path absolute path that stores the ms program 
 #' (eg: /User/msdir/) [default  NULL]
-#' @param simulation.out Directory in which to save simulated summary statsitics from MS, given ms.path is provided  [default  NULL]
+#' @param simulation.out Directory in which to save simulated summary statistics from MS, given ms.path is provided  [default  NULL]
 #' @param rep Number of replicates in ms [default  NULL, required for simulation]
 #' @param cleanup clean data in tmp [default  TRUE]
 #' @param plot.dir Directory in which to save files [default = working directory]
