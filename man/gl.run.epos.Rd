@@ -83,10 +83,12 @@ progress log; 3, progress and results summary; 5, full report
 [default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-returns a list with two components: 
+returns a list with four components: 
 \itemize{
 \item{history: Ne estimates of over generations (generation, median, low and high)} 
 \item{plot: a ggplot of history }
+\item{sfs: the sfs used for the analysis}
+\item{diagnostics: a list with the several diagnostics and a plot of observed and expected sfs}
 }
 }
 \description{
