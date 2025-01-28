@@ -35,8 +35,21 @@
 #' @param ld_threshold_haplo Minimum LD between adjacent SNPs to call a
 #' haplotype [default 0.5].
 #' @param plot_het Whether to plot heterozygosity [default TRUE].
-#' @param snp_pos Whether to plot SNP position [default TRUE].
-#' @param target_snp Position of target SNP [default NULL].
+#' @param snp_pos Whether to plot SNP positions [default TRUE].
+#' @param target.snp1 Vector of position(s) of target SNP(s) in base pairs 
+#' [default NULL].
+#' @param target.snp2 Vector of position(s) of target SNP(s) in base pairs 
+#' [default NULL].
+#' @param target.snp3 Vector of position(s) of target SNP(s) in base pairs 
+#' [default NULL].
+#' @param col.all Color of line indicating position for all SNPs 
+#' [default "black"].
+#' @param col.target1 Color of line indicating position for target.snp1 
+#' [default "green"].
+#' @param col.target2 Color of line indicating position for target.snp2
+#'  [default "blue"].
+#' @param col.target3 Color of line indicating position for target.snp3
+#'  [default "red"].
 #' @param coordinates A vector of two elements with the start and end
 #' coordinates in base pairs to which restrict the
 #' analysis e.g. c(1,1000000) [default NULL].
@@ -46,7 +59,7 @@
 #' @param color_het Color for heterozygosity [default "deeppink"].
 #' @param plot.out Specify if heatmap plot is to be produced [default TRUE].
 #' @param plot.dir Directory in which to save files [default = working directory]
-#' @param plot.save Whethwr to save the plot in pdf format [default FALSE].
+#' @param plot.save Whether to save the plot in pdf format [default FALSE].
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 #' progress log; 3, progress and results summary; 5, full report
 #' [default 2, unless specified using gl.set.verbosity].
@@ -94,7 +107,14 @@ gl.ld.haplotype <- function(x,
                             ld_threshold_haplo = 0.5,
                             plot_het = TRUE,
                             snp_pos = TRUE, 
-                            target_snp = NULL,
+                            target.snp1 = NULL,
+                            target.snp2 = NULL,
+                            target.snp3 = NULL,
+                            col.all = "black",
+                            col.target1 = "green",
+                            col.target2 = "blue",
+                            col.target3 = "red",
+                            plot_factor = 1,
                             coordinates = NULL,
                             color_haplo = "viridis",
                             color_het = "deeppink",
@@ -692,7 +712,6 @@ gl.ld.haplotype <- function(x,
         colors_plot <- c("Heterozygosity" = color_het)
 
         p_pos <- snp <- p_temp <- NULL
-
         p_temp <- ggplot() +
           geom_polygon(
             data = polygon_haplo.df,
@@ -740,27 +759,62 @@ gl.ld.haplotype <- function(x,
         snp$order <- 1:nrow(snp)
         snp$scale <- scales::rescale(snp$snp, to = c(1,length(pop_ld$position)))
         snp1 <-snp
-        snp1$y <- 2
+        snp1$y <- 2 
         snp2 <- snp
         snp2$y <- 1
         snp2$order <- snp1$scale
         snp_fin <- rbind(snp1,snp2)
         
-        labels_tmp <- c(seq(1,max(pop_ld$position),max(pop_ld$position)/10),max(pop_ld$position))
+        if(!is.null(coordinates)){
+          labels_tmp <- c(seq(coordinates[1],max(pop_ld$position),max(pop_ld$position)/10),max(pop_ld$position))
+        }else{
+          labels_tmp <- c(seq(1,max(pop_ld$position),max(pop_ld$position)/10),max(pop_ld$position))
+        }
+        
         labels_plot <- round(labels_tmp,-6)/1000000
         breaks_plot <- scales::rescale(labels_plot,to = c(1,length(pop_ld$position)) )
         
-        snp_fin$colorL <- "black"
+        snp_fin$colorL <- "col.all"
         
-        if(!is.null(target_snp)){
-          snp_pos <- target_snp
-          snp_fin[which(snp_fin$snp %in% target_snp),"colorL"] <- "red"
+        if(!is.null(target.snp1)){
+          target.snp1 <- sapply(target.snp1, function(target) {
+            differences <- abs(snp_fin$snp - target)
+            min_index <- which.min(differences)
+            snp_fin$snp[min_index][1]
+          })
+          snp_fin[which(snp_fin$snp %in% target.snp1),"colorL"] <- "col.target1"
+        }
+        
+        if(!is.null(target.snp2)){
+          target.snp2 <- sapply(target.snp2, function(target) {
+            differences <- abs(snp_fin$snp - target)
+            min_index <- which.min(differences)
+            snp_fin$snp[min_index][1]
+          })
+          snp_fin[which(snp_fin$snp %in% target.snp2),"colorL"] <- "col.target2"
+        }
+        
+        if(!is.null(target.snp3)){
+          target.snp3 <- sapply(target.snp3, function(target) {
+            differences <- abs(snp_fin$snp - target)
+            min_index <- which.min(differences)
+            snp_fin$snp[min_index][1]
+          })
+          snp_fin[which(snp_fin$snp %in% target.snp3),"colorL"] <- "col.target3"
         }
         
         if(snp_pos){
-        y<- NA
-        p_pos <- ggplot(snp_fin, aes(x = order, y = y, group = snp)) +
-          geom_line(color= snp_fin$colorL) +
+          colorL <- y <- NA
+
+          p_pos <- ggplot(snp_fin, aes(x = order,
+                                            y = y,
+                                            group = snp, 
+                                            color = colorL)) +
+          geom_line()  +
+          scale_color_manual(values = c("col.all" = col.all,
+                                        "col.target1" = col.target1,
+                                        "col.target2" = col.target2,
+                                        "col.target3" = col.target3)) +
           theme(
             panel.background = element_rect(fill = "transparent", colour = NA),
             plot.background = element_rect(fill = "transparent", colour = NA),
@@ -776,23 +830,20 @@ gl.ld.haplotype <- function(x,
             scale_x_continuous(breaks =breaks_plot ,
                                 labels =labels_plot ) +
           labs(
-            x = "Chromosome location (Mbp)") 
+            x = "Chromosome location (Mbp)")
         
 
         layout <- c(
           area(t = 1, l = 1, b = 5, r = 1),
-          area(t = 4, l = 1, b = 6, r = 1)
+          area(t = 5.5, l = 1, b = 5.5, r = 1)
         )
         p_temp  <- p_temp / p_pos + 
           plot_layout(design = layout)
         }
-        # p <- c(p,p_temp)
-        # p[[pop_n]][[chrom]] <- p_temp
 
         # PRINTING OUTPUTS
          if (plot.out) {
           print(p_temp)
-          # print(p)
          }
         
         file.name <- paste0(plot.dir,"/",pop_name, "_", chr_name,".pdf")
