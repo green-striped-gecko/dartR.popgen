@@ -80,7 +80,7 @@ clumpp <- function(Q_list,
         replace = FALSE
       ))
     permQs <- apply(perms, 2, function(p) {
-      largeKGreedy(Q_list[p])
+      largeKGreedy(Q_list = Q_list[p])
     })
     Hs <-
       lapply(permQs, function(x) {

@@ -22,6 +22,7 @@
 #' @param colors_clusters A color palette for clusters (K) or a list with
 #' as many colors as there are clusters (K) [default NULL].
 #' @param ind_name Whether to plot individual names [default TRUE].
+#' @param label.size Specify the size of the population labels [default 12].
 #' @param border_ind The width of the border line between individuals
 #' [default 0.25].
 #' @param den Whether to include a dendrogram. It is necessary to include the 
@@ -67,6 +68,7 @@
 #' gl.map.structure(qmat, K = 2, t1, scalex = 1, scaley = 0.5)
 #' }
 #' @export
+#' @importFrom stats as.dendrogram dist hclust order.dendrogram reorder runif
 #' @seealso \code{gl.run.faststructure}
 #' @references
 #' \itemize{
@@ -94,18 +96,20 @@ gl.plot.faststructure <- function(sr,
                                   plot_theme = NULL,
                                   colors_clusters = NULL,
                                   ind_name = TRUE,
+                                  label.size = 12,
                                   border_ind = 0.15,
                                   den = FALSE,
                                   x = NULL) {
   res <- list()
 
   for (i in k.range) {
-    eq.k <- which(names(sr) == as.character(i))
+    eq.k <- which(names(sr$q_list) == as.character(i))
 
-    sr_tmp <- sr[[eq.k]]
+    sr_tmp <- sr$q_list[[eq.k]]
 
     Q_list_tmp <- lapply(sr_tmp, function(x) {
-      as.matrix(x[, 3:ncol(x)])
+      # x <- x[[1]]
+      return(as.matrix(x[, 3:ncol(x)]))
     })
 
     # If K = 1
@@ -115,7 +119,7 @@ gl.plot.faststructure <- function(sr,
     } else {
       # If just one replicate
       if (length(Q_list_tmp) == 1) {
-        res_tmp <- Q_list_tmp[[1]]
+        res_tmp <- list(Q_list_tmp[[1]])
         # if more than 1 replicate
       } else {
         res_tmp <- clumpp(Q_list_tmp,
@@ -128,7 +132,8 @@ gl.plot.faststructure <- function(sr,
       if (clumpak) {
         # if just one replicate
         if (length(res_tmp) == 1) {
-          res_tmp_2 <- res_tmp[[1]]
+          # res_tmp_2 <- res_tmp[[1]]
+          res_tmp_2 <- res_tmp
           # if more than one replicate
         } else {
           simMatrix <- as.matrix(proxy::simil(res_tmp, method = G))
@@ -143,7 +148,7 @@ gl.plot.faststructure <- function(sr,
         # if there is just one mode
         if (length(res_tmp_2) == 1) {
           # if there is just one replicate within the mode
-          if (length(res_tmp_2[[1]]) == 1) {
+          if (!is.list(res_tmp_2[[1]])) {
             res_tmp_3 <- res_tmp_2[[1]]
             # if there are more than 1 replicate within the mode
           } else {
@@ -202,10 +207,10 @@ gl.plot.faststructure <- function(sr,
 
   for (i in 1:length(Q_list)) {
     Q_list_tmp <- data.frame(
-      Label = sr[[1]][[1]]$id,
+      Label = sr$q_list[[1]][[1]]$id,
       Q_list[[i]],
       K = rep(Ks[[i]], nrow(Q_list[[i]])),
-      orig.pop = sr[[1]][[1]]$orig.pop
+      orig.pop = sr$q_list[[1]][[1]]$orig.pop
     )
     n_col <- ncol(Q_list_tmp) - 3
     colnames(Q_list_tmp) <-
@@ -236,7 +241,8 @@ gl.plot.faststructure <- function(sr,
   }
 
   if (is.null(colors_clusters)) {
-    colors_clusters <- gl.select.colors(ncolors = max(k.range))
+    colors_clusters <- gl.select.colors(ncolors = max(k.range),
+                                        verbose = 0)
   }
 
   if (is(colors_clusters, "function")) {
@@ -263,7 +269,7 @@ gl.plot.faststructure <- function(sr,
     
     res <- gl.dist.ind(x,method = "Manhattan",plot.display = FALSE,verbose = 0)
     
-    reorderfun <- function(d, w) reorder(d, w, agglo.FUN = mean)
+    reorderfun <- function(d, w) stats::reorder(d, w, agglo.FUN = mean)
     
     distr <- dist(res)
     hcr <- hclust(distr)
@@ -279,7 +285,12 @@ gl.plot.faststructure <- function(sr,
   }
 
   Q_melt$orig.pop <-
-    factor(Q_melt$orig.pop, levels = unique(sr[[1]][[1]]$orig.pop))
+    factor(Q_melt$orig.pop, levels = unique(sr[[1]][[1]][[1]]$orig.pop))
+  
+  if(den){
+    Q_melt$orig.pop <- ""
+  }
+  
 
   p3 <- ggplot(Q_melt, aes_(x = ~ factor(ord), y = ~value, fill = ~Cluster)) +
     geom_col(color = "black", size = border_ind, width = 1) +
@@ -300,7 +311,7 @@ gl.plot.faststructure <- function(sr,
         size = 1
       ),
       strip.background = element_blank(),
-      strip.text.x = element_text(size = 12, angle = 90),
+      strip.text.x = element_text(size = label.size, angle = 90),
       axis.title.x = element_blank(),
       axis.text.x = element_text(
         size = 8,

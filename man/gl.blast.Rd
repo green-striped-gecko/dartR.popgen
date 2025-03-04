@@ -152,7 +152,7 @@ res <- gl.blast(x = testset.gl, ref_genome = "sequence.fasta")
  }
 }
 \seealso{
-\code{\link{gl.print.history}}
+\code{\link[dartR.base]{gl.print.history}}
 }
 \author{
 Berenice Talamantes Becerra & Luis Mijangos (Post to

@@ -10,6 +10,7 @@
 #' @param num.k.rep Number of replicates [default 1].
 #' @param exec Full path and name+extension where the fastStructure executable
 #' is located [default working directory "./fastStructure"].
+#' @param exec.plink path to plink executable [default working directory].
 #' @param output Path to output file [default getwd()].
 #' @param tol Convergence criterion [default 10e-6].
 #' @param prior Choice of prior: simple or logistic [default "simple"].
@@ -103,7 +104,9 @@ gl.run.faststructure <- function(x,
   )
 
   for (k_n in k.range) {
+    
     for (rep_n in 1:num.k.rep) {
+      print(paste("Running K =",k_n,"Replicate =",rep_n))
       if (is.null(seed)) {
         system(
           paste0(
@@ -180,7 +183,7 @@ gl.run.faststructure <- function(x,
     df_likelihood[k_run, k_replicate] <- likelihood_2
   }
   df_likelihood <-
-    df_likelihood[stats::complete.cases(df_likelihood), ]
+    as.data.frame(df_likelihood[stats::complete.cases(df_likelihood), ])
   df_likelihood_res <- rowMeans(df_likelihood)
 
   p3 <- ggplot() +

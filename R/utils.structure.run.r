@@ -15,7 +15,45 @@
 #' @param label label to use for input and output files
 #' @param delete.files logical. Delete all files when STRUCTURE is finished?
 #' @param exec name of executable for STRUCTURE. Defaults to "structure".
-#' @param ... arguments to be passed to \code{structureWrite}.
+#' @param burnin Number of burnin reps [default 10000].
+#' @param numreps Number of MCMC replicates [default 1000].
+#' @param noadmix Logical. No admixture? [default TRUE].
+#' @param freqscorr Logical. Correlated frequencies? [default FALSE].
+#' @param randomize Randomize [default TRUE].
+#' @param seed Set random seed [default 0].
+#' @param pop.prior A character specifying which population prior model to use:
+#'  "locprior" or "usepopinfo" [default NULL].
+#' @param locpriorinit Parameterizes locprior parameter r - how informative the
+#'  populations are. Only used when pop.prior = "locprior" [default 1].
+#' @param maxlocprior Specifies range of locprior parameter r. Only used when 
+#' pop.prior = "locprior" [default 20].
+#' @param gensback Integer defining the number of generations back to test for 
+#' immigrant ancestry. Only used when pop.prior = "usepopinfo" [default 2].
+#' @param migrprior Numeric between 0 and 1 listing migration prior. Only used 
+#' when pop.prior = "usepopinfo" [default 0.05].
+#' @param pfrompopflagonly Logical. update allele frequencies from individuals 
+#' specified by popflag. Only used when pop.prior = "usepopinfo" [default TRUE].
+#' @param popflag A vector of integers (0, 1) or logicals identifiying whether 
+#' or not to use strata information. Only used when pop.prior = "usepopinfo"
+#'  [default NULL].
+#' @param inferalpha Logical. Infer the value of the model parameter # from the 
+#' data; otherwise is fixed at the value alpha which is chosen by the user. 
+#' This option is ignored under the NOADMIX model. Small alpha implies that 
+#' most individuals are essentially from one population or another, while 
+#' alpha > 1 implies that most individuals are admixed [default FALSE].
+#' @param alpha Dirichlet parameter for degree of admixture. This is the 
+#' initial value if inferalpha = TRUE [default 1].
+#' @param unifprioralpha Logical. Assume a uniform prior for alpha which runs 
+#' between 0 and alphamax. This model seems to work fine; the alternative model
+#'  (when unfprioralpha = 0) is to take alpha as having a Gamma prior, with 
+#'  mean alphapriora × alphapriorb, and variance alphapriora × alphapriorb^2 
+#'  [default TRUE].
+#' @param alphamax Maximum for uniform prior on alpha when 
+#' unifprioralpha = TRUE [default 20].
+#' @param alphapriora Parameters of Gamma prior on alpha when 
+#' unifprioralpha = FALSE [default 0.05].
+#' @param alphapriorb Parameters of Gamma prior on alpha when 
+#' unifprioralpha = FALSE [default 0.001].
 #'
 #' @return \describe{ \item{\code{structureRun}}{a list where each element is a
 #' list with results from \code{structureRead} and a vector of the filenames
@@ -29,12 +67,33 @@
 #' run} } } }
 
 utils.structure.run <- function(g,
-                                k.range = NULL,
-                                num.k.rep = 1,
-                                label = NULL,
+                                k.range,
+                                num.k.rep,
+                                label,
                                 delete.files = TRUE,
-                                exec = "structure",
-                                ...) {
+                                exec,
+                                burnin,
+                                numreps,
+                                noadmix,
+                                freqscorr,
+                                randomize,
+                                seed,
+                                pop.prior,
+                                locpriorinit,
+                                maxlocprior,
+                                gensback,
+                                migrprior,
+                                pfrompopflagonly,
+                                popflag,
+                                inferalpha,
+                                alpha,
+                                unifprioralpha,
+                                alphamax,
+                                alphapriora,
+                                alphapriorb
+                                # ,
+                                # ...
+                                ) {
   ################################################################
 
   .structureParseQmat <- function(q.mat.txt,
@@ -409,7 +468,29 @@ utils.structure.run <- function(g,
   )
 
   out.files <- lapply(rownames(rep.df), function(x) {
-    sw.out <- structureWrite(g, label = x, maxpops = rep.df[x, "k"], ...)
+    sw.out <- structureWrite(g, 
+                             label = x, 
+                             maxpops = rep.df[x, "k"],
+                             burnin = burnin,
+                             numreps = numreps,
+                             noadmix = noadmix,
+                             freqscorr = freqscorr,
+                             randomize = randomize,
+                             seed = seed,
+                             pop.prior = pop.prior,
+                             locpriorinit = locpriorinit,
+                             maxlocprior = maxlocprior,
+                             gensback = gensback,
+                             migrprior = migrprior,
+                             pfrompopflagonly = pfrompopflagonly,
+                             popflag = popflag,
+                             inferalpha = inferalpha,
+                             alpha = alpha,
+                             unifprioralpha = unifprioralpha,
+                             alphamax = alphamax,
+                             alphapriora = alphapriora,
+                             alphapriorb = alphapriorb
+                             )
 
     files <- sw.out$files
     cmd <- paste0(

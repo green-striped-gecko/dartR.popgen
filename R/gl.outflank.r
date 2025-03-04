@@ -56,9 +56,10 @@ gl.outflank <- function(gi,
     ))
     return(-1)
   }
-
+  
   # convert genlight to genind
   if (is(gi, "genlight")) {
+    gi <- gl.filter.allna(gi,verbose=0)
     gi <- gl2gi(gi)
   }
 

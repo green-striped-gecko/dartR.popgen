@@ -20,9 +20,7 @@
 #' If you specify a directory for the NewHybrids executable file, then the
 #' script will create the input file from the SNP data then run NewHybrids. If
 #' the directory is set to NULL, the execution will stop once the input file
-#' (default='nhyb.txt') has been written to disk. Note: the executable option
-#' will not work on a Mac; Mac users should generate the NewHybrids input file
-#' and run this on their local installation of NewHybrids.
+#' (default='nhyb.txt') has been written to disk.
 #'
 #' Refer to the New Hybrids manual for further information on the parameters to
 #' set
@@ -206,7 +204,7 @@ gl.nhybrids <- function(gl,
     pop(gl.tmp) <- indNames(gl.tmp)
 
     # Reformat the data broken down by population and locus, and calculate allele frequencies
-    gl2 <- gl.allele.freq(gl.tmp, verbose = verbose)
+    gl2 <- gl.allele.freq(gl.tmp,by = "popxloc" ,percent = T,verbose = verbose)
 
     # IDENTIFY LOCI WITH FIXED DIFFERENCES BETWEEN P0 AND P1
     if (verbose >= 3) {
@@ -231,7 +229,7 @@ gl.nhybrids <- function(gl,
         ))
       }
       if (!is.na(utils.is.fixed(gl2$frequency[i], gl2$frequency[i + 1], tloc = thold))) {
-        if (utils.is.fixed(gl2$frequency[i], gl2$frequency[i + 1], tloc = thold)) {
+        if (utils.is.fixed(gl2$frequency[i], gl2$frequency[i + 1], tloc = thold)>0) {
           fixed.loci[i] <- as.character(gl2$locus[i])
         }
       }
@@ -261,22 +259,23 @@ gl.nhybrids <- function(gl,
           )
         )
       }
+
+      gl.fixed.all <- gl[, (locNames(gl) %in% fixed.loci)]
+      gl.fixed.all@other$loc.metrics <-
+        gl@other$loc.metrics[(locNames(gl) %in% fixed.loci), ]
+      
       gl.fixed.used <-
-        gl.subsample.loc(gl,
+        gl.subsample.loc(gl.fixed.all,
           loc.limit,
           # method = "random",
           replace = FALSE,
           verbose = 0
         )
 
-      gl.fixed.all <- gl[, (locNames(gl) %in% fixed.loci)]
-      gl.fixed.all@other$loc.metrics <-
-        gl@other$loc.metrics[(locNames(gl) %in% fixed.loci), ]
-
 
       gl2nhyb <- gl.fixed.used
     } else {
-      if (method == "random") {
+      # if (method == "random") {
         if (verbose >= 3) {
           cat(
             report(
@@ -288,12 +287,11 @@ gl.nhybrids <- function(gl,
             )
           )
         }
-        gl.fixed.all <-
-          gl[, (locNames(gl) %in% fixed.loci)]
+        gl.fixed.all <- gl[, (locNames(gl) %in% fixed.loci)]
         gl.fixed.used <- gl.fixed.all
         tmp <-
           gl.subsample.loc(gl,
-            200 - nloci,
+                           loc.limit - nloci,
             # method = "random",
             replace = FALSE,
             verbose = 0
@@ -301,34 +299,34 @@ gl.nhybrids <- function(gl,
         gl2nhyb <- cbind(gl.fixed.used, tmp)
         gl2nhyb@other$loc.metrics <-
           gl@other$loc.metrics[locNames(gl) %in% locNames(gl2nhyb), ]
-      } else {
-        if (verbose >= 3) {
-          cat(
-            report(
-              "  Selecting",
-              nloci,
-              "loci showing fixed differences between parentals, supplementing with",
-              loc.limit - nloci,
-              "other loci selected based on AvgPic\n"
-            )
-          )
-        }
-        gl.fixed.all <-
-          gl[, (locNames(gl) %in% fixed.loci)]
-        gl.fixed.used <- gl.fixed.all
-
-
-        tmp <-
-          gl.subsample.loc(gl,
-            loc.limit - nloci,
-            # method = "AvgPic",
-            replace = FALSE,
-            verbose = 0
-          )
-        gl2nhyb <- cbind(gl.fixed.used, tmp)
-        gl2nhyb@other$loc.metrics <-
-          gl@other$loc.metrics[locNames(gl) %in% locNames(gl2nhyb), ]
-      }
+      # } else {
+      #   if (verbose >= 3) {
+      #     cat(
+      #       report(
+      #         "  Selecting",
+      #         nloci,
+      #         "loci showing fixed differences between parentals, supplementing with",
+      #         loc.limit - nloci,
+      #         "other loci selected based on AvgPic\n"
+      #       )
+      #     )
+      #   }
+      #   gl.fixed.all <-
+      #     gl[, (locNames(gl) %in% fixed.loci)]
+      #   gl.fixed.used <- gl.fixed.all
+      # 
+      # 
+      #   tmp <-
+      #     gl.subsample.loc(gl,
+      #       loc.limit - nloci,
+      #       # method = "AvgPic",
+      #       replace = FALSE,
+      #       verbose = 0
+      #     )
+      #   gl2nhyb <- cbind(gl.fixed.used, tmp)
+      #   gl2nhyb@other$loc.metrics <-
+      #     gl@other$loc.metrics[locNames(gl) %in% locNames(gl2nhyb), ]
+      # }
     }
   } # Finished -- loc.limit selected loci in gl2nhyb
 
@@ -782,7 +780,7 @@ gl.nhybrids <- function(gl,
 
   if (flag == "bothpar" & plot == TRUE) {
     # Read in the results of the New Hybrids analysis
-    F1.test <- read.csv(file = "aa-PofZ.csv")
+    F1.test <- read.csv(file = paste0(outpath,"/aa-PofZ.csv"))
     # Pull out results for F1 hybrids only, defined by posterior probability >= pprob
     F1.test <- F1.test[(F1.test$F1 >= pprob), ]
     # Use the id of the F1 hybrids to subset the genlight object containing the loci with fixed differences used in the analysis

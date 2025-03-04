@@ -7,7 +7,7 @@
 #' all the chromosomes and a red line representing the threshold (R.squared =
 #' 0.2) that is commonly used to imply that two loci are unlinked (Delourme et
 #' al., 2013; Li et al., 2014).
-#' @param ld.report Output from function \code{\link{gl.report.ld.map}}
+#' @param ld.report Output from function \code{\link[dartR.base]{gl.report.ld.map}}
 #' [required].
 #' @param ld.resolution Resolution at which LD should be reported in number of
 #' base pairs [default NULL].
@@ -110,9 +110,10 @@ gl.ld.distance <- function(ld.report,
   }
 
   if (is.null(pop.colors)) {
-    pop.colors <- gl.select.colors(
-      library = "baseR", palette = "terrain.colors",
-      ncolors = nlevels(pops), verbose = 0
+    pop.colors <- 
+    gl.select.colors(
+    library = "gr.palette", palette = "Alphabet",
+    ncolors = nlevels(pops), verbose = 0
     )
   }
 

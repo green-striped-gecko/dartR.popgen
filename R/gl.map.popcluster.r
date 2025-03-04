@@ -1,21 +1,20 @@
-#' @name gl.map.structure
-#' @title Maps a STRUCTURE plot using a genlight object
+#' @name gl.map.popcluster
+#' @title Maps a PopCluster plot using a genlight object
 #' @description
-#' This function takes the output of plotstructure (the q matrix) and maps the
-#' q-matrix across using the population centers from the genlight object that
-#' was used to run the structure analysis via \code{\link{gl.run.structure}})
-#' and plots the typical structure bar plots on a spatial map, providing a
+#' This function takes the output of gl.plot.popcluster (the Q matrix) and maps the
+#' Q-matrix across using the population centers from the genlight object that
+#' was used to run the PopCluster analysis via (\code{\link{gl.run.popcluster}})
+#' and plots the typical PopCluster bar plots on a spatial map, providing a
 #' barplot for each subpopulation. Therefore it requires coordinates from a
 #'  genlight object. This kind of plots should support the interpretation of the
-#'   spatial structure of a population, but in principle is not different from
-#'   \code{\link{gl.plot.structure}}
-#'
-#' @param qmat Q-matrix from a structure run followed by a clumpp run object
-#' [from \code{\link{gl.run.structure}} and \code{\link{gl.plot.structure}}]
-#'  [required].
+#'   spatial PopCluster of a population, but in principle is not different from
+#'   (\code{\link{gl.plot.popcluster}})
 #' @param x Name of the genlight object containing the coordinates in the
-#'  \code{\@other$latlon} slot to calculate the population centers [required].
-#' @param K The number for K to be plotted [required].
+#'  \code{\@other$latlon} slot to calculate the population centers [required]
+#' @param qmat Q-matrix from a gl.plot.popcluster [required]
+#' [from \code{\link{gl.run.popcluster}} and \code{\link{gl.plot.popcluster}}]
+#'  [required].
+#' @param color_clusters A color palette for clusters (K) or a list with
 #' @param provider Provider	passed to leaflet. Check \link[leaflet]{providers}
 #' for a list of possible backgrounds [default "Esri.NatGeoWorldMap"].
 #' @param scalex Scaling factor to determine the size of the bars in x direction
@@ -31,11 +30,11 @@
 #' @param pop.labels Switch for population labels below the parplots
 #' [default TRUE].
 #' @param pop.labels.cex Size of population labels [default 12].
-#' @return An interactive map that shows the structure plots broken down by
+#' @return An interactive map that shows the PopCluster plots broken down by
 #' population.
-#' @author Bernd Gruber (Post to \url{https://groups.google.com/d/forum/dartr})
+#' @author Ching Ching Lau (Post to \url{https://groups.google.com/d/forum/dartr})
 #' @details
-#' Creates a mapped version of structure plots. For possible background maps
+#' Creates a mapped version of PopCluster plots. For possible background maps
 #' check as specified via the provider:
 #' \url{http://leaflet-extras.github.io/leaflet-providers/preview/index.html}.
 #' You may need to adjust scalex and scaley values [default 1], as the size
@@ -43,63 +42,41 @@
 #' @return returns the map and a list of the qmat split into sorted matrices per
 #'  population. This can be used to create your own map.
 #' @examples
-#' # examples need structure to be installed on the system (see above)
+#' # examples need popcluster to be installed on the system
 #' \dontrun{
-#' bc <- bandicoot.gl[,1:100]
-#' sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3, exec = './structure.exe')
-#' ev <- gl.evanno(sr)
-#' ev
-#' qmat <- gl.plot.structure(sr, k=2:4)#' #head(qmat)
-#' gl.map.structure(qmat, bc,K=3)
-#' gl.map.structure(qmat, bc,K=4)
+#' m <- gl.run.popcluster(x=bandicoot.gl, popcluster.path="/User/PopCluster/Bin/",
+#' output.path="/User/Documents/Output/",
+#' minK=1, maxK=3, 
+#' rep=10, PopData=1, location=1)
+#' Q <- gl.plot.popcluster(pop_cluster_result=m, plot.K = 3, ind_name=T)
+#' gl.map.popcluster(x = bandicoot.gl, qmat = Q)
 #' # move population 4 (out of 5) 0.5 degrees to the right and populations 1
 #' # 0.3 degree to the north of the map.
 #' mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
-#' gl.map.structure(qmat, bc,K=4, movepops=mp)
+#' gl.map.popcluster(bandicoot.gl, qmat=Q, movepops=mp)
 #' }
 #' @export
-#' @seealso \code{\link{gl.run.structure}},  \code{clumpp},
-#' \code{\link{gl.plot.structure}}
+#' @importFrom dplyr left_join
+#' @seealso \code{\link{gl.run.popcluster}},
+#' \code{\link{gl.plot.popcluster}}
 #' @references
 #' \itemize{
-#' \item Pritchard, J.K., Stephens, M., Donnelly, P. (2000) Inference of
-#' population structure using multilocus genotype data. Genetics 155, 945-959.
-#' \item Archer, F. I., Adams, P. E. and Schneiders, B. B. (2016) strataG: An R
-#'  package for manipulating, summarizing and analysing population genetic data.
-#'   Mol Ecol Resour. doi:10.1111/1755-0998.12559
-#' \item Evanno, G., Regnaut, S., and J. Goudet. 2005. Detecting the number of
-#' clusters of individuals using the software STRUCTURE: a simulation study.
-#' Molecular Ecology 14:2611-2620.
-#' \item Mattias Jakobsson and Noah A. Rosenberg. 2007. CLUMPP: a cluster
-#' matching and permutation program for dealing with label switching and
-#' multimodality in analysis of population structure. Bioinformatics
-#' 23(14):1801-1806. Available at
-#' \href{http://web.stanford.edu/group/rosenberglab/clumppDownload.html}{clumpp}
+#' \item Wang, J. (2022). Fast and accurate population admixture inference 
+#' from genotype data from a few microsatellites to millions of SNPs. Heredity, 129(2), 79-92.
+#' 
 #' }
 
-gl.map.structure <- function(qmat,
-                             x,
-                             K,
+gl.map.popcluster <- function(x,
+                             qmat,
+                             color_clusters=NULL,
                              provider = "Esri.NatGeoWorldMap",
                              scalex = 1,
                              scaley = 1,
                              movepops = NULL,
                              pop.labels = TRUE,
                              pop.labels.cex = 12) {
-  eq.k <- sapply(qmat, function(x) {
-    ncol(x) - 4 == K
-  })
 
-  if (sum(eq.k) == 0) {
-    stop(error(paste(
-      "No entries for K =", K, "found in 'qmat'.\n"
-    )))
-  }
-
-  qmat <- as.data.frame(qmat[eq.k][[1]])
-
-  # ff <- qmat[, 4:(ncol(qmat))]
-  ff <- qmat[, which(grepl("cluster", colnames(qmat)))]
+  ff <- qmat[, which(grepl("Pop_", colnames(qmat)))]
 
   df <- x@other$latlon
   centers <-
@@ -118,10 +95,11 @@ gl.map.structure <- function(qmat,
     centers[, 1] <- centers[, 1] + movepops[, 1]
     centers[, 2] <- centers[, 2] + movepops[, 2]
   }
-
-
+  
+  Q_name <- left_join(qmat, data.frame(Label=as.character(x$ind.names), Pop_name=as.character(x$pop)))
+  
   sc <-
-    match(rownames(centers), levels(factor(qmat$orig.pop)))
+    match(rownames(centers), levels(factor(Q_name$Pop_name)))
   if (any(is.na(sc))) {
     message(
       error(
@@ -129,52 +107,74 @@ gl.map.structure <- function(qmat,
       )
     )
   }
+  
   centers <- centers[sc, ]
   cx <- centers[, "lon"]
   cy <- centers[, "lat"]
   sx <- abs(diff(range(centers[, "lon"]))) / (100) * scalex
   sy <- 20 * sx * scaley
   #
-  qmat$orig.pop <- factor(qmat$orig.pop)
-  npops <- length(levels(qmat$orig.pop))
-  ll <- data.frame(cbind(as.numeric(qmat$orig.pop), ff))
+  Q_name$Pop_name <- factor(Q_name$Pop_name)
+  npops <- length(levels(Q_name$Pop_name))
+  ll <- data.frame(cbind(as.numeric(Q_name$Pop_name), ff))
   zz <- do.call(order, unname(as.list(ll)))
-  bb <- qmat[zz, ]
-  bb$orig.pop <- factor(bb$orig.pop)
+  bb <- Q_name[zz, ]
+  bb$Pop_name <- factor(bb$Pop_name)
   # ff <- bb[, 4:(ncol(bb))]
 
-  ff <- bb[, which(grepl("cluster", colnames(bb)))]
+  ff <- bb[, which(grepl("Pop_", colnames(bb)))]
 
   out <- list()
   m1 <- leaflet::leaflet() %>%
     leaflet::addProviderTiles(provider = provider)
   for (p in 1:npops) {
-    qmi <- ff[bb$orig.pop == levels(bb$orig.pop)[p], ]
-    out[[p]] <- bb[bb$orig.pop == levels(bb$orig.pop)[p], ]
-    names(out)[p] <- levels(bb$orig.pop)[p]
+    qmi <- ff[bb$Pop_name == levels(bb$Pop_name)[p], ]
+    out[[p]] <- bb[bb$Pop_name == levels(bb$Pop_name)[p], ]
+    names(out)[p] <- levels(bb$Pop_name)[p]
     qmi1 <- cbind(rep(0, nrow(qmi)), qmi)
     for (xx in 1:nrow(qmi1)) {
-      qmi1[xx, ] <- cumsum(as.numeric(qmi1[xx, ]))
+      qmi1[xx, -c(ncol(qmi1))] <- cumsum(as.numeric(qmi1[xx, -c(ncol(qmi1))]))
     }
+    
+    qmi1$Pop_name <- NULL
 
-
-    for (ii in 1:nrow(qmi1)) {
-      for (i in 1:(ncol(qmi1) - 1)) {
-        oo <- (ii - nrow(qmi) / 2) * sx
-
-        m1 <- m1 %>%
-          leaflet::addRectangles(
-            cx[p] + oo,
-            cy[p] + qmi1[ii, i] * sy,
-            cx[p] + oo + sx,
-            cy[p] + qmi1[ii, i + 1] * sy,
-            opacity = 0,
-            color = rainbow(ncol(ff))[i],
-            fillOpacity = 0.8
-          )
+    if (is.null(color_clusters)) {
+      for (ii in 1:nrow(qmi1)) {
+        for (i in 1:(ncol(qmi1) - 1)) {
+          oo <- (ii - nrow(qmi) / 2) * sx
+          
+          m1 <- m1 %>%
+            leaflet::addRectangles(
+              cx[p] + oo,
+              cy[p] + qmi1[ii, i] * sy,
+              cx[p] + oo + sx,
+              cy[p] + qmi1[ii, i + 1] * sy,
+              opacity = 0,
+              color = rainbow(ncol(ff))[i],
+              fillOpacity = 0.8
+            )
+        }
+      }
+    } else {
+      for (ii in 1:nrow(qmi1)) {
+        for (i in 1:(ncol(qmi1) - 1)) {
+          oo <- (ii - nrow(qmi) / 2) * sx
+          
+          m1 <- m1 %>%
+            leaflet::addRectangles(
+              cx[p] + oo,
+              cy[p] + qmi1[ii, i] * sy,
+              cx[p] + oo + sx,
+              cy[p] + qmi1[ii, i + 1] * sy,
+              opacity = 0,
+              color = color_clusters[i],
+              fillOpacity = 0.8
+            )
+        }
       }
     }
   }
+  
   if (pop.labels) {
     m1 <- m1 %>%
       leaflet::addLabelOnlyMarkers(
@@ -192,8 +192,9 @@ gl.map.structure <- function(qmat,
 
 
   print(m1)
+  
   # mapshot(m1, file='./Rplot.png', remove_controls = TRUE)
-  return(list(qmats=out,map=m1))
+  return(list(Q_name=out,map=m1))
   # %>% addLegend(labels=paste('Group',1:ncol(ff)), colors=rainbow(ncol(ff)),position ='topright' )
 
   # if (save) mapshot(m1, file='./Rplot.png', remove_controls = TRUE)
