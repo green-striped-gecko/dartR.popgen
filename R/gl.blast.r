@@ -129,7 +129,7 @@
 #'  (“homology”) searching. Current protocols in bioinformatics, 42(1), 3-1.
 #'  }
 #'
-#' @seealso \code{\link{gl.print.history}}
+#' @seealso \code{\link[dartR.base]{gl.print.history}}
 #'
 #' @family reference genomes
 #'
@@ -146,28 +146,26 @@ gl.blast <- function(x,
                      verbose = NULL) {
   # SET VERBOSITY
   verbose <- gl.check.verbosity(verbose)
-
+  
   # FLAG SCRIPT START
   funname <- match.call()[[1]]
-  utils.flag.start(
-    func = funname,
-    build = "Jody",
-    verbose = verbose
-  )
-
+  utils.flag.start(func = funname,
+                   build = "Jody",
+                   verbose = verbose)
+  
   # Check if the x@other$loc.metrics$TrimmedSequence slot exists
-  if (is(x, "genlight")) {
+  if (class(x)[1] == "genlight"| class(x)[1] == "dartR" ) {
     if (is.null(x$other$loc.metrics$TrimmedSequence)) {
       stop(error(
         "\n\nFatal Error: TrimmedSequence column is required!.\n\n"
       ))
     }
   }
-
+  
   # DO THE JOB
-
+  
   # getting the query fasta files
-  if (is(x, "genlight") | class(x)[1] == "dartR") {
+  if (class(x)[1] == "genlight" | class(x)[1] == "dartR") {
     fasta.input <-
       c(rbind(
         paste("> ", 1:nLoc(x)),
@@ -187,7 +185,7 @@ gl.blast <- function(x,
       overwrite = TRUE
     )
   }
-
+  
   # Find executable makeblastdb if unix
   if (grepl("unix", .Platform$OS.type, ignore.case = TRUE)) {
     path_makeblastdb <- Sys.which("makeblastdb")
@@ -197,32 +195,31 @@ gl.blast <- function(x,
     path_makeblastdb <-
       tryCatch(
         system(sprintf("where %s", "makeblastdb"), intern = TRUE)[1],
-        warning = function(w) {
+        warning = function(w)
+          "",
+        error = function(e)
           ""
-        },
-        error = function(e) {
-          ""
-        }
       )
     if (grepl("\\s", path_makeblastdb)) {
       stop(
         error(
-          "  The path to the executable for makeblastdb has spaces.
+          "  The path to the executable for makeblastdb has spaces. 
               Please move it\n to a path without spaces so BLAST can work.\n\n"
         )
       )
     }
   }
+  
   ## if not found
   if (all(path_makeblastdb == "")) {
     stop(
       error(
-        "  Executable for makeblastdb not found! Please make sure that
+        "  Executable for makeblastdb not found! Please make sure that 
                 the software\n is correctly installed.\n\n"
       )
     )
   }
-
+  
   # creating BLAST databases
   system(paste(
     path_makeblastdb,
@@ -233,7 +230,7 @@ gl.blast <- function(x,
     "-out",
     paste0(tempdir(), "/db_blast")
   ))
-
+  
   # Find executable blastn if unix
   if (grepl("unix", .Platform$OS.type, ignore.case = TRUE)) {
     path_blastn <- Sys.which("blastn")
@@ -243,17 +240,15 @@ gl.blast <- function(x,
     path_blastn <-
       tryCatch(
         system(sprintf("where %s", "blastn"), intern = TRUE)[1],
-        warning = function(w) {
+        warning = function(w)
+          "",
+        error = function(e)
           ""
-        },
-        error = function(e) {
-          ""
-        }
       )
     if (grepl("\\s", path_blastn)) {
       stop(
         error(
-          "The path to the executable for blastn has spaces. Please
+          "The path to the executable for blastn has spaces. Please 
                     move it to a\n path without spaces so BLAST can work.\n\n"
         )
       )
@@ -263,16 +258,16 @@ gl.blast <- function(x,
   if (all(path_blastn == "")) {
     stop(
       error(
-        "Executable for blastn not found! Please make sure that the
+        "Executable for blastn not found! Please make sure that the 
                 software is\n correctly installed.\n\n"
       )
     )
   }
-
+  
   if (verbose >= 1) {
     cat(report("Starting BLASTing\n\n"))
   }
-
+  
   # BLASTing
   system(
     paste(
@@ -292,13 +287,13 @@ gl.blast <- function(x,
       " -outfmt ",
       "\"",
       6,
-      " qseqid sacc stitle qseq sseq nident mismatch pident length evalue
+      " qseqid sacc stitle qseq sseq nident mismatch pident length evalue 
             bitscore qstart qend sstart send gapopen gaps qlen slen\""
     )
   )
-
+  
   file_size <- file.info(paste0(tempdir(), "/output_blast.txt"))$size
-
+  
   # reading file for filtering
   if (file_size > 0) {
     blast_res_unfiltered <-
@@ -313,14 +308,14 @@ gl.blast <- function(x,
         stringsAsFactors = FALSE
       )
   } else {
-    if (verbose>0) cat(report("No sequences were aligned\n\n"))
+    cat(report("No sequences were aligned\n\n"))
     return(x)
   }
-
+  
   if (verbose >= 1) {
     cat(report("Starting filtering\n\n"))
   }
-
+  
   colnames(blast_res_unfiltered) <-
     c(
       "qseqid",
@@ -343,7 +338,7 @@ gl.blast <- function(x,
       "qlen",
       "slen"
     )
-
+  
   # calculate percentage overlap ratio of the alignment length divided by the
   # query length or subject length (whichever is shortest of
   # the two lengths)
@@ -356,84 +351,82 @@ gl.blast <- function(x,
     blast_res_unfiltered[which(
       blast_res_unfiltered$PercentageOverlap >= Percentage_overlap &
         blast_res_unfiltered$bitscore >=
-          bitscore
-    ), ]
+        bitscore
+    ),]
   # splitting hits by sequence
   all_hits <-
     split(x = blast_res_filtered, f = blast_res_filtered$qseqid)
-  # ordering by first considering the highest percentage identity, then the
+  # ordering by first considering the highest percentage identity, then the 
   # highest percentage overlap, then the highest bitscore. Only
   # one hit per sequence is kept based on these selection criteria.
   one_hit_temp <- lapply(all_hits, function(x) {
     x[order(x$pident,
-      x$PercentageOverlap,
-      x$bitscore,
-      decreasing = T
-    ), ][1, ]
+            x$PercentageOverlap,
+            x$bitscore,
+            decreasing = T),][1,]
   })
-
+  
   one_hit <- plyr::rbind.fill(one_hit_temp)
   # merging one hit per sequence with genlight object
-  if (is(x, "genlight")) {
+  if (class(x)[1] == "genlight"| class(x)[1] == "dartR"  ) {
     one_hit_temp <- x$other$loc.metrics
     one_hit_temp$qseqid <- 1:nLoc(x)
     if (!is.null(one_hit)) {
       x$other$loc.metrics <-
         merge(one_hit_temp,
-          one_hit,
-          by = "qseqid",
-          all = T
-        )
+              one_hit,
+              by = "qseqid",
+              all = T)
     }
   }
-
+  
   if (verbose >= 1) {
     cat(report(paste(
       nrow(one_hit), " sequences were aligned after filtering"
     )))
   }
-
+  
   match_call <-
     paste0(names(match.call()),
-      "_",
-      as.character(match.call()),
-      collapse = "_"
-    )
-
+           "_",
+           as.character(match.call()),
+           collapse = "_")
+  
   # creating file names
   temp_blast_unfiltered <- tempfile(pattern = "Blast_unfiltered_")
   temp_blast_filtered <- tempfile(pattern = "Blast_filtered_")
   temp_one_hit <- tempfile(pattern = "Blast_one_hit_")
-
+  
   # saving to tempdir
-  saveRDS(list(match_call, blast_res_unfiltered),
-    file = temp_blast_unfiltered
-  )
+  saveRDS(list(match_call, blast_res_unfiltered), 
+          file = temp_blast_unfiltered)
   saveRDS(list(match_call, blast_res_filtered), file = temp_blast_filtered)
   saveRDS(list(match_call, one_hit), file = temp_one_hit)
-
+  
   if (verbose >= 2) {
     cat(
       report(
-        "  NOTE: Retrieve output files from plot.dir"
+        "  NOTE: Retrieve output files from tempdir using 
+                gl.list.reports() and gl.print.reports()\n"
       )
     )
   }
-
+  
   # ADD TO HISTORY
-  if (is(x, "genlight")) {
+  if (class(x)[1] == "genlight" | class(x)[1] == "dartR" ) {
     nh <- length(x@other$history)
     x@other$history[[nh + 1]] <- match.call()
   }
-
+  
   # FLAG SCRIPT END
   if (verbose >= 1) {
     cat(report("Completed:", funname, "\n\n"))
   }
-
-  if (is(x, "genlight")) {
+  
+  if (class(x)[1] == "genlight" | class(x)[1] == "dartR") {
     return(x)
   } else {
     return(one_hit)
   }
+  
 }

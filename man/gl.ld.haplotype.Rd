@@ -13,13 +13,17 @@ gl.ld.haplotype(
   maf = 0.05,
   ld_stat = "R.squared",
   ind.limit = 10,
+  haplo_id = FALSE,
   min_snps = 10,
   ld_threshold_haplo = 0.5,
+  plot_het = TRUE,
+  snp_pos = TRUE,
+  target_snp = NULL,
   coordinates = NULL,
   color_haplo = "viridis",
   color_het = "deeppink",
   plot.out = TRUE,
-  plot.file = NULL,
+  plot.save = FALSE,
   plot.dir = NULL,
   verbose = NULL
 )
@@ -47,25 +51,33 @@ loci. If a value > 1 is provided it will be interpreted as MAC (i.e. the
 \item{ind.limit}{Minimum number of individuals that a population should
 contain to take it in account to report loci in LD [default 10].}
 
+\item{haplo_id}{Whether to identify haplotypes [default FALSE].}
+
 \item{min_snps}{Minimum number of SNPs that should have a haplotype to call
 it [default 10].}
 
 \item{ld_threshold_haplo}{Minimum LD between adjacent SNPs to call a
 haplotype [default 0.5].}
 
+\item{plot_het}{Whether to plot heterozygosity [default TRUE].}
+
+\item{snp_pos}{Whether to plot SNP position [default TRUE].}
+
+\item{target_snp}{Position of target SNP [default NULL].}
+
 \item{coordinates}{A vector of two elements with the start and end
 coordinates in base pairs to which restrict the
 analysis e.g. c(1,1000000) [default NULL].}
 
-\item{color_haplo}{Color palette for haplotype plot. See details
-[default "viridis"].}
+\item{color_haplo}{Color palette for haplotype plot. Options are: "magma", 
+"inferno", "plasma", "viridis", "cividis", "rocket", "mako" and "turbo" 
+ [default "viridis"].}
 
 \item{color_het}{Color for heterozygosity [default "deeppink"].}
 
 \item{plot.out}{Specify if heatmap plot is to be produced [default TRUE].}
 
-\item{plot.file}{Name for the RDS binary file to save (base name only, exclude extension) [default NULL]
-temporary directory (tempdir) [default FALSE].}
+\item{plot.save}{Whethwr to save the plot in pdf format [default FALSE].}
 
 \item{plot.dir}{Directory in which to save files [default = working directory]}
 
@@ -106,8 +118,8 @@ The output of the function includes a table with the haplotypes
 require("dartR.data")
 x <- platypus.gl
 x <- gl.filter.callrate(x, threshold = 1)
-# only the first 20 individuals because of speed during tests
-x <- gl.keep.pop(x, pop.list = "TENTERFIELD")[1:20, ]
+# only the first 15 individuals because of speed during tests
+x <- gl.keep.pop(x, pop.list = "TENTERFIELD")[1:15, ]
 x$chromosome <- as.factor(x$other$loc.metrics$Chrom_Platypus_Chrom_NCBIv1)
 x$position <- x$other$loc.metrics$ChromPos_Platypus_Chrom_NCBIv1
 ld_res <- gl.ld.haplotype(x,

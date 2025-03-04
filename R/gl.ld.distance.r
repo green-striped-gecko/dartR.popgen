@@ -7,14 +7,15 @@
 #' all the chromosomes and a red line representing the threshold (R.squared =
 #' 0.2) that is commonly used to imply that two loci are unlinked (Delourme et
 #' al., 2013; Li et al., 2014).
-#' @param ld_report Output from function \code{\link{gl.report.ld.map}}
+#' @param ld.report Output from function \code{\link[dartR.base]{gl.report.ld.map}}
 #' [required].
-#' @param ld_resolution Resolution at which LD should be reported in number of
+#' @param ld.resolution Resolution at which LD should be reported in number of
 #' base pairs [default NULL].
-#' @param pop_colors A color palette for box plots by population or a list
+#' @param pop.colors A color palette for box plots by population or a list
 #'  with as many colors as there are populations in the dataset
 #' [default NULL].
-#' @param plot_theme User specified theme [default NULL].
+#' @param plot.title Title of tyh plot [default " "].
+#' @param plot.theme User specified theme [default NULL].
 #' @param plot.out Specify if plot is to be produced [default TRUE].
 #' @param plot.dir Directory in which to save files [default = working directory]
 #' @param plot.file Name for the RDS binary file to save (base name only, exclude extension) [default NULL]
@@ -44,15 +45,16 @@
 #'   x$position <- x$other$loc.metrics$ChromPos_Platypus_Chrom_NCBIv1
 #'   x$chromosome <- as.factor(x$other$loc.metrics$Chrom_Platypus_Chrom_NCBIv1)
 #'   ld_res <- gl.report.ld.map(x, ld.max.pairwise = 10000000)
-#'   ld_res_2 <- gl.ld.distance(ld_res, ld_resolution = 1000000)
+#'   ld_res_2 <- gl.ld.distance(ld_res, ld.resolution = 1000000)
 #' }
 #' @family ld functions
 #' @export
 
-gl.ld.distance <- function(ld_report,
-                           ld_resolution = 100000,
-                           pop_colors = NULL,
-                           plot_theme = NULL,
+gl.ld.distance <- function(ld.report,
+                           ld.resolution = 100000,
+                           pop.colors = NULL,
+                           plot.title = " ",
+                           plot.theme = NULL,
                            plot.out = TRUE,
                            plot.file = NULL,
                            plot.dir = NULL,
@@ -73,10 +75,10 @@ gl.ld.distance <- function(ld_report,
 
   # DO THE JOB
 
-  ld_max_pairwise <- max(ld_report$distance)
-  break_bins <- c(seq(1, ld_max_pairwise, ld_resolution), ld_max_pairwise)
+  ld_max_pairwise <- max(ld.report$distance)
+  break_bins <- c(seq(1, ld_max_pairwise, ld.resolution), ld_max_pairwise)
 
-  split_df <- split(ld_report, f = ld_report$pop)
+  split_df <- split(ld.report, f = ld.report$pop)
   split_df <- lapply(split_df, function(x) {
     x[order(x$distance), ]
   })
@@ -101,16 +103,17 @@ gl.ld.distance <- function(ld_report,
 
   # pairwise LD by population
 
-  pops <- as.factor(unique(ld_report$pop))
+  pops <- as.factor(unique(ld.report$pop))
 
-  if (is.null(plot_theme)) {
-    plot_theme <- theme_dartR()
+  if (is.null(plot.theme)) {
+    plot.theme <- theme_dartR()
   }
 
-  if (is.null(pop_colors)) {
-    pop_colors <- gl.select.colors(
-      library = "baseR", palette = "terrain.colors",
-      ncolors = nlevels(pops), verbose = 0
+  if (is.null(pop.colors)) {
+    pop.colors <- 
+    gl.select.colors(
+    library = "gr.palette", palette = "Alphabet",
+    ncolors = nlevels(pops), verbose = 0
     )
   }
 
@@ -130,9 +133,10 @@ gl.ld.distance <- function(ld_report,
     xlab("Base pairs") +
     ylab("Linkage disequilibrium") +
     labs(color = "") +
-    scale_color_manual(values = pop_colors) +
-    plot_theme +
-    theme(legend.position = "bottom")
+    scale_color_manual(values = pop.colors) +
+    plot.theme +
+    theme(legend.position = "bottom") +
+    ggtitle(plot.title)
 
 
   # PRINTING OUTPUTS

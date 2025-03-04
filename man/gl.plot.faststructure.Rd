@@ -13,7 +13,10 @@ gl.plot.faststructure(
   plot_theme = NULL,
   colors_clusters = NULL,
   ind_name = TRUE,
-  border_ind = 0.15
+  label.size = 12,
+  border_ind = 0.15,
+  den = FALSE,
+  x = NULL
 )
 }
 \arguments{
@@ -40,8 +43,17 @@ as many colors as there are clusters (K) [default NULL].}
 
 \item{ind_name}{Whether to plot individual names [default TRUE].}
 
+\item{label.size}{Specify the size of the population labels [default 12].}
+
 \item{border_ind}{The width of the border line between individuals
 [default 0.25].}
+
+\item{den}{Whether to include a dendrogram. It is necessary to include the 
+original genlight object used in gl.run.structure in the parameter x 
+[default FALSE].}
+
+\item{x}{The original genlight object used in gl.run.structure description
+[default NULL].}
 }
 \value{
 List of Q-matrices

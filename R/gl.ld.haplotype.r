@@ -29,20 +29,37 @@
 #'    (package snpStats) for details [default "R.squared"].
 #' @param ind.limit Minimum number of individuals that a population should
 #' contain to take it in account to report loci in LD [default 10].
+#' @param haplo_id Whether to identify haplotypes [default FALSE].
 #' @param min_snps Minimum number of SNPs that should have a haplotype to call
 #' it [default 10].
 #' @param ld_threshold_haplo Minimum LD between adjacent SNPs to call a
 #' haplotype [default 0.5].
+#' @param plot_het Whether to plot heterozygosity [default TRUE].
+#' @param snp_pos Whether to plot SNP positions [default TRUE].
+#' @param target.snp1 Vector of position(s) of target SNP(s) in base pairs 
+#' [default NULL].
+#' @param target.snp2 Vector of position(s) of target SNP(s) in base pairs 
+#' [default NULL].
+#' @param target.snp3 Vector of position(s) of target SNP(s) in base pairs 
+#' [default NULL].
+#' @param col.all Color of line indicating position for all SNPs 
+#' [default "black"].
+#' @param col.target1 Color of line indicating position for target.snp1 
+#' [default "green"].
+#' @param col.target2 Color of line indicating position for target.snp2
+#'  [default "blue"].
+#' @param col.target3 Color of line indicating position for target.snp3
+#'  [default "red"].
 #' @param coordinates A vector of two elements with the start and end
 #' coordinates in base pairs to which restrict the
 #' analysis e.g. c(1,1000000) [default NULL].
-#' @param color_haplo Color palette for haplotype plot. See details
+#' @param color_haplo Color palette for haplotype plot. Options are: "magma", 
+#' "inferno", "plasma", "viridis", "cividis", "rocket", "mako" and "turbo" 
 #'  [default "viridis"].
 #' @param color_het Color for heterozygosity [default "deeppink"].
 #' @param plot.out Specify if heatmap plot is to be produced [default TRUE].
 #' @param plot.dir Directory in which to save files [default = working directory]
-#' @param plot.file Name for the RDS binary file to save (base name only, exclude extension) [default NULL]
-#' temporary directory (tempdir) [default FALSE].
+#' @param plot.save Whether to save the plot in pdf format [default FALSE].
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 #' progress log; 3, progress and results summary; 5, full report
 #' [default 2, unless specified using gl.set.verbosity].
@@ -65,8 +82,8 @@
 #' require("dartR.data")
 #' x <- platypus.gl
 #' x <- gl.filter.callrate(x, threshold = 1)
-#' # only the first 20 individuals because of speed during tests
-#' x <- gl.keep.pop(x, pop.list = "TENTERFIELD")[1:20, ]
+#' # only the first 15 individuals because of speed during tests
+#' x <- gl.keep.pop(x, pop.list = "TENTERFIELD")[1:15, ]
 #' x$chromosome <- as.factor(x$other$loc.metrics$Chrom_Platypus_Chrom_NCBIv1)
 #' x$position <- x$other$loc.metrics$ChromPos_Platypus_Chrom_NCBIv1
 #' ld_res <- gl.ld.haplotype(x,
@@ -85,13 +102,24 @@ gl.ld.haplotype <- function(x,
                             maf = 0.05,
                             ld_stat = "R.squared",
                             ind.limit = 10,
+                            haplo_id = FALSE,
                             min_snps = 10,
                             ld_threshold_haplo = 0.5,
+                            plot_het = TRUE,
+                            snp_pos = TRUE, 
+                            target.snp1 = NULL,
+                            target.snp2 = NULL,
+                            target.snp3 = NULL,
+                            col.all = "black",
+                            col.target1 = "green",
+                            col.target2 = "blue",
+                            col.target3 = "red",
+                            plot_factor = 1,
                             coordinates = NULL,
                             color_haplo = "viridis",
                             color_het = "deeppink",
                             plot.out = TRUE,
-                            plot.file = NULL,
+                            plot.save = FALSE,
                             plot.dir = NULL,
                             verbose = NULL) {
   # SET VERBOSITY
@@ -186,14 +214,14 @@ gl.ld.haplotype <- function(x,
 
   chr_list <- as.character(unique(x$chromosome))
 
-  p <- NULL
+  # p <- NULL
 
-  # p <- rep(list(as.list(rep(NA, length(chr_list)))), length(names(x_list)))
-  # names(p) <- names(x_list)
-  # p <- lapply(p, function(x) {
-  #   names(x) <- paste0("chr_", chr_list)
-  #   return(x)
-  # })
+  p <- rep(list(as.list(rep(NA, length(chr_list)))), length(names(x_list)))
+  names(p) <- names(x_list)
+  p <- lapply(p, function(x) {
+    names(x) <- paste0("chr_", chr_list)
+    return(x)
+  })
 
   for (pop_n in 1:length(x_list)) {
     pop_ld <- x_list[[pop_n]]
@@ -419,7 +447,8 @@ gl.ld.haplotype <- function(x,
         scales::rescale(snp_het_alone[, 2], to = c(0, height_poly))
 
       # identifying haplotypes
-      if (any(first_row_2 > ld_threshold_haplo)) {
+      if (any(first_row_2 > ld_threshold_haplo) &
+          haplo_id) {
         haplo_loc_test <- first_row_2 >= ld_threshold_haplo
         haplo_loc_test <- c(haplo_loc_test, FALSE)
         start_haplo <- NULL
@@ -565,7 +594,7 @@ gl.ld.haplotype <- function(x,
         labels_haplo <- as.character(1:nrow(locations_temp_2))
 
         # for an unknown reason, the name of the fill variable in the geom_polygon
-        # changes between Freq and layer. So when there is a error in displaying
+        # changes between Freq and layer. So, when there is an error in displaying
         # the graphic, the name of this variable has to be changed for it to work
 
         haplo_table_tmp <- rbind(haplo_temp_a, haplo_temp_b)
@@ -606,7 +635,7 @@ gl.ld.haplotype <- function(x,
             data = polygon_haplo.df,
             aes(long, lat,
               group = group,
-              fill = polygon_haplo.df[, 8]
+              fill = polygon_haplo.df[, "Freq"]
             )
           ) +
           viridis::scale_fill_viridis(name = ld_stat, option = color_haplo) +
@@ -618,14 +647,7 @@ gl.ld.haplotype <- function(x,
               haplo_temp_a$end_ld_plo
             ),
             color = "Haplotypes limits"
-          ), size = 1) +
-          geom_line(
-            data = snp_het_alone,
-            aes(x = position, y = het, color = "Heterozygosity"),
-            inherit.aes = FALSE,
-            size = 1 / 2,
-            alpha = 1
-          ) +
+          ), linewidth = 1) +
           annotate(
             "text",
             x = locations_temp_2$midpoint_ld_plot,
@@ -664,6 +686,17 @@ gl.ld.haplotype <- function(x,
             axis.text.x = element_blank()
           ) +
           coord_fixed(ratio = 1 / 1)
+        
+        if(plot_het){
+          p_temp <- p_temp +
+            geom_line(
+              data = snp_het_alone,
+              aes(x = position, y = het, color = "Heterozygosity"),
+              inherit.aes = FALSE,
+              linewidth = 1 / 2,
+              alpha = 1
+            )
+        }
 
         # p <- c(p,p_temp)
 
@@ -678,31 +711,21 @@ gl.ld.haplotype <- function(x,
 
         colors_plot <- c("Heterozygosity" = color_het)
 
-        p_temp <- NULL
-
+        p_pos <- snp <- p_temp <- NULL
         p_temp <- ggplot() +
           geom_polygon(
             data = polygon_haplo.df,
             aes(long, lat,
               group = group,
-              fill = polygon_haplo.df[, 8]
+              fill = polygon_haplo.df[, "Freq"]
             )
           ) +
           viridis::scale_fill_viridis(name = ld_stat, option = color_haplo) +
-          geom_line(
-            data = snp_het_alone,
-            aes(x = position, y = het, color = "Heterozygosity"),
-            inherit.aes = FALSE,
-            size = 1 / 2,
-            alpha = 1
-          ) +
           labs(
             x = "Chromosome location (Mbp)",
             y = "Het",
-            title = paste("Population", pop_name, "Chromosome", chr_name, "-", nLoc(pop_ld), "SNPs")
+            title = paste("Population", pop_name, "Chromosome", chr_name, "-", length(pop_ld$position), "SNPs")
           ) +
-          # scale_x_continuous(breaks = ticks_joint$ticks_breaks,
-          #                    labels = ticks_joint$ticks_lab) +
           scale_colour_manual(name = "", values = colors_plot) +
           theme_void() +
           theme(
@@ -711,41 +734,167 @@ gl.ld.haplotype <- function(x,
             axis.ticks.y = element_blank(),
             axis.title.y = element_blank(),
             axis.text.y = element_blank(),
-            axis.title.x = element_text(hjust = 0.5),
+            axis.title.x = element_blank(),
+            
             axis.ticks.x = element_blank(),
             axis.text.x = element_blank()
           ) +
           coord_fixed(ratio = 1 / 1)
+        
+        if(plot_het){
+        p_temp <- p_temp +
+        geom_line(
+          data = snp_het_alone,
+          aes(x = position, y = het, color = "Heterozygosity"),
+          inherit.aes = FALSE,
+          linewidth = 1 / 2,
+          alpha = 1
+        ) 
+        }
+        
+        snp <- pop_ld$position
+        snp <- snp[order(snp)]
+        snp <- data.frame(snp=snp)
+        colnames(snp) <- "snp"
+        snp$order <- 1:nrow(snp)
+        snp$scale <- scales::rescale(snp$snp, to = c(1,length(pop_ld$position)))
+        snp1 <-snp
+        snp1$y <- 2 
+        snp2 <- snp
+        snp2$y <- 1
+        snp2$order <- snp1$scale
+        snp_fin <- rbind(snp1,snp2)
+        
+        if(!is.null(coordinates)){
+          labels_tmp <- c(seq(coordinates[1],max(pop_ld$position),max(pop_ld$position)/10),max(pop_ld$position))
+        }else{
+          labels_tmp <- c(seq(1,max(pop_ld$position),max(pop_ld$position)/10),max(pop_ld$position))
+        }
+        
+        labels_plot <- round(labels_tmp,-6)/1000000
+        breaks_plot <- scales::rescale(labels_plot,to = c(1,length(pop_ld$position)) )
+        
+        snp_fin$colorL <- "col.all"
+        
+        if(!is.null(target.snp1)){
+          target.snp1 <- sapply(target.snp1, function(target) {
+            differences <- abs(snp_fin$snp - target)
+            min_index <- which.min(differences)
+            snp_fin$snp[min_index][1]
+          })
+          snp_fin[which(snp_fin$snp %in% target.snp1),"colorL"] <- "col.target1"
+        }
+        
+        if(!is.null(target.snp2)){
+          target.snp2 <- sapply(target.snp2, function(target) {
+            differences <- abs(snp_fin$snp - target)
+            min_index <- which.min(differences)
+            snp_fin$snp[min_index][1]
+          })
+          snp_fin[which(snp_fin$snp %in% target.snp2),"colorL"] <- "col.target2"
+        }
+        
+        if(!is.null(target.snp3)){
+          target.snp3 <- sapply(target.snp3, function(target) {
+            differences <- abs(snp_fin$snp - target)
+            min_index <- which.min(differences)
+            snp_fin$snp[min_index][1]
+          })
+          snp_fin[which(snp_fin$snp %in% target.snp3),"colorL"] <- "col.target3"
+        }
+        
+        if(snp_pos){
+          colorL <- y <- NA
 
-        # p <- c(p,p_temp)
+          p_pos <- ggplot(snp_fin, aes(x = order,
+                                            y = y,
+                                            group = snp, 
+                                            color = colorL)) +
+          geom_line()  +
+          scale_color_manual(values = c("col.all" = col.all,
+                                        "col.target1" = col.target1,
+                                        "col.target2" = col.target2,
+                                        "col.target3" = col.target3)) +
+          theme(
+            panel.background = element_rect(fill = "transparent", colour = NA),
+            plot.background = element_rect(fill = "transparent", colour = NA),
+            panel.grid = element_blank(),
+            panel.border = element_blank(),
+            plot.margin = unit(c(0, 0, 0, 0), "null"),
+            panel.spacing = unit(c(0, 0, 0, 0), "null"),
+            axis.ticks.y = element_blank(),
+            axis.title.y = element_blank(),
+            axis.text.y = element_blank(),
+            legend.position = "none"
+          )+
+            scale_x_continuous(breaks =breaks_plot ,
+                                labels =labels_plot ) +
+          labs(
+            x = "Chromosome location (Mbp)")
+        
 
-        # p[[pop_n]][[chrom]] <- p_temp
+        layout <- c(
+          area(t = 1, l = 1, b = 5, r = 1),
+          area(t = 5.5, l = 1, b = 5.5, r = 1)
+        )
+        p_temp  <- p_temp / p_pos + 
+          plot_layout(design = layout)
+        }
 
         # PRINTING OUTPUTS
-        if (plot.out) {
+         if (plot.out) {
           print(p_temp)
+         }
+        
+        file.name <- paste0(plot.dir,"/",pop_name, "_", chr_name,".pdf")
+        
+        ggsave(filename = file.name, 
+               plot = p_temp,
+               width = 15, 
+               height = 5, 
+               units = "in",
+               dpi="retina", 
+               bg = "transparent",
+               limitsize = FALSE)
+        
+        if (!is.null(plot.save)) {
+          # utils.plot.save(p_temp,
+          #                        dir = plot.dir,
+          #                        file = filename,
+          #                        verbose = verbose
+          # )
+          file.name <- paste0(plot.dir,"/",pop_name, "_", chr_name,".pdf")
+          
+          ggsave(filename = file.name, 
+                 width = 15, 
+                 height = 5, 
+                 units = "in",
+                 dpi="retina", 
+                 bg = "transparent",
+                 limitsize = FALSE)
         }
+        
       }
     }
   }
 
   # # PRINTING OUTPUTS
-  if (plot.out) {
-    print(p)
-  }
+  # if (plot.out) {
+  #   print(p)
+  # }
 
   haplo_table <- haplo_table[-1, ]
   print(haplo_table, row.names = FALSE)
 
   # Optionally save the plot ---------------------
 
-  if (!is.null(plot.file)) {
-    tmp <- utils.plot.save(p,
-      dir = plot.dir,
-      file = plot.file,
-      verbose = verbose
-    )
-  }
+  # if (!is.null(plot.file)) {
+  #   tmp <- utils.plot.save(p,
+  #     dir = plot.dir,
+  #     file = plot.file,
+  #     verbose = verbose
+  #   )
+  # }
 
 
   # FLAG SCRIPT END

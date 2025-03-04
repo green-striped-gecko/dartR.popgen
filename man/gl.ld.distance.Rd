@@ -6,10 +6,11 @@
 disequilibrium patterns}
 \usage{
 gl.ld.distance(
-  ld_report,
-  ld_resolution = 1e+05,
-  pop_colors = NULL,
-  plot_theme = NULL,
+  ld.report,
+  ld.resolution = 1e+05,
+  pop.colors = NULL,
+  plot.title = " ",
+  plot.theme = NULL,
   plot.out = TRUE,
   plot.file = NULL,
   plot.dir = NULL,
@@ -17,17 +18,19 @@ gl.ld.distance(
 )
 }
 \arguments{
-\item{ld_report}{Output from function \code{\link{gl.report.ld.map}}
+\item{ld.report}{Output from function \code{\link[dartR.base]{gl.report.ld.map}}
 [required].}
 
-\item{ld_resolution}{Resolution at which LD should be reported in number of
+\item{ld.resolution}{Resolution at which LD should be reported in number of
 base pairs [default NULL].}
 
-\item{pop_colors}{A color palette for box plots by population or a list
+\item{pop.colors}{A color palette for box plots by population or a list
  with as many colors as there are populations in the dataset
 [default NULL].}
 
-\item{plot_theme}{User specified theme [default NULL].}
+\item{plot.title}{Title of tyh plot [default " "].}
+
+\item{plot.theme}{User specified theme [default NULL].}
 
 \item{plot.out}{Specify if plot is to be produced [default TRUE].}
 
@@ -58,7 +61,7 @@ if ((requireNamespace("snpStats", quietly = TRUE)) & (requireNamespace("fields",
   x$position <- x$other$loc.metrics$ChromPos_Platypus_Chrom_NCBIv1
   x$chromosome <- as.factor(x$other$loc.metrics$Chrom_Platypus_Chrom_NCBIv1)
   ld_res <- gl.report.ld.map(x, ld.max.pairwise = 10000000)
-  ld_res_2 <- gl.ld.distance(ld_res, ld_resolution = 1000000)
+  ld_res_2 <- gl.ld.distance(ld_res, ld.resolution = 1000000)
 }
 }
 \references{

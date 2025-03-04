@@ -7,8 +7,9 @@
 gl.run.faststructure(
   x,
   k.range,
-  num.k.rep,
+  num.k.rep = 1,
   exec = "./fastStructure",
+  exec.plink = getwd(),
   output = getwd(),
   tol = 1e-05,
   prior = "simple",
@@ -21,10 +22,12 @@ gl.run.faststructure(
 
 \item{k.range}{Range of the number of populations [required].}
 
-\item{num.k.rep}{Number of replicates [required].}
+\item{num.k.rep}{Number of replicates [default 1].}
 
 \item{exec}{Full path and name+extension where the fastStructure executable
 is located [default working directory "./fastStructure"].}
+
+\item{exec.plink}{path to plink executable [default working directory].}
 
 \item{output}{Path to output file [default getwd()].}
 

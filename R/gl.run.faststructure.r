@@ -7,9 +7,10 @@
 #'
 #' @param x Name of the genlight object containing the SNP data [required].
 #' @param k.range Range of the number of populations [required].
-#' @param num.k.rep Number of replicates [required].
+#' @param num.k.rep Number of replicates [default 1].
 #' @param exec Full path and name+extension where the fastStructure executable
 #' is located [default working directory "./fastStructure"].
+#' @param exec.plink path to plink executable [default working directory].
 #' @param output Path to output file [default getwd()].
 #' @param tol Convergence criterion [default 10e-6].
 #' @param prior Choice of prior: simple or logistic [default "simple"].
@@ -77,8 +78,9 @@
 
 gl.run.faststructure <- function(x,
                                  k.range,
-                                 num.k.rep,
+                                 num.k.rep = 1,
                                  exec = "./fastStructure",
+                                 exec.plink = getwd(),
                                  output = getwd(),
                                  tol = 10e-6,
                                  prior = "simple",
@@ -94,16 +96,17 @@ gl.run.faststructure <- function(x,
     return(-1)
   }
 
-
-
-  gl2plink(x,
+  dartR.base::gl2plink(x,
     bed.files = TRUE,
     outpath = output,
-    verbose = 0
+    verbose = 0,
+    plink.bin.path = exec.plink
   )
 
   for (k_n in k.range) {
+    
     for (rep_n in 1:num.k.rep) {
+      print(paste("Running K =",k_n,"Replicate =",rep_n))
       if (is.null(seed)) {
         system(
           paste0(
@@ -161,7 +164,7 @@ gl.run.faststructure <- function(x,
   files_structure_2 <- paste0(output, "/", files_structure)
   n_first_line <- 23
   df_likelihood <-
-    as.data.frame(matrix(nrow = dplyr::last(k.range), ncol = num.k.rep))
+    as.data.frame(matrix(nrow = length(k.range), ncol = num.k.rep))
   for (i in 1:length(files_structure_2)) {
     file_name <- files_structure[i]
     file_name <-
@@ -180,7 +183,7 @@ gl.run.faststructure <- function(x,
     df_likelihood[k_run, k_replicate] <- likelihood_2
   }
   df_likelihood <-
-    df_likelihood[stats::complete.cases(df_likelihood), ]
+    as.data.frame(df_likelihood[stats::complete.cases(df_likelihood), ])
   df_likelihood_res <- rowMeans(df_likelihood)
 
   p3 <- ggplot() +
@@ -229,5 +232,5 @@ gl.run.faststructure <- function(x,
 
   q_list <- q_list[-(1)]
 
-  return(q_list)
+  return(list(q_list=q_list,plot=p3))
 }
