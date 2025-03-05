@@ -52,6 +52,9 @@
 #' @param method either "exhaustive" or "greedy". check the epos manual for details. If method="exhaustive" then the paramter depth is used. default: "greedy".
 #' @param depth if method="exhaustive" then this parameter is used to set the search depth, default is 2. If method is set to greedy this is setting is ignored.
 #' @param other.options additional options for epos (e.g -m, -x etc.)
+#' @param outfile File name of the output file [default 'genepop.gen'].
+#' @param outpath Path where to save the output file [default global working 
+#' directory or if not specified, tempdir()].
 #' @param cleanup if set to true intermediate tempfiles are deleted after the run
 #' @param plot.display Specify if plot is to be produced [default TRUE].
 #' @param plot.theme User specified theme [default theme_dartR()].
@@ -61,10 +64,12 @@
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 #' progress log; 3, progress and results summary; 5, full report
 #' [default 2, unless specified using gl.set.verbosity].
-#' @return returns a list with two components: 
+#' @return returns a list with four components: 
 #' \itemize{
 #' \item{history: Ne estimates of over generations (generation, median, low and high)} 
 #' \item{plot: a ggplot of history }
+#' \item{sfs: the sfs used for the analysis}
+#' \item{diagnostics: a list with the several diagnostics and a plot of observed and expected sfs}
 #' }
 #' @export
 #' @examples 
@@ -94,6 +99,8 @@ gl.run.epos <- function(x,
                         method="greedy", 
                         depth=2, 
                         other.options="",
+                        outfile="epos.out",
+                        outpath=NULL,
                         cleanup=TRUE, 
                         plot.display=TRUE,
                         plot.theme = theme_dartR(),
@@ -107,6 +114,8 @@ gl.run.epos <- function(x,
   
   # SET WORKING DIRECTORY
   plot.dir <- gl.check.wd(plot.dir,verbose=0)
+  # SET WORKING DIRECTORY for file
+  outpath <- gl.check.wd(outpath,verbose=0)
   
   # FLAG SCRIPT START
   funname <- match.call()[[1]]
@@ -162,7 +171,7 @@ gl.run.epos <- function(x,
   ucmd <- paste0(" -u ",u)
   if (boot>0) sfsfile <-"bs.sfs" else sfsfile <- " dummy.sfs"
   if (pmatch(method, table=methods)==1) depthcmd <- paste0(" -E ",depth) else depthcmd <- ""
-  eposcmd <- paste0("epos ",lcmd, ucmd,depthcmd, other.options, " ", sfsfile)
+  eposcmd <- paste0("epos ",lcmd, ucmd,depthcmd, other.options, " -o ", sfsfile)
   if (os!="windows") eposcmd <- paste0("./", eposcmd)
   # DO THE JOB
   old.path <- getwd()
@@ -193,6 +202,82 @@ gl.run.epos <- function(x,
   p1 <- ggplot(epp, aes(x=generation, y=median))+geom_point()+geom_line()+geom_ribbon(aes(ymin=low, ymax=high), alpha=0.2)+ylab("Effective population size")+xlab("Generation")+plot.theme
   
   
+  #parse ep.dat
+  con <- file(file.path(tempd,"ep.dat"), "r")
+  ep <- readLines(con)
+  close(con)
+  
+  #poly
+  ll <- which(substr(ep,1,12)=="#Polymorphic")
+  polymorphic_sites <- as.numeric(gsub(".*#Polymorphic sites surveyed:\\s*([0-9]+).*", "\\1",ep[ll]))
+  #mono
+  ll <- which(substr(ep,1,12)=="#Monomorphic")
+ monomorphic_sites <- as.numeric(gsub(".*#Monomorphic sites surveyed:\\s*([0-9]+).*", "\\1",ep[ll]))
+  
+  
+ #likelihood
+ ll <- which(substr(ep,1,10)=="#Final Log")
+ fll<- as.numeric(gsub(".*Log\\(Likelihood\\):\\s*([-0-9.]+).*", "\\1", ep[ll]))
+
+ #d2
+ ll <- which(substr(ep,1,5)=="#d^2:")
+ d2<- as.numeric(gsub(".*#d\\^2:\\s*([-0-9.]+).*", "\\1", ep[ll]))
+ 
+ #find sfs(s)
+ 
+ ll <- which(substr(ep,1,4)=="#sfs")
+ if (length(ll)>0) {
+ ll <- c(min(ll)-1,ll) #find the header
+ sfss <- read.csv(text=ep[ll], header =T, sep = "\t")
+ if (boot==0) boot=1
+ sfsl <-list()
+ ff <- rep(1:boot, each=(length(ll)-1)/boot)
+ for (i in 1:boot) sfsl[[i]] <- sfss[ff==i,]
+ 
+ 
+ 
+ 
+ } else sfsl <- NULL
+ 
+  # OUTPUT
+
+
+  
+  #if outpath not null copy to outpath
+  if (!is.null(outfile)) {
+    file.copy(file.path(tempd,"ep.dat"), file.path(outpath,outfile), overwrite = TRUE)
+    cat(report(paste("  Output written to", file.path(outpath,outfile), "\n")))
+    
+  }
+  
+  #sfs format
+  bins <- as.numeric(substr(names(sfs),2,100))
+  dfsfs <- data.frame(r=bins, fr=sfs)
+
+  #PLOT EXPECTED VS OBSERVED SFS
+  if (!is.null(sfsl)) {
+  xx <- do.call(rbind,sfsl)
+  
+  sfsm <- plyr::ddply(xx,.variables =  "r", plyr::summarise, meane=mean(e), sde=sd(e), meano=mean(o), sdo=sd(o))
+  
+  
+  p2 <- ggplot(dfsfs, aes(x=r, y=fr) )+ geom_bar(stat="identity",color="darkgrey", fill="darkgrey")  + geom_errorbar(data=sfsm, aes(x=r-0.1, y=meane, ymin = meane-1.96*sde, ymax = meane+1.96*sde), color="purple") +  labs(x="bin", y="frequency")+theme_bw() #+ geom_errorbar(data=sfsm, aes(x=r+0.1, y=meano, ymin = meano-1.96*sdo, ymax = meano+1.96*sdo), color="orange") + geom_point(data=sfsm, aes(x=r-0.1, y=meane), color="blue", size=0.8)
+  
+  if (boot==1)
+  p2 <- p2+geom_point(data=data.frame(sfsl[[1]]),aes( x=r, y=e), color="purple", size=1)
+ }
+  else p2 <- NULL
+  
+  out <- list(
+    polymorphic_sites = polymorphic_sites,
+    monomorphic_sites = monomorphic_sites,
+    likelihood = fll,
+    d2 = d2,
+    sfs = sfsl,
+    sfs_plot = p2
+  )
+  
+  
   if (cleanup) unlink(tempd, recursive = T)
   # PRINTING OUTPUTS
   if (plot.display) {print(p1)}
@@ -214,6 +299,6 @@ gl.run.epos <- function(x,
   # RETURN
   
   
-  return(list(history=epp, plot=p1))
+  return(list(history=epp, plot=p1, sfs=dfsfs, diagnostics=out))
 }
 

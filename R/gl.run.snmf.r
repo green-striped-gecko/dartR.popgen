@@ -14,6 +14,7 @@
 #' @param rep Number of replicates runs per K [required]
 #' @param regularization alpha value for regularization when analyzing small dataset [default=10]
 #' @param ploidy_lv ploidy level of dataset [default=2]
+#' @param cleanup clean data in tmp [default  TRUE]
 #' @param plot.out Specify if plot is to be produced [default TRUE].
 #' @param plot.dir Directory in which to save files [default = working directory]
 #' @param plot.file Name for the RDS binary file to save (base name only, exclude
@@ -25,6 +26,8 @@
 #' @export
 #' @importFrom LEA snmf
 #' @importFrom LEA cross.entropy
+#' @importFrom utils capture.output
+#' @importFrom grDevices recordPlot
 #' @references
 #' \itemize{
 #' \item Frichot E, Mathieu F, Trouillon T, Bouchard G, Francois O. (2014). Fast and Efficient 
@@ -43,13 +46,13 @@
 #' mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
 #' gl.map.snmf(bandicoot.gl, qmat=Q, movepops=mp)
 #' }
-#' Wrapper function to run snmf from LEA
+#' #Wrapper function to run snmf from LEA
 #' 
 #' @export 
 
 
 gl.run.snmf <- function(x, filename="output", minK, maxK, rep, regularization=10,
-                        ploidy_lv=2, plot.out=TRUE, plot.dir=NULL,
+                        ploidy_lv=2, cleanup=TRUE, plot.out=TRUE, plot.dir=NULL,
                         plot.file=NULL, verbose =2) 
 {
   # SET VERBOSITY
@@ -68,6 +71,17 @@ gl.run.snmf <- function(x, filename="output", minK, maxK, rep, regularization=10
   #create tempdir
   tempd <-  tempfile(pattern = "dir")
   dir.create(tempd, showWarnings = FALSE)
+  
+  pkg <- "LEA"
+  if (!(requireNamespace(pkg, quietly = TRUE))) {
+    cat(error(
+      "Package",
+      pkg,
+      " needed for this function to work. Please install it.\n"
+    ))
+    return(-1)
+  }
+  
   
   #TODO: convert genlight object to geno file
   gl2geno(x, outpath=tempd, outfile = filename)

@@ -175,10 +175,10 @@ utils.outflank <- function(FstDataFrame,
       HighTrimPoint
     )
     workingDataFrame <- pOutlierFinderChiSqNoCorr(
-      workingDataFrame,
-      FstbarNoCorrTemp,
-      dfInferredTemp,
-      qthreshold
+      DataList = workingDataFrame,
+      Fstbar = FstbarNoCorrTemp,
+      dfInferred = dfInferredTemp,
+      qthreshold = qthreshold
     )
 
     #### mark all negative FSTs as outliers if lowest nonneg FST is outlier

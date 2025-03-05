@@ -43,6 +43,8 @@
 #' @export
 #' @importFrom pillar align
 #' @importFrom stringr str_split
+#' @importFrom stats na.omit
+#' @importFrom utils capture.output
 #' @references
 #' \itemize{
 #' \item Wang, J. (2022). Fast and accurate population admixture inference 
@@ -63,7 +65,7 @@
 #' mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
 #' gl.map.popcluster(bandicoot.gl, qmat=Q, movepops=mp)
 #' }
-#' Wrapper function to run PopCluster
+#' #Wrapper function to run PopCluster
 #' 
 #' @export 
 
@@ -224,6 +226,7 @@ gl.run.popcluster <- function(x, popcluster.path, output.path, filename="output"
   for (j in 1:length(res2)) {
     best_run_file <- data.frame(rbind(best_run_file, res2[[j]]))
   }
+  K <- LogL_Mean <- LogL_Min <- LogL_Max <- DLK1 <- DLK2 <- FST.FIS <- NA
   colnames(best_run_file) <- c("K", "BestRun", "LogL_Mean", "LogL_Min", "LogL_Max", "DLK1", "DLK2", "FST.FIS")
   
     # plot likelihood

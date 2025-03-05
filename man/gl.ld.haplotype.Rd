@@ -16,6 +16,8 @@ gl.ld.haplotype(
   haplo_id = FALSE,
   min_snps = 10,
   ld_threshold_haplo = 0.5,
+  plot_het = TRUE,
+  snp_pos = TRUE,
   target_snp = NULL,
   coordinates = NULL,
   color_haplo = "viridis",
@@ -57,14 +59,19 @@ it [default 10].}
 \item{ld_threshold_haplo}{Minimum LD between adjacent SNPs to call a
 haplotype [default 0.5].}
 
+\item{plot_het}{Whether to plot heterozygosity [default TRUE].}
+
+\item{snp_pos}{Whether to plot SNP position [default TRUE].}
+
 \item{target_snp}{Position of target SNP [default NULL].}
 
 \item{coordinates}{A vector of two elements with the start and end
 coordinates in base pairs to which restrict the
 analysis e.g. c(1,1000000) [default NULL].}
 
-\item{color_haplo}{Color palette for haplotype plot. See details
-[default "viridis"].}
+\item{color_haplo}{Color palette for haplotype plot. Options are: "magma", 
+"inferno", "plasma", "viridis", "cividis", "rocket", "mako" and "turbo" 
+ [default "viridis"].}
 
 \item{color_het}{Color for heterozygosity [default "deeppink"].}
 
