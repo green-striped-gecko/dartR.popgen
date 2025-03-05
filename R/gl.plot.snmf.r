@@ -34,12 +34,14 @@
 #'  \url{https://yutannihilation.github.io/allYourFigureAreBelongToUs/ggthemes/}
 #'  }
 #'
+#'The Q matrices can be input to other R packages for plotting ancestry proportion, e.g. FSTruct
+#'\url{https://github.com/MaikeMorrison/FSTruct}
 #' @return Q-matrix
 #'
 #' @author Ching Ching Lau (Post to \url{https://groups.google.com/d/forum/dartr})
 #'
 #' @examples
-#' # examples need structure to be installed on the system (see above)
+#' # examples need LEA to be installed on the system (see above)
 #' \dontrun{
 #' m <- gl.run.snmf(x=bandicoot.gl, minK=1, 
 #' maxK=5, rep=10)
