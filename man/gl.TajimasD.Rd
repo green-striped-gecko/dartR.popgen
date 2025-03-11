@@ -56,7 +56,9 @@ Refer to the ms manual for further information on the parameters to set
 # To run without ms simulation
 Tajima <- gl.TajimasD(x=bandicoot.gl)
 #' # To run with ms simulation
+\dontrun{
 Tajima <- gl.TajimasD(x=bandicoot.gl, rep=10, ms.path="/User/msdir/")
+}
 }
 \references{
 \itemize{

@@ -38,8 +38,11 @@
 #' # To run without ms simulation
 #' Tajima <- gl.TajimasD(x=bandicoot.gl)
 #' #' # To run with ms simulation
+#' \dontrun{
 #' Tajima <- gl.TajimasD(x=bandicoot.gl, rep=10, ms.path="/User/msdir/")
+#' }
 #' @export 
+#' @importFrom stats D pbeta pnorm sd
 
 
 gl.TajimasD <- function(x, ms.path=NULL,
@@ -72,6 +75,10 @@ gl.TajimasD <- function(x, ms.path=NULL,
   if (is.null(plot_theme)) {
     plot_theme <- theme_dartR()
   }
+  
+  population <- D  <- meane <- NULL
+  
+  
     # get Tajima's D (code adopted from Paradis, E. (2010) -- pegas package -- written by Renee Catullo)
     get_tajima_D <- function(x){
         # Find allele frequencies (p1 and p2) for every locus in every population
@@ -150,6 +157,9 @@ gl.TajimasD <- function(x, ms.path=NULL,
   
 
   
+  
+  
+  
   old.path <- getwd()
   setwd(tempd)
   on.exit(setwd(old.path))
@@ -159,42 +169,45 @@ gl.TajimasD <- function(x, ms.path=NULL,
   if (!is.null(ms.path)) {
   tmp_tajD$sim_pval <- NA
   sim_sum <- NULL
+  # check OS
+  os <- tolower(Sys.info()['sysname'] )
   
-  fex <- file.exists(file.path(ms.path, "ms"))
-  fex2 <- file.exists(file.path(ms.path, "sample_stats"))
+  progs<- c("ms", "sample_stats")
+  if (os=="windows") progs <- paste0(progs,".exe") 
+  fex <- file.exists(file.path(ms.path, progs))
   
   if (all(fex)) {
-    file.copy(file.path(ms.path, "ms"),
+    file.copy(file.path(ms.path,progs),
               to = tempd,
               overwrite = TRUE, recursive = TRUE)
   } else {
-    cat("  Cannot find ms",
+    cat("  Cannot find ",progs[!fex],
         "in the specified folder given by ms.path:",
         ms.path,
-        "\n, please complie it")
+        "\n, please download it e.g using gl.download.binary('ms')")
     stop()
   }
   
-  if (all(fex2)) { 
-    file.copy(file.path(ms.path, "sample_stats"),
-              to = tempd,
-              overwrite = TRUE, recursive = TRUE)
-  } else {
-    cat("  Cannot find sample_stats",
-        "in the specified folder given by ms.path:",
-        ms.path,
-        "\n, please complie it")
-    stop()
-  }
   
   #simulation summary and p-value
   for (p in unique(x$pop)){
-       assign(paste0("sim_", p),system(paste0(file.path(tempd, "ms")," ",
-       tmp_tajD[which(tmp_tajD$population==p), 'N'], 
-       " ", rep, " ", "-t ", 
-       tmp_tajD[which(tmp_tajD$population==p), 'theta_per_site'], " -seed 1 2 3 ", "-s ", 
-       tmp_tajD[which(tmp_tajD$population==p), 'S'], " | ", 
-       file.path(tempd, "sample_stats") ),intern=TRUE))
+    
+    cmd <- paste0( "ms ",
+                  tmp_tajD[which(tmp_tajD$population==p), 'N'], 
+                  " ", rep, " ", "-t ", 
+                  tmp_tajD[which(tmp_tajD$population==p), 'theta_per_site'], " -seed 1 2 3 ", "-s ", 
+                  tmp_tajD[which(tmp_tajD$population==p), 'S'], " | ", 
+                   "sample_stats")
+    
+    # Run the command depending on the operating system
+    if (.Platform$OS.type == "windows") {
+      # On Windows, use shell() which handles piping through the Windows command interpreter
+      assign(paste0("sim_", p),shell(cmd, intern = TRUE))
+    } else {
+      # On Linux, use system() which passes the command to the shell
+      assign(paste0("sim_", p),system(cmd, intern = TRUE))
+    }
+    
       write.table(get(paste0("sim_", p)), file.path(tempd, paste0("MS_sim_", p, ".txt")), row.names = F, col.names = F, quote = F)
       assign(paste0("sim_taj_", p), as.numeric(unlist(str_split_fixed(get(paste0("sim_", p)), "\t",12))[,c(6)]))
       tmp_tajD[which(tmp_tajD$population==p), 'sim_pval'] <- 
