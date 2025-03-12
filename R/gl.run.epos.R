@@ -160,6 +160,10 @@ gl.run.epos <- function(x,
     stop()
   }
   
+  #initialise variables in data.frames
+  e <- o <- r <- sde <- fr <- meane <- NULL
+  
+  
   if (is.null(sfs)) sfs <- gl.sfs(x, minbinsize=minbinsize,folded=folded,singlepop = TRUE, plot.out = FALSE, verbose = 0 )
   df <- data.frame(r=1:length(sfs), fr=sfs)
   write.table(df,file=file.path(tempd,"dummy.sfs"), row.names = F, sep="\t", col.names = TRUE, quote = FALSE)
