@@ -98,7 +98,9 @@ gl.plot.snmf <- function(snmf_result,
   }
   
   p3 <- ggplot(Q_long, aes_(x = ~factor(Order), y = ~values, fill = ~K)) +
-    geom_col(size = border_ind, width = 1, position = "fill")+
+    # geom_col(size = border_ind, width = 1, position = "fill")+
+    geom_col(color = "black", size = border_ind, width = 1) +
+    
     facet_grid( ~factor(Pop, levels=unique(Q_long$Pop)), scales = "free", space = "free") +
     scale_y_continuous(expand = c(0, 0)) +
     scale_x_discrete(
