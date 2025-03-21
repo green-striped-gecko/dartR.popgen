@@ -17,6 +17,7 @@
 #' @param cv Number of test sets for cross-validation, 0 implies no CV step
 #'  [default 0].
 #' @param seed Seed for random number generator [default NULL].
+#' 
 #' @details
 #' Download faststructure binary for your system from here (only runs on Mac or
 #' Linux):
@@ -86,6 +87,20 @@ gl.run.faststructure <- function(x,
                                  prior = "simple",
                                  cv = 0,
                                  seed = NULL) {
+  
+  # SET VERBOSITY
+  verbose <- gl.check.verbosity(verbose)
+
+  # FLAG SCRIPT START
+  funname <- match.call()[[1]]
+  utils.flag.start(
+    func = funname,
+    build = "Jody",
+    verbose = verbose
+  )
+  
+  # CHECK DATATYPE
+  datatype <- utils.check.datatype(x, verbose = verbose)
   pkg <- "gsubfn"
   if (!(requireNamespace(pkg, quietly = TRUE))) {
     cat(error(
@@ -231,6 +246,12 @@ gl.run.faststructure <- function(x,
   })
 
   q_list <- q_list[-(1)]
+  
+  # FLAG SCRIPT END
+  
+  if (verbose >= 1) {
+    cat(report("Completed:", funname, "\n"))
+  }
 
   return(list(q_list=q_list,plot=p3))
 }
