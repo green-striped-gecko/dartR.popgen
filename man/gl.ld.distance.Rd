@@ -28,7 +28,7 @@ base pairs [default NULL].}
  with as many colors as there are populations in the dataset
 [default NULL].}
 
-\item{plot.title}{Title of tyh plot [default " "].}
+\item{plot.title}{Title of the plot [default " "].}
 
 \item{plot.theme}{User specified theme [default NULL].}
 
