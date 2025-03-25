@@ -447,7 +447,7 @@ gl.LDNe <- function(x,
     })
 
     pop_list_plot <- as.data.frame(rbindlist(pop_list_plot))
-    pop_list_plot$pop <- as.factor(pop_list_plot$pop)
+    pop_list_plot$pop <- factor(pop_list_plot$pop,levels = pop_list_plot$pop)
     pop_list_plot[pop_list_plot == Inf] <- NA
     pop_list_plot$color <- rep(plot_colors_pop, each = sum(!duplicated(freq)))
     pop_list_plot$`CI low Parametric` <-
@@ -515,6 +515,7 @@ gl.LDNe <- function(x,
     print(p3)
   }
 
+  
   print(pop_list, row.names = FALSE)
 
   # Optionally save the plot ---------------------
