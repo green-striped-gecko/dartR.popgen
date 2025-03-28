@@ -16,7 +16,6 @@ gl.run.popcluster(
   search_relate = 0,
   allele_freq = 1,
   ISeed = 333,
-  PopData = 0,
   PopFlag = 0,
   model = 2,
   loc_admixture = 0,
@@ -61,10 +60,8 @@ method. [default 0].}
 
 \item{ISeed}{Seed for random number generator [default 333].}
 
-\item{PopData}{Whether to use population information stored in the genlight 
+\item{PopFlag}{Whether to use population information stored in the genlight 
 object in the slot "pop" in structure analysis. 0=No and 1=Yes [default 0].}
-
-\item{PopFlag}{PopFlag available: 0=No, 1=Yes. [default 0].}
 
 \item{model}{1=Clustering, 2=Admixture, 3=Hybridyzation, 4=Migration 
 model [default 2].}

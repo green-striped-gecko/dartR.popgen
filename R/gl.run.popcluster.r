@@ -41,9 +41,8 @@
 #' method. [default 0].
 #' @param allele_freq Output allele frequency: 0=N, 1=Y [default 1].
 #' @param ISeed  Seed for random number generator [default 333].
-#' @param PopData Whether to use population information stored in the genlight 
+#' @param PopFlag Whether to use population information stored in the genlight 
 #' object in the slot "pop" in structure analysis. 0=No and 1=Yes [default 0].
-#' @param PopFlag PopFlag available: 0=No, 1=Yes. [default 0].
 #' @param model 1=Clustering, 2=Admixture, 3=Hybridyzation, 4=Migration 
 #' model [default 2].
 #' @param loc_admixture Whether to estimate and output the admixture 
@@ -125,7 +124,6 @@ gl.run.popcluster <- function(x,
                               search_relate = 0,
                               allele_freq = 1,
                               ISeed = 333,
-                              PopData = 0,
                               PopFlag = 0,
                               model = 2,
                               loc_admixture = 0,
@@ -176,6 +174,15 @@ gl.run.popcluster <- function(x,
   #create tempdir
   tempd <- tempfile(pattern = "dir")
   dir.create(tempd, showWarnings = FALSE)
+  
+  if(model == 4 &&
+     nPop(x) != maxK && 
+     maxK != minK ){
+   cat(error(
+     "For migration model, K must be fixed (i.e. maxK = minK) and equal to sampling locations or known populations\n"
+   )) 
+    stop()
+  }
   
   # check OS
   os <- Sys.info()['sysname']
@@ -236,7 +243,7 @@ gl.run.popcluster <- function(x,
     rep,
     search_relate,
     allele_freq,
-    PopData,
+    1,
     PopFlag,
     model,
     0,
@@ -381,24 +388,28 @@ gl.run.popcluster <- function(x,
                                     aes(K, LogL_Mean, group = 1)) +
     geom_line() + 
     geom_point(fill = "white",shape = 21, size = 3) + 
-    theme(axis.title.x = element_blank())
+    theme(axis.title.x = element_blank()) +
+    theme_dartR()
   
   plot.list[[2]] <- ggplot2::ggplot(best_run_file, 
                                     aes(K, DLK1, group = 1)) + 
     geom_line() +
     geom_point(fill = "white",shape = 21, size = 3) + 
-    theme(axis.title.x = element_blank())
+    theme(axis.title.x = element_blank()) +
+    theme_dartR()
   
   plot.list[[3]] <- ggplot2::ggplot(best_run_file, 
                                     aes(K, DLK2, group =1)) + 
     geom_line() + geom_point(fill = "white",shape = 21, size = 3) + 
-    theme(axis.title.x = element_blank())
+    theme(axis.title.x = element_blank()) +
+    theme_dartR()
   
   plot.list[[4]] <- ggplot2::ggplot(best_run_file,
                                     aes(K, FST.FIS, group = 1)) + 
     geom_line() + 
     geom_point(fill = "white", shape = 21, size = 3) + 
-    theme(axis.title.x = element_blank())
+    theme(axis.title.x = element_blank()) +
+    theme_dartR()
   
   names(plot.list) <- c("LogL_Mean", "DLK1", "DLK2", "FST.FIS")
   
@@ -421,6 +432,10 @@ gl.run.popcluster <- function(x,
   Q <- NULL
   
   for (i in best_run_file$BestRun) {
+    
+    if(abs(minK - maxK)== 0){
+      i <- best_run_file$BestRun[1]
+    }
     best <- readLines(con <- file(file.path(tempd, i)))
     close(con)
     Q_raw <- stringr::str_split(best[(which(startsWith(
