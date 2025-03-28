@@ -197,6 +197,12 @@ gl.run.popcluster <- function(x,
   }
   
   # create INPUT FILE
+  if(PopFlag == 0){
+    PopData <- 0
+  }else if(PopFlag == 1){
+    PopData <- 1
+  }
+  
   genotype <- as.matrix.genlight(x)
   genotype[is.na(genotype)] <- 3
   sample_name <- x@ind.names
@@ -243,7 +249,7 @@ gl.run.popcluster <- function(x,
     rep,
     search_relate,
     allele_freq,
-    1,
+    PopData,
     PopFlag,
     model,
     0,
