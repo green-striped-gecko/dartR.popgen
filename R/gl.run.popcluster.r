@@ -365,9 +365,12 @@ gl.run.popcluster <- function(x,
   ))
   
   # Summarise best run and likelihood
+  # res <- readLines(con <- file(file.path(
+  #   tempd, paste0(filename, ".popcluster.K")
+  # )), n = maxK + 1)[-1]
   res <- readLines(con <- file(file.path(
     tempd, paste0(filename, ".popcluster.K")
-  )), n = maxK + 1)[-1]
+  )), n = ((maxK-minK)+2))[-1]
   close(con)
   res2 <- stringr::str_split(gsub('\"', "", res), " ")
   for (i in 1:length(res2)) {
@@ -461,7 +464,7 @@ gl.run.popcluster <- function(x,
       Q <- data.frame(rbind(Q, Q_raw[[j]]))
     }
     
-    Q <- Q[,-(4:5)]
+      Q <- Q[,-(4:5)]
     
     colnames(Q) <- c("Index",
                      "Order",
