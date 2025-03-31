@@ -184,6 +184,30 @@ gl.run.popcluster <- function(x,
     stop()
   }
   
+  
+  if (model == "4" &&
+      nPop(x) != maxK ||
+      model == "4" &&
+      maxK != minK ||
+      model == "4" &&
+      PopFlag == "0") {
+    cat(error(
+      "For migration model:
+                1. Minimum and maximum values of K must be the same
+                2. K must be equal to number populations
+                3. Population info must be used"
+    ))
+    stop()
+  }
+  
+  if(PopFlag == "1" &&
+     nPop(x) < minK){
+    cat(error(
+      "If population information is used, the minimum value of K must be at least the number of populations"
+    ))
+    stop()
+  }
+  
   # check OS
   os <- Sys.info()['sysname']
   if (os == "Windows") {
