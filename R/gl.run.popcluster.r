@@ -424,8 +424,11 @@ gl.run.popcluster <- function(x,
   })
   maxWidth <- do.call(grid::unit.pmax, purrr::map(p, function(x)
     x$widths[2:3]))
-  for (i in 1:length(p))
+  
+  for (i in 1:length(p)){
     p[[i]]$widths[2:3] <- maxWidth
+  }
+  
   p$bottom <- "K"
   p$ncol <- 2
   if (plot.out) {
@@ -438,10 +441,11 @@ gl.run.popcluster <- function(x,
   Q <- NULL
   
   for (i in best_run_file$BestRun) {
-    
+     
     if(abs(minK - maxK)== 0){
       i <- best_run_file$BestRun[1]
     }
+    
     best <- readLines(con <- file(file.path(tempd, i)))
     close(con)
     Q_raw <- stringr::str_split(best[(which(startsWith(
@@ -449,12 +453,16 @@ gl.run.popcluster <- function(x,
     )) + 2):(which(startsWith(
       best, "Inferred ancestry of individuals"
     )) + 1 + nInd(x))], " ")
+    
     for (j in 1:length(Q_raw)) {
       Q_raw[[j]][which(Q_raw[[j]] == "")] <- NA
       Q_raw[[j]][which(Q_raw[[j]] == ":")] <- NA
       Q_raw[[j]] <- na.omit(Q_raw[[j]])
       Q <- data.frame(rbind(Q, Q_raw[[j]]))
     }
+    
+    Q <- Q[,-(4:5)]
+    
     colnames(Q) <- c("Index",
                      "Order",
                      "Label",
@@ -500,6 +508,9 @@ gl.run.popcluster <- function(x,
     )
   )
   setwd(old.path)
-  if (cleanup)
-    unlink(tempd, recursive = T)
+  
+  if (cleanup){
+    unlink(tempd, recursive = TRUE)
+  }
+  
 }
