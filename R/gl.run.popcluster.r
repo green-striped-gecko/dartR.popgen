@@ -201,7 +201,7 @@ gl.run.popcluster <- function(x,
   }
   
   if(PopFlag == "1" &&
-     nPop(x) < minK){
+      minK < nPop(x)){
     cat(error(
       "If population information is used, the minimum value of K must be at least the number of populations"
     ))
