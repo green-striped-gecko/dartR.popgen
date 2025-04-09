@@ -17,6 +17,9 @@
 #' @param cv Number of test sets for cross-validation, 0 implies no CV step
 #'  [default 0].
 #' @param seed Seed for random number generator [default NULL].
+#' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
+#' progress log; 3, progress and results summary; 5, full report
+#' [default NULL, unless specified using gl.set.verbosity].
 #' 
 #' @details
 #' Download faststructure binary for your system from here (only runs on Mac or
@@ -86,7 +89,8 @@ gl.run.faststructure <- function(x,
                                  tol = 10e-6,
                                  prior = "simple",
                                  cv = 0,
-                                 seed = NULL) {
+                                 seed = NULL,
+                                 verbose = NULL) {
   
   # SET VERBOSITY
   verbose <- gl.check.verbosity(verbose)
