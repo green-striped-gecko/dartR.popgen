@@ -34,13 +34,14 @@
 #'  \item \url{https://ggplot2.tidyverse.org/reference/ggtheme.html} and \item
 #'  \url{https://yutannihilation.github.io/allYourFigureAreBelongToUs/ggthemes/}
 #'  }
-#'
+#'The Q matrices can be input to other R packages for plotting ancestry proportion, e.g. FSTruct
+#'\url{https://github.com/MaikeMorrison/FSTruct}
 #' @return Q-matrix and structure plot
 #'
 #' @author Ching Ching Lau (Post to \url{https://groups.google.com/d/forum/dartr})
 #'
 #' @examples
-#' # examples need structure to be installed on the system (see above)
+#' # examples need popcluster to be installed on the system (see above)
 #' \dontrun{
 #' m <- gl.run.popcluster(x=bandicoot.gl, popcluster.path="/User/PopCluster/Bin/",
 #' output.path="/User/Documents/Output/",
@@ -93,13 +94,16 @@ gl.plot.popcluster <- function(pop_cluster_result,
   best_run <- pop_cluster_result$best_run[which(pop_cluster_result$best_run$K == plot.K),'BestRun']
   Q <- pop_cluster_result$matrix[best_run][[1]]
   Q_long <- tidyr::pivot_longer(Q, cols = starts_with("Pop_"), names_to = "K", values_to = "values")
+  
   if (is.null(color_clusters)) {
     color_clusters <- gl.select.colors(ncolors = max(plot.K), verbose = 0)
   }
   
   p3 <- ggplot(Q_long, aes_(x = ~ factor(Order), y = ~values, fill = ~K)) +
-    geom_col(size = 0.15, width = 1, position = "fill")+
-    facet_grid( ~ factor(Pop, levels=unique(Q_long$Pop)), scales = "free", space = "free") +
+    geom_col(color = "black", size = border_ind, width = 1) +
+    facet_grid( ~ factor(Pop, levels=unique(Q_long$Pop)), 
+                scales = "free", 
+                space = "free") +
     scale_y_continuous(expand = c(0, 0)) +
     scale_x_discrete(
       breaks = unique(Q_long$Order),

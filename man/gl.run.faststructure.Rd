@@ -14,7 +14,8 @@ gl.run.faststructure(
   tol = 1e-05,
   prior = "simple",
   cv = 0,
-  seed = NULL
+  seed = NULL,
+  verbose = NULL
 )
 }
 \arguments{
@@ -39,6 +40,10 @@ is located [default working directory "./fastStructure"].}
 [default 0].}
 
 \item{seed}{Seed for random number generator [default NULL].}
+
+\item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
+progress log; 3, progress and results summary; 5, full report
+[default NULL, unless specified using gl.set.verbosity].}
 }
 \value{
 A list in which each list entry is a single faststructure run output

@@ -34,12 +34,14 @@
 #'  \url{https://yutannihilation.github.io/allYourFigureAreBelongToUs/ggthemes/}
 #'  }
 #'
+#'The Q matrices can be input to other R packages for plotting ancestry proportion, e.g. FSTruct
+#'\url{https://github.com/MaikeMorrison/FSTruct}
 #' @return Q-matrix
 #'
 #' @author Ching Ching Lau (Post to \url{https://groups.google.com/d/forum/dartr})
 #'
 #' @examples
-#' # examples need structure to be installed on the system (see above)
+#' # examples need LEA to be installed on the system (see above)
 #' \dontrun{
 #' m <- gl.run.snmf(x=bandicoot.gl, minK=1, 
 #' maxK=5, rep=10)
@@ -96,7 +98,9 @@ gl.plot.snmf <- function(snmf_result,
   }
   
   p3 <- ggplot(Q_long, aes_(x = ~factor(Order), y = ~values, fill = ~K)) +
-    geom_col(size = 0.15, width = 1, position = "fill")+
+    # geom_col(size = border_ind, width = 1, position = "fill")+
+    geom_col(color = "black", size = border_ind, width = 1) +
+    
     facet_grid( ~factor(Pop, levels=unique(Q_long$Pop)), scales = "free", space = "free") +
     scale_y_continuous(expand = c(0, 0)) +
     scale_x_discrete(
