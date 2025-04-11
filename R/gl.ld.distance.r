@@ -14,7 +14,7 @@
 #' @param pop.colors A color palette for box plots by population or a list
 #'  with as many colors as there are populations in the dataset
 #' [default NULL].
-#' @param plot.title Title of tyh plot [default " "].
+#' @param plot.title Title of the plot [default " "].
 #' @param plot.theme User specified theme [default NULL].
 #' @param plot.out Specify if plot is to be produced [default TRUE].
 #' @param plot.dir Directory in which to save files [default = working directory]

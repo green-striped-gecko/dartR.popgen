@@ -10,6 +10,7 @@ gl.TajimasD(
   ms.path = NULL,
   simulation.out = NULL,
   rep = NULL,
+  seeds = NULL,
   cleanup = TRUE,
   plot.dir = NULL,
   plot.out = TRUE,
@@ -24,9 +25,12 @@ gl.TajimasD(
 \item{ms.path}{absolute path that stores the ms program 
 (eg: /User/msdir/) [default  NULL]}
 
-\item{simulation.out}{Directory in which to save simulated summary statsitics from MS, given ms.path is provided  [default  NULL]}
+\item{simulation.out}{Directory in which to save simulated summary statistics from MS, given ms.path is provided  [default  NULL]}
 
 \item{rep}{Number of replicates in ms [default  NULL, required for simulation]}
+
+\item{seeds}{Seeds for the random number generator in ms [default  NULL,
+seeds are randomly generated]}
 
 \item{cleanup}{clean data in tmp [default  TRUE]}
 
@@ -44,20 +48,21 @@ progress log; 3, progress and results summary; 5, full report
 [default 2 or as specified using gl.set.verbosity].}
 }
 \value{
-The plot and table of Tajima's D (results from MS and plot of simulated Tajima's D can be return if ms.path is provided)
+A plot and table of Tajima's D (results from MS and plot of simulated Tajima's D can be returned if ms.path is provided)
 }
 \description{
-This function calculate Tajima's D
+This function calculate Tajima's D, with p-values from beta distribution, standard normal distribution and simulation from ms (Hudson, 2002)
 
-Refer to the ms manual for further information on the parameters to
-set
--- ##########################################
+Refer to the ms manual for further information on the parameters to set
+##########################################
 }
 \examples{
 # To run without ms simulation
 Tajima <- gl.TajimasD(x=bandicoot.gl)
 #' # To run with ms simulation
+\dontrun{
 Tajima <- gl.TajimasD(x=bandicoot.gl, rep=10, ms.path="/User/msdir/")
+}
 }
 \references{
 \itemize{

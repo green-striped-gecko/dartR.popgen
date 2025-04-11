@@ -2,24 +2,23 @@
 % Please edit documentation in R/gl.run.popcluster.r
 \name{gl.run.popcluster}
 \alias{gl.run.popcluster}
-\title{Creates an input file for the program PopCluster and runs it if
-PopCluster is installed (can be installed at: https://www.zsl.org/about-zsl/resources/software/popcluster)}
+\title{Runs a PopCluster analysis using a genlight object}
 \usage{
 gl.run.popcluster(
   x,
-  popcluster.path,
-  output.path,
+  popcluster.path = getwd(),
+  output.path = getwd(),
   filename = "output",
-  minK,
-  maxK,
-  rep,
+  minK = 1,
+  maxK = 2,
+  rep = 1,
+  Scaling = 0,
   search_relate = 0,
   allele_freq = 1,
-  PopData,
+  ISeed = 333,
   PopFlag = 0,
   model = 2,
-  location,
-  loc_admixture = 1,
+  loc_admixture = 0,
   relatedness = 0,
   kinship = 0,
   pr_allele_freq = 2,
@@ -28,78 +27,120 @@ gl.run.popcluster(
   plot.out = TRUE,
   plot.file = NULL,
   plot_theme = theme_dartR(),
-  verbose = 2
+  verbose = NULL
 )
 }
 \arguments{
-\item{x}{Name of the genlight object containing the SNP data [required]}
+\item{x}{Name of the genlight object containing the SNP data [required].}
 
-\item{popcluster.path}{absolute path to the directory that contain the PopCluster program 
-(eg: c:/User/bin/PopCluster/) [required]}
+\item{popcluster.path}{Path to the directory that contain the PopCluster
+program [default getwd()].}
 
-\item{output.path}{Path to store the parameter file and input data [required]}
+\item{output.path}{Path to store the parameter file and input
+data [default getwd()].}
 
-\item{filename}{Prefix of all the files that will be produced [default “output”]}
+\item{filename}{Prefix of all the files that will be produced
+[default “output”].}
 
-\item{minK}{Minimum K [required]}
+\item{minK}{Minimum K [default 1].}
 
-\item{maxK}{Maximum K [required]}
+\item{maxK}{Maximum K [default 2].}
 
-\item{rep}{Number of replicates runs per K [required]}
+\item{rep}{Number of replicates runs per K [default 1].}
 
-\item{search_relate}{Search using assignment_prob/relatedness: 0=N, 1=Y [default 0]}
+\item{Scaling}{Scaling to be applied in the clustering analysis: none (0), 
+weak (1), medium (2), strong (3) and very strong (4), see details 
+section [default 0].}
 
-\item{allele_freq}{Output allele frequency: 0=N, 1=Y [default 1]}
+\item{search_relate}{Method for proposing a configuration in clustering 
+analysis. 0 for the assignment probability method and 1 for relatedness 
+method. [default 0].}
 
-\item{PopData}{PopData available: 0=N, 1=Y [required]}
+\item{allele_freq}{Output allele frequency: 0=N, 1=Y [default 1].}
 
-\item{PopFlag}{PopFlag available: 0=N, 1=Y. [default 0]}
+\item{ISeed}{Seed for random number generator [default 333].}
 
-\item{model}{1=Mixture, 2=Admixture, 3=Hybridyzation, 4=Migration model [default 2]}
+\item{PopFlag}{Whether to use population information stored in the genlight 
+object in the slot "pop" in structure analysis. 0=No and 1=Yes [default 0].}
 
-\item{location}{Individual location data available: 0=N, 1=Y [required]}
+\item{model}{1=Clustering, 2=Admixture, 3=Hybridyzation, 4=Migration 
+model [default 2].}
 
-\item{loc_admixture}{Infer locus admixture: 0=N, 1=Y [default 1]}
+\item{loc_admixture}{Whether to estimate and output the admixture 
+proportions for each individual at each locus (=1) or not (=0) [default 0].}
 
-\item{relatedness}{Compute relatedness = 0=No, 1=Wang, 2=LynchRitland [default 0]}
+\item{relatedness}{Compute relatedness = 0=No, 1=Wang, 2=LynchRitland
+[default 0].}
 
-\item{kinship}{Estimate kinship: 0=N, 1=Y [default 0]}
+\item{kinship}{Estimate kinship: 0=N, 1=Y [default 0].}
 
-\item{pr_allele_freq}{0=Undefined, 1=equal, 2=unequal prior allele freq [default 2]}
+\item{pr_allele_freq}{Whether allele frequency prior should be determined 
+by the program (0), the Equal Frequency prior (1) or Unequal Frequency 
+prior (2) [default 2].}
 
-\item{cleanup}{clean data in tmp [default  TRUE]}
+\item{cleanup}{clean data in tmp [default  TRUE].}
 
-\item{plot.dir}{Directory in which to save files [default = working directory]}
+\item{plot.dir}{Directory in which to save files [default getwd()].}
 
 \item{plot.out}{Specify if plot is to be produced [default TRUE].}
 
-\item{plot.file}{Name for the RDS binary file to save (base name only, exclude
-extension) [default NULL]}
+\item{plot.file}{Name for the RDS binary file to save (base name only, 
+exclude extension) [default NULL].}
 
-\item{plot_theme}{Theme of the plot [default theme_dartR()]}
+\item{plot_theme}{Theme of the plot [default theme_dartR()].}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 progress log; 3, progress and results summary; 5, full report
 [default 2 or as specified using gl.set.verbosity].}
 }
 \value{
-The plot of likelihood, DLK1, DLK2, FST.FIS, best run, Q-matrices of PopCluster,
+The plot of likelihood, DLK1, DLK2, FST.FIS, best run, Q-matrices 
+of PopCluster.
 }
 \description{
-This function infers the population admixture
-
+Creates an input file for the program PopCluster and runs it if
+PopCluster is installed (can be installed at:
+ https://www.zsl.org/about-zsl/resources/software/popcluster)
+ 
 If you specify a directory for the PopCluster executable file, then the
-script will create the input file (DataForm=0) from the SNP data then run PopCluster.
+script will create the input file (DataForm=0) from the SNP data then run 
+PopCluster.
+
+PopCluster infers population admixture by coupling a clustering stage with
+a subsequent admixture-analysis stage. First, it uses simulated annealing to
+assign individuals to clusters under a mixture model, thus identifying
+discrete populations and estimating allele frequencies without prematurely
+converging to local optima. In the second step, these results provide
+starting points for an expectation–maximization (EM) algorithm under an
+admixture model, where each individual’s genetic contributions from multiple
+populations are refined.
 
 Refer to the PopCluster manual for further information on the parameters to
-set
--- ##########################################
+set.
+}
+\details{
+For best results, run multiple replicates with different starting seeds to
+verify convergence and consistency. 
+
+Use scaling when your sampling is highly unbalanced (e.g., one population 
+with few individuals vs. another with many). Applying an appropriate 
+scaling level (1, 2, 3, or 4) can substantially improve structure 
+inference in these cases.
+
+If your sample has many closely related individuals, using the Equal 
+Frequency Prior (pr_allele_freq = 1)  gives better admixture results. If 
+your sample doesn't include many relatives, the Unequal Frequency Prior 
+(pr_allele_freq = 2) is more accurate. If you're unsure about how related 
+the individuals in your sample are, set pr_allele_freq = 0. This 
+will let the program check for relatedness and automatically choose the 
+best prior (Equal or Unequal) based on the results.
 }
 \examples{
 \dontrun{
-m <- gl.run.popcluster(x=bandicoot.gl, popcluster.path="/User/PopCluster/Bin/",
+m <- gl.run.popcluster(x=bandicoot.gl, 
+popcluster.path="/User/PopCluster/Bin/",
 output.path="/User/Documents/Output/",
-minK=1, maxK=3, 
+minK=1, maxK=3,
 rep=10, PopData=1, location=1)
 Q <- gl.plot.popcluster(pop_cluster_result=m, plot.K = 3, ind_name=T)
 gl.map.popcluster(x = bandicoot.gl, qmat = Q)
@@ -108,13 +149,13 @@ gl.map.popcluster(x = bandicoot.gl, qmat = Q)
 mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
 gl.map.popcluster(bandicoot.gl, qmat=Q, movepops=mp)
 }
-#Wrapper function to run PopCluster
 
 }
 \references{
 \itemize{
-\item Wang, J. (2022). Fast and accurate population admixture inference 
-from genotype data from a few microsatellites to millions of SNPs. Heredity, 129(2), 79-92.
+\item Wang, J. (2022). Fast and accurate population admixture inference
+from genotype data from a few microsatellites to millions of SNPs. 
+Heredity, 129(2), 79-92.
 }
 }
 \author{

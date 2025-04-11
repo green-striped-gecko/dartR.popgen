@@ -1,10 +1,10 @@
 #' Select Loci Panel Based on Various Methods
 #'
 #' @description
-#' This function selects a panel of loci from a genomic dataset (`genlight` object)
+#' This function selects a panel of loci from a genomic dataset ('dartR or genlight' object)
 #' based on various selection methods.
 #'
-#' @param x A `dartR\genlight` object containing the genomic data.
+#' @param x A 'dartR or genlight' object containing the genomic data.
 #' @param method A character string specifying the selection method. Options include:
 #'   \itemize{
 #'     \item `"dapc"`: Select loci contributing most to discrimination between populations using DAPC (Discriminant Analysis of Principal Components).
@@ -22,7 +22,7 @@
 #' @param verbose Integer level of verbosity for reporting progress and information.
 #'
 #' @details
-#' The function applies various methods to select loci based on the input `genlight` object.
+#' The function applies various methods to select loci based on the input 'dartR or genlight' object.
 #' Each method has specific criteria for selecting loci:
 #' \itemize{
 #'   \item `dapc`: Performs DAPC and identifies loci with the highest contributions to discrimination between population pairs.
@@ -34,7 +34,7 @@
 #'   \item `hafpop`: Selects loci with the highest allele frequencies within individual populations.
 #' }
 #'
-#' @return A `genlight` object containing the selected loci.
+#' @return A 'dartR or genlight' object containing the selected loci.
 #'
 #' @examples
 #' # Example usage:
@@ -46,6 +46,7 @@
 #' selected <- gl.select.panel(possums.gl, method = "dapc", nl = 5)
 #'
 #' @export
+#' @importFrom utils combn
 
 gl.select.panel <- function(x, 
                             method="random", 
