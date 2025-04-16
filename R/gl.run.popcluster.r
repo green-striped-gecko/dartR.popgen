@@ -104,9 +104,7 @@
 #' \dontrun{
 #' m <- gl.run.popcluster(x=bandicoot.gl, 
 #' popcluster.path="/User/PopCluster/Bin/",
-#' output.path="/User/Documents/Output/",
-#' minK=1, maxK=3,
-#' rep=10, PopData=1, location=1)
+#' output.path="/User/Documents/Output/", minK=1, maxK=3, rep=2)
 #' Q <- gl.plot.popcluster(pop_cluster_result=m, plot.K = 3, ind_name=T)
 #' gl.map.popcluster(x = bandicoot.gl, qmat = Q)
 #' # move population 4 (out of 5) 0.5 degrees to the right and populations 1
