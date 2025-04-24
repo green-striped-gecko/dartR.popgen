@@ -22,8 +22,6 @@ gl.run.popcluster(
   relatedness = 0,
   kinship = 0,
   pr_allele_freq = 2,
-  parallel = FALSE,
-  ncores = 1,
   cleanup = TRUE,
   plot.dir = NULL,
   plot.out = TRUE,
@@ -79,12 +77,6 @@ proportions for each individual at each locus (=1) or not (=0) [default 0].}
 \item{pr_allele_freq}{Whether allele frequency prior should be determined 
 by the program (0), the Equal Frequency prior (1) or Unequal Frequency 
 prior (2) [default 2].}
-
-\item{parallel}{Use parallelisation (only availlable in LINUX) 
-[default FALSE].}
-
-\item{ncores}{How many cores should be used (only availlable in LINUX) 
-[default 1].}
 
 \item{cleanup}{clean data in tmp [default  TRUE].}
 

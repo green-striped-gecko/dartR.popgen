@@ -53,10 +53,6 @@
 #' @param pr_allele_freq Whether allele frequency prior should be determined 
 #' by the program (0), the Equal Frequency prior (1) or Unequal Frequency 
 #' prior (2) [default 2].
-#' @param parallel Use parallelisation (only availlable in LINUX) 
-#' [default FALSE].
-#' @param ncores How many cores should be used (only availlable in LINUX) 
-#' [default 1].
 #' @param cleanup clean data in tmp [default  TRUE].
 #' @param plot.dir Directory in which to save files [default getwd()].
 #' @param plot.out Specify if plot is to be produced [default TRUE].
@@ -132,8 +128,6 @@ gl.run.popcluster <- function(x,
                               relatedness = 0,
                               kinship = 0,
                               pr_allele_freq = 2,
-                              parallel = FALSE,
-                              ncores = 1,
                               cleanup = TRUE,
                               plot.dir = NULL,
                               plot.out = TRUE,
@@ -223,11 +217,7 @@ gl.run.popcluster <- function(x,
     popcluster_version <- paste0("PopCluster", "Mac")
     
   } else if (os == "Linux") {
-    if(parallel){
     popcluster_version <- paste0("PopCluster", "Lnx")
-    }else{
-      popcluster_version <- paste0("PopCluster", "Lnx","_impi")
-    }
   }
   
   # create INPUT FILE
@@ -392,26 +382,12 @@ gl.run.popcluster <- function(x,
   }
   
   # RUN POPCLUSTER
-  if(parallel & os == "Linux"){
-    
-    system(paste0(
-      "mpirun -n ",
-      ncores, " ",
-      file.path(tempd, popcluster_version[1]),
-      " INP:",
-      paste0(filename, ".popcluster.PcPjt"),
-      " MPI:1 "
-    ))
-    
-  }else{
     
     system(paste0(
       file.path(tempd, popcluster_version[1]),
       " INP:",
       paste0(filename, ".popcluster.PcPjt")
     ))
-    
-  }
 
   # Summarise best run and likelihood
   # res <- readLines(con <- file(file.path(
