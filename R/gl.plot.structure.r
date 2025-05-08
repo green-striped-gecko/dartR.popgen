@@ -259,6 +259,11 @@ gl.plot.structure <- function(sr,
       K = rep(Ks[[i]], nrow(Q_list[[i]])),
       orig.pop = sr[[1]]$q.mat$orig.pop
     )
+    
+    if(den){
+      Q_list_tmp$orig.pop <- " "
+    }
+    
     n_col <- ncol(Q_list_tmp) - 3
     colnames(Q_list_tmp) <-
       c("Label", paste0(rep("cluster", n_col), 1:n_col), "K", "orig.pop")
@@ -333,6 +338,10 @@ gl.plot.structure <- function(sr,
   
   if(!is.null(k_name)){
     Q_melt <- Q_melt[which(Q_melt$K==k_name),]
+  }
+  
+  if(den){
+    Q_melt$orig.pop <- ""
   }
   
   p3 <- ggplot(Q_melt, aes_(x = ~ factor(ord), y = ~value, fill = ~Cluster)) +
