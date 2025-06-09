@@ -1,13 +1,10 @@
 #' @name gl.TajimasD
 #' @title Calculation of Tajima's D
-#' simulation results can only be output if ms and sample_stats are compiled (can be installed at: https://uchicago.app.box.com/s/l3e5uf13tikfjm7e1il1eujitlsjdx13)
 #' @description
-#' This function calculate Tajima's D, with p-values from beta distribution, standard normal distribution and simulation from ms (Hudson, 2002)
-#'
-#' Refer to the ms manual for further information on the parameters to set
-#' ##########################################
-#'
-#'
+#' This function calculate Tajima's D, with p-values from beta distribution, standard normal distribution and simulation from ms (Hudson, 2002) for each population in the dartR/genlight object.
+#' #' simulation results can only be output if ms and sample_stats are available. Both programs need to be compiled from here: \url{https://home.uchicago.edu/rhudson1/source/mksamples.html} or binaries can be downloaded via: \code{\link[dartRverse]{gl.download.binary}}. If you provide the ms path, the function will simulate a population according to the provided dartR/genlight object. The function will then calculate Tajima's D for each population and compare the results from ms and plot the distribution of simulated Tajima's D for each population. (this can be used to test the TajimasD against a neutral model of evolution [p values is provided under sim_pval]).
+#' Refer to the ms manual for further information on the program and simulation. Here we estimate theta from the number of segregating sites (S) and the number of alleles (k) in the sample and simulate a population according to the provided dartR/genlight object.
+#' @return A plot and table of Tajima's D for each population ( and results from MS and plots of simulated Tajima's D can be returned if ms.path is provided). If you use ms, please make sure you cite: Hudson, R. R. (2002). Generating samples under a Wright–Fisher neutral model of genetic variation. Bioinformatics, 18(2), 337-338.
 #'@param x Name of the genlight object containing the SNP data [required]
 #' @param ms.path absolute path that stores the ms program 
 #' (eg: /User/msdir/) [default  NULL]
