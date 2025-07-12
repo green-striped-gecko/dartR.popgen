@@ -21,26 +21,28 @@ gl.TajimasD(
 \arguments{
 \item{x}{Name of the genlight object containing the SNP data [required]}
 
-\item{ms.path}{absolute path that stores the ms program 
-(eg: /User/msdir/) [default  NULL]}
+\item{ms.path}{absolute path that stores the ms program
+(eg: /User/msdir/) [default  NULL].}
 
-\item{simulation.out}{Directory in which to save simulated summary statistics from MS, given ms.path is provided  [default  NULL]}
+\item{simulation.out}{Directory in which to save simulated summary
+statistics from MS, given ms.path is provided  [default  NULL].}
 
-\item{rep}{Number of replicates in ms [default  NULL, required for simulation]}
+\item{rep}{Number of replicates in ms
+[default  NULL, required for simulation].}
 
 \item{seeds}{Seeds for the random number generator in ms [default  NULL,
-seeds are randomly generated]}
+seeds are randomly generated].}
 
-\item{cleanup}{clean data in tmp [default  TRUE]}
+\item{cleanup}{clean data in tmp [default  TRUE].}
 
-\item{plot.dir}{Directory in which to save files [default = working directory]}
+\item{plot.dir}{Directory in which to save files [default working directory].}
 
 \item{plot.out}{Specify if plot is to be produced [default TRUE].}
 
-\item{plot.file}{Name for the RDS binary file to save (base name only, exclude
-extension) [default NULL]}
+\item{plot.file}{Name for the RDS binary file to save (base name only,
+exclude extension) [default NULL].}
 
-\item{plot_theme}{Theme of the plot [default theme_dartR()]}
+\item{plot_theme}{Theme of the plot [default theme_dartR()].}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 progress log; 3, progress and results summary; 5, full report
@@ -66,9 +68,12 @@ Tajima <- gl.TajimasD(x=bandicoot.gl, rep=10, ms.path="/User/msdir/")
 }
 \references{
 \itemize{
-\item Tajima, F. (1989). Statistical method for testing the neutral mutation hypothesis by DNA polymorphism. Genetics, 123(3), 585-595.
-\item Hudson, R. R. (2002). Generating samples under a Wright–Fisher neutral model of genetic variation. Bioinformatics, 18(2), 337-338.
-\item Paradis, E. (2010). pegas: an R package for population genetics with an integrated–modular approach. Bioinformatics, 26(3), 419-420.
+\item Tajima, F. (1989). Statistical method for testing the neutral
+mutation hypothesis by DNA polymorphism. Genetics, 123(3), 585-595.
+\item Hudson, R. R. (2002). Generating samples under a Wright–Fisher
+neutral model of genetic variation. Bioinformatics, 18(2), 337-338.
+\item Paradis, E. (2010). pegas: an R package for population genetics with
+an integrated–modular approach. Bioinformatics, 26(3), 419-420.
 }
 }
 \author{
