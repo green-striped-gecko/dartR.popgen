@@ -63,7 +63,7 @@ gl.read.structure <- function(folder.path,
   
   # FLAG SCRIPT START
   funname <- match.call()[[1]]
-  utils.flag.start(func = funname, build = "Jody", v = verbose)
+  utils.flag.start(func = funname, build = "Jody", verbose = verbose)
   
   # FUNCTION SPECIFIC ERROR CHECKING
   # Check if required packages are installed
@@ -311,7 +311,7 @@ gl.read.structure <- function(folder.path,
       prior.anc = prior.anc
     ))
   }
-  
+  k <- NULL
   # Create dataframe to track files and their K values
   file_info <- data.frame(f_name = file_paths, k = NA, rep = NA)
   
