@@ -220,6 +220,9 @@ parameter to locate it."
   }
 
   # DO THE JOB
+  
+  x <- gl.filter.allna(x)
+  
   gg <- utils.structure.genind2gtypes(gl2gi(x, verbose = 0))
 
   sr <- utils.structure.run(g = gg, 
