@@ -13,6 +13,7 @@ gl.plot.faststructure(
   plot_theme = NULL,
   colors_clusters = NULL,
   ind_name = TRUE,
+  k_name = NULL,
   label.size = 12,
   border_ind = 0.15,
   den = FALSE,
@@ -42,6 +43,9 @@ One of 'greedy' or 'greedyLargeK' or 'stephens' [default "greedyLargeK"].}
 as many colors as there are clusters (K) [default NULL].}
 
 \item{ind_name}{Whether to plot individual names [default TRUE].}
+
+\item{k_name}{Name of the structure plot to plot. It should be character
+[default NULL].}
 
 \item{label.size}{Specify the size of the population labels [default 12].}
 
