@@ -22,6 +22,8 @@
 #' @param colors_clusters A color palette for clusters (K) or a list with
 #' as many colors as there are clusters (K) [default NULL].
 #' @param ind_name Whether to plot individual names [default TRUE].
+#' @param k_name Name of the structure plot to plot. It should be character
+#'  [default NULL].
 #' @param label.size Specify the size of the population labels [default 12].
 #' @param border_ind The width of the border line between individuals
 #' [default 0.25].
@@ -96,6 +98,7 @@ gl.plot.faststructure <- function(sr,
                                   plot_theme = NULL,
                                   colors_clusters = NULL,
                                   ind_name = TRUE,
+                                  k_name = NULL,
                                   label.size = 12,
                                   border_ind = 0.15,
                                   den = FALSE,
@@ -264,6 +267,10 @@ gl.plot.faststructure <- function(sr,
         variable.name = "Cluster"
       )
     )
+  
+  if(!is.null(k_name)){
+    Q_melt <- Q_melt[which(Q_melt$K==k_name),]
+  }
   
   if(den){
     
