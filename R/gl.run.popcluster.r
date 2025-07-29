@@ -53,6 +53,9 @@
 #' @param pr_allele_freq Whether allele frequency prior should be determined 
 #' by the program (0), the Equal Frequency prior (1) or Unequal Frequency 
 #' prior (2) [default 2].
+#' @param parallel Use parallelisation (implemented only in LINUX for the
+#'  moment) [default FALSE].
+#' @param ncores How many cores should be used [default 1].
 #' @param cleanup clean data in tmp [default  TRUE].
 #' @param plot.dir Directory in which to save files [default getwd()].
 #' @param plot.out Specify if plot is to be produced [default TRUE].
@@ -128,6 +131,8 @@ gl.run.popcluster <- function(x,
                               relatedness = 0,
                               kinship = 0,
                               pr_allele_freq = 2,
+                              parallel = FALSE,
+                              ncores = 1,
                               cleanup = TRUE,
                               plot.dir = NULL,
                               plot.out = TRUE,
@@ -217,7 +222,16 @@ gl.run.popcluster <- function(x,
     popcluster_version <- paste0("PopCluster", "Mac")
     
   } else if (os == "Linux") {
-    popcluster_version <- paste0("PopCluster", "Lnx")
+    if(parallel){
+      
+      popcluster_version <- "PopClusterLnx_impi"
+       
+    }else{
+      
+      popcluster_version <- paste0("PopCluster", "Lnx")
+      
+    }
+    
   }
   
   # create INPUT FILE
@@ -382,20 +396,31 @@ gl.run.popcluster <- function(x,
   }
   
   # RUN POPCLUSTER
-    
-    system(paste0(
-      file.path(tempd, popcluster_version[1]),
+    if(os == "Linux" & parallel){
+      
+      system(paste0(
+      "mpirun -np",ncores,"--use-hwthread-cpus ",
+      file.path(tempd, popcluster_version[1]), 
       " INP:",
       paste0(filename, ".popcluster.PcPjt")
-    ))
+      ))
+      
+    }else{
+      
+      system(paste0(
+        file.path(tempd, popcluster_version[1]),
+        " INP:",
+        paste0(filename, ".popcluster.PcPjt")
+      ))
+      
+    }
 
   # Summarise best run and likelihood
   # res <- readLines(con <- file(file.path(
   #   tempd, paste0(filename, ".popcluster.K")
   # )), n = maxK + 1)[-1]
-  res <- readLines(con <- file(file.path(
-    tempd, paste0(filename, ".popcluster.K")
-  )), n = ((maxK-minK)+2))[-1]
+  res <- readLines(con <- file(file.path(tempd, paste0(filename, ".popcluster.K"))), 
+                   n = ((maxK-minK)+2))[-1]
   close(con)
   res2 <- stringr::str_split(gsub('\"', "", res), " ")
   for (i in 1:length(res2)) {
