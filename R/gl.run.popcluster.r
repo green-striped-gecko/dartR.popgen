@@ -402,7 +402,7 @@ gl.run.popcluster <- function(x,
       "mpirun -np ",ncores,
       file.path(tempd, popcluster_version[1]), 
       " INP:",
-      paste0(filename, ".popcluster.PcPjt MPI:1")
+      paste0(filename, ".popcluster.PcPjt")
       ))
       
     }else{
