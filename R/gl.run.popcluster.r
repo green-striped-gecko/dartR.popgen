@@ -399,10 +399,10 @@ gl.run.popcluster <- function(x,
     if(os == "Linux" & parallel){
       
       system(paste0(
-      "mpirun -np ",ncores," --use-hwthread-cpus ",
+      "mpirun -np ",ncores,
       file.path(tempd, popcluster_version[1]), 
       " INP:",
-      paste0(filename, ".popcluster.PcPjt")
+      paste0(filename, ".popcluster.PcPjt MPI:1")
       ))
       
     }else{
