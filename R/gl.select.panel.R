@@ -16,6 +16,8 @@
 #'     \item `"hafpop"`: Select loci with the highest allele frequencies within each population.
 #'   }
 #' @param nl An integer specifying the number of loci to select.
+#' @param exact Logical. If `TRUE`, ensures that the number of selected loci is exactly `nl`. 
+#' If `FALSE`, allows for a random selection that may not match `nl` exactly.
 #' @param plot.out Logical. If `TRUE`, generates plots summarizing selected loci.
 #' @param plot.file A character string specifying the file name for saving plots. If `NULL`, plots are not saved.
 #' @param plot.dir A character string specifying the directory to save plots. Defaults to the working directory.
@@ -32,6 +34,8 @@
 #'   \item `stratified`: Uses stratified sampling to select loci based on allele frequencies.
 #'   \item `hafall`: Selects loci with the highest allele frequencies across the dataset.
 #'   \item `hafpop`: Selects loci with the highest allele frequencies within individual populations.
+#'   \item `pic`: Selects loci based on the highest polymorphic information content (PIC).
+#'   \item `picdart`: Selects loci based on the average PIC calculated from the 'dartR' metrics.
 #' }
 #'
 #' @return A 'dartR or genlight' object containing the selected loci.
@@ -52,6 +56,7 @@ gl.select.panel<-
   function(x, 
            method="random", 
            nl=10,
+           exact=TRUE,
            plot.out = TRUE,
            plot.file = NULL,
            plot.dir = NULL,
@@ -95,14 +100,14 @@ gl.select.panel<-
     if (method=="dapc"){ 
       com <- t(combn(nPop(x), 2))
       pops <- seppop(x)
-      nl <- ceiling(nl/nrow(com)) 
+      nl2 <- ceiling(nl/nrow(com)) 
       
       for (i in 1:nrow(com)){
         dummy <- pops[c(com[i,1],com[i,2])] 
         dummy <-do.call(rbind,dummy)
         dd <- dapc(dummy, n.pca=20, n.da=5)
         ll <- sort(dd$var.contr[,1], decreasing=TRUE)
-        index <-names(ll)[1:nl]
+        index <-names(ll)[1:nl2]
         res[[i]] <- index
         
       }
@@ -123,7 +128,7 @@ gl.select.panel<-
       
       com <- t(combn(nPop(x), 2))
       pops <- seppop(x)
-      nl <- ceiling(nl/(nrow(com)*2))
+      nl2 <- ceiling(nl/(nrow(com)*2))
       
       
       res <- list()
@@ -133,19 +138,21 @@ gl.select.panel<-
         p2 <- pops[[com[i,2]]]
         p1p <- gl.keep.loc(p1, loc.list = pas, verbose = 0)
         p2p <- gl.keep.loc(p2, loc.list = pas, verbose = 0) 
-        res1<- names(sort(rowSums(cbind(gl.alf(p1p)* !gl.alf(p2p))), decreasing=TRUE)[1:nl])
+        res1<- names(sort(rowSums(cbind(gl.alf(p1p)* !gl.alf(p2p))), decreasing=TRUE)[1:nl2])
         
         pas <- panxx[[i]]$pa2
         p1 <- pops[[com[i,2]]]
         p2 <- pops[[com[i,1]]]
         p1p <- gl.keep.loc(p1, loc.list = pas, verbose = 0)
         p2p <- gl.keep.loc(p2, loc.list = pas, verbose = 0) 
-        res2<- names(sort(rowSums(cbind(gl.alf(p1p)* !gl.alf(p2p))), decreasing=TRUE)[1:nl]) 
+        res2<- names(sort(rowSums(cbind(gl.alf(p1p)* !gl.alf(p2p))), decreasing=TRUE)[1:nl2]) 
         res[[i]] <- c(res1,res2)
         
       }
       
       selloc <- unique(unlist(res))
+      #reduce numbers due to uprounding if there are many populations
+     
       
       
       
@@ -157,16 +164,16 @@ gl.select.panel<-
     if (method=="monopop"){ 
       res <- list()
       pops <- seppop(x)
-      nl <- nl/length(pops)
+      nl2 <- ceiling(nl/length(pops))
       
       for (i in 1:nPop(x)){
         dummy <- pops[[i]]
         index <- abs(colMeans(as.matrix(dummy), na.rm=TRUE)-1)==1
         dl<-  locNames(dummy)[index]
-        mons <- sample(dl, nl, replace=FALSE)
-        res[[i]] <- sample(mons, nl)
+        mons <- sample(dl, nl2, replace=FALSE)
+        res[[i]] <- mons
       }
-      
+   
       
       selloc <- unique(unlist(res))
       
@@ -174,7 +181,7 @@ gl.select.panel<-
     if (method=="stratified"){
       res <- list()
       pops <- seppop(x)
-      nl <- nl/length(pops)
+      nl2 <- ceiling(nl/length(pops))
       for (i in 1:nPop(x)){
         
         dummy <- pops[[i]]
@@ -182,7 +189,7 @@ gl.select.panel<-
         df <- data.frame(id=locNames(dummy), freq=0.5-(abs(gl.alf(dummy)[,1]-0.5)))
         df <- df[order(df$freq),]
         
-        self <- seq(0,0.5, length=nl+1)
+        self <- seq(0,0.5, length=nl2+1)
         
         cf <- cut(df$freq, breaks=self, include.lowest=TRUE)
         
@@ -210,12 +217,12 @@ gl.select.panel<-
       
       res <- list()
       pops <- seppop(x)
-      nl <- nl/length(pops)
+      nl2 <- ceiling(nl/length(pops))
       for (i in 1:nPop(x)){
         
         dummy <- pops[[i]]
         index <- order(0.5-abs(0.5-gl.alf(pops[[i]])[,1]), decreasing = TRUE)
-        res[[i]] <- locNames(pops[[i]])[index[1:nl]]
+        res[[i]] <- locNames(pops[[i]])[index[1:nl2]]
       }
       
       
@@ -244,7 +251,22 @@ gl.select.panel<-
       selloc<- locNames(x)[index]
     }
     
-    
+    if (exact) {  #add/remove random loci in case exact is wanted
+      if (length(selloc) > nl)
+      {
+        selloc <- sample(selloc, nl, replace = FALSE)
+      }
+      if (length(selloc)< nl)
+      {
+        if (verbose >= 1) {
+          cat(report("Warning: Not enough loci selected, adding random loci to reach the desired number.\n"))
+        }
+        #add random loci
+        lcs <- locNames(x)
+        selloc <- c(selloc, sample(lcs[!lcs %in% selloc], nl - length(selloc), replace = FALSE))
+      }
+      
+    }
     
     
     
