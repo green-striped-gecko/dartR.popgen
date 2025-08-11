@@ -30,7 +30,8 @@ Description: Facilitates the analysis of SNP (single nucleotide polymorphism)
 Encoding: UTF-8
 Depends: R (>= 3.5), adegenet (>= 2.0.0),  dartR.base, dartR.data
 Imports: methods, utils, MASS, dplyr, patchwork, crayon, ggplot2, data.table, 
-         stringr, furrr, future, ggdendro, LEA, pillar, plyr, terra, purrr, ggpmisc
+         stringr, furrr, future, ggdendro, LEA, pillar, plyr, terra, purrr, 
+         ggpmisc, ape
 Suggests: 
   SIBER,
   expm,
@@ -51,7 +52,8 @@ Suggests:
   viridis,
   zoo,
   gsubfn,
-  sp
+  sp,
+  R.utils
 License: GPL (>= 3)
 RoxygenNote: 7.3.2
 NeedsCompilation: no
