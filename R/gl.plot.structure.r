@@ -345,7 +345,7 @@ gl.plot.structure <- function(sr,
   }
   
   p3 <- ggplot(Q_melt, aes_(x = ~ factor(ord), y = ~value, fill = ~Cluster)) +
-    geom_col(color = "black", size = border_ind, width = 1) +
+    geom_col(color = "black", linewidth = border_ind, width = 1) +
     facet_grid(K ~ orig.pop, scales = "free", space = "free") +
     scale_y_continuous(expand = c(0, 0)) +
     scale_x_discrete(
@@ -360,7 +360,7 @@ gl.plot.structure <- function(sr,
       panel.border = element_rect(
         color = "black",
         fill = NA,
-        size = 1
+        linewidth = 1
       ),
       strip.background = element_blank(),
       strip.text.x = element_text(size = 12, angle = 90),
