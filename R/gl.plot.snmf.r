@@ -98,8 +98,8 @@ gl.plot.snmf <- function(snmf_result,
   }
   
   p3 <- ggplot(Q_long, aes_(x = ~factor(Order), y = ~values, fill = ~K)) +
-    # geom_col(size = border_ind, width = 1, position = "fill")+
-    geom_col(color = "black", size = border_ind, width = 1) +
+    # geom_col(linewidth = border_ind, width = 1, position = "fill")+
+    geom_col(color = "black", linewidth = border_ind, width = 1) +
     
     facet_grid( ~factor(Pop, levels=unique(Q_long$Pop)), scales = "free", space = "free") +
     scale_y_continuous(expand = c(0, 0)) +
@@ -115,7 +115,7 @@ gl.plot.snmf <- function(snmf_result,
       panel.border = element_rect(
         color = "black",
         fill = NA,
-        size = 1
+        linewidth = 1
       ),
       strip.background = element_blank(),
       strip.text.x = element_text(size = 12, angle = 90),
