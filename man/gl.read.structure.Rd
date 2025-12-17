@@ -4,58 +4,42 @@
 \alias{gl.read.structure}
 \title{Read output files produced by the program STRUCTURE}
 \usage{
-gl.read.structure(folder.path, x = NULL, verbose = NULL)
+gl.read.structure(
+  folder.path,
+  x = NULL,
+  pattern = NULL,
+  recursive = FALSE,
+  rename_files = FALSE,
+  prefix = NULL,
+  verbose = NULL
+)
 }
 \arguments{
-\item{folder.path}{Path to the folder containing STRUCTURE output files [required].}
+\item{folder.path}{Path to folder containing STRUCTURE output files [required].}
 
-\item{x}{Name of the genlight object to associate population information with
-[default NULL].}
+\item{x}{Optional genlight object used to attach population labels to individuals [default NULL].}
 
-\item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2, progress log;
-3, progress and results summary; 5, full report [default 2 or as specified using 
-gl.set.verbosity].}
+\item{pattern}{Optional regex to filter files in folder.path (e.g. ".*_f$" or "out$") [default NULL].}
+
+\item{recursive}{Logical; search folder recursively [default FALSE].}
+
+\item{rename_files}{Logical; if TRUE, renames source files on disk based on K and replicate [default FALSE].}
+
+\item{prefix}{Optional prefix used for renaming/labels. If NULL, uses longest common prefix of filenames [default NULL].}
+
+\item{verbose}{Verbosity (as in dartR) [default 2 / gl.set.verbosity()].}
 }
 \value{
-A list of class "structure.result" containing the processed results from
- each STRUCTURE output file, with names based on the file labels.
+A list of class "structure.result". Each element contains:
+\itemize{
+  \item summary: named numeric vector (k, est.ln.prob, mean.lnL, var.lnL)
+  \item q.mat: data.frame (id, pct.miss, orig.pop, Group.1..Group.K)
+  \item prior.anc: optional list of ancestry matrices (if present)
+  \item files: file path
+  \item label: run label
+}
 }
 \description{
-This function reads and processes files produced by the population genetics
-program STRUCTURE (Pritchard et al., 2000). It renames the files based on the
-K value found in each file and consolidates the data into a standardized format.
+Reads and processes STRUCTURE output files, extracting run summaries and Q-matrices.
+Optionally associates Q-matrices with population information from a genlight object.
 }
-\details{
-This function processes STRUCTURE output files by:
-\itemize{
-  \item Finding the K value (number of populations) in each file
-  \item Renaming files based on their K value and replicate number
-  \item Extracting Q-matrices and other relevant information
-  \item Optionally associating the data with population information from a genlight object
-}
-
-STRUCTURE is a widely used software for inferring population structure from 
-multilocus genotype data. This function helps to organize and consolidate the
-output files for further analysis in R.
-}
-\examples{
-\dontrun{
-# Assuming structure output files are in the "structure_results" folder
-str_results <- gl.read.structure("structure_results")
-
-# With population information from a genlight object
-str_results <- gl.read.structure("structure_results", testset.gl)
-}
-
-}
-\references{
-Pritchard, J.K., Stephens, M., and Donnelly, P. (2000). Inference of population 
-structure using multilocus genotype data. Genetics 155, 945-959.
-}
-\seealso{
-\code{\link{gl.plot.structure}}
-}
-\author{
-Luis Mijangos & Bernd Gruber (Post to \url{https://groups.google.com/d/forum/dartr})
-}
-\concept{structure functions}
