@@ -64,6 +64,7 @@
 #' @author Custodian: Bernd Gruber (Post to
 #' \url{https://groups.google.com/d/forum/dartr})
 #' @importFrom stats weighted.mean
+#' @rawNamespace import(adegenet, except = glMean)
 #' @examples
 #' \dontrun{
 #' # SNP data (use two populations and only the first 100 SNPs)

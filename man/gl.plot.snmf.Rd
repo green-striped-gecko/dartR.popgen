@@ -5,45 +5,62 @@
 \title{Plots ancestry coefficient from snmf}
 \usage{
 gl.plot.snmf(
-  snmf_result,
-  border_ind = 0.25,
+  snmf.result,
+  border.ind = 0.25,
   plot.K,
-  plot_theme = NULL,
-  color_clusters = NULL,
-  ind_name = T,
+  plot.theme = NULL,
+  color.clusters = NULL,
+  ind.name = TRUE,
   plot.out = TRUE,
   plot.file = NULL,
   plot.dir = NULL,
+  den = FALSE,
+  inverse.den = TRUE,
+  x = NULL,
+  plot.colors.pop = gl.colors("dis"),
   verbose = 2
 )
 }
 \arguments{
-\item{snmf_result}{run object from \code{\link{gl.run.snmf}} [required]}
+\item{snmf.result}{run object from \code{\link{gl.run.snmf}} [required].}
 
-\item{border_ind}{The width of the border line between individuals
-[default 0.25]}
+\item{border.ind}{The width of the border line between individuals
+[default 0.25].}
 
 \item{plot.K}{The number for K of the Q matrix that should be plotted. Needs to
-be within you simulated range of K's in your snmf run object [required]}
+be within you simulated range of K's in your snmf run object [required].}
 
-\item{plot_theme}{Theme for the plot. See Details for options
-[default NULL]}
+\item{plot.theme}{Theme for the plot. See Details for options
+[default NULL].}
 
-\item{color_clusters}{A color palette for clusters (K) or a list with
-as many colors as there are clusters (K) [default NULL]}
+\item{color.clusters}{A color palette for clusters (K) or a list with
+as many colors as there are clusters (K) [default NULL].}
 
-\item{ind_name}{Whether to plot individual names [default TRUE]}
+\item{ind.name}{Whether to plot individual names [default TRUE].}
 
-\item{plot.out}{Specify if plot is to be produced [default TRUE]}
+\item{plot.out}{Specify if plot is to be produced [default TRUE].}
 
 \item{plot.file}{Name for the RDS binary file to save (base name only, exclude
-extension) [default NULL]}
+extension) [default NULL].}
 
-\item{plot.dir}{Directory in which to save files [default = working directory]}
+\item{plot.dir}{Directory in which to save files [default = working directory].}
+
+\item{den}{Whether to include a dendrogram. It is necessary to include the 
+original genlight object used in gl.run.structure in the parameter x 
+[default FALSE].}
+
+\item{inverse.den}{Flip dendrogram upside down [default TRUE].}
+
+\item{x}{The original genlight object used in gl.run.structure description
+[default NULL].}
+
+\item{plot.colors.pop}{A color palette for population plots or a list with
+as many colors as there are populations in the dataset 
+[default gl.colors("dis")].}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 progress log ; 3, progress and results summary; 5, full report [default
- 2, unless specified using gl.set.verbosity]}
+ 2, unless specified using gl.set.verbosity].}
 }
 \value{
 Q-matrix
@@ -72,7 +89,7 @@ The Q matrices can be input to other R packages for plotting ancestry proportion
 \dontrun{
 m <- gl.run.snmf(x=bandicoot.gl, minK=1, 
 maxK=5, rep=10)
-Q <- gl.plot.snmf(snmf_result=m, plot.K = 3, ind_name=T)
+Q <- gl.plot.snmf(snmf.result=m, plot.K = 3, ind.name=T)
 gl.map.snmf(bandicoot.gl, qmat=Q)
 # move population 4 (out of 5) 0.5 degrees to the right and populations 1
 # 0.3 degree to the north of the map.
