@@ -345,7 +345,7 @@ gl.plot.snmf <- function(snmf.result,
         )
   }else {
     lab_df <- lab_df[!duplicated(lab_df$Label),]
-    lab_df$pos_pop <- 1:nrow(x)
+    lab_df$pos_pop <- 1:nrow(lab_df)
     p3 <- p3 +  scale_x_continuous(
       expand = c(0, 0),
       breaks = lab_df$pos_pop,
