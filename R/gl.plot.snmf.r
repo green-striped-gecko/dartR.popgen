@@ -293,12 +293,12 @@ gl.plot.snmf <- function(snmf.result,
     group_by(Pop) %>%
     arrange(Label, .by_group = TRUE) %>%
     mutate(
-      pos_pop = row_number()  # 1..n within each Pop
+      pos_pop = dplyr::row_number()  # 1..n within each Pop
     ) %>%
     ungroup()
   
   lab_df <- Q_long_plot %>%
-    distinct(Pop, pos_pop, Label)
+    dplyr::distinct(Pop, pos_pop, Label)
   
   p3 <- ggplot(Q_long, aes_(x = ~Order, y = ~values, fill = ~K)) +
     geom_col(aes(colour = K), linewidth = border.ind, width = 1) +
