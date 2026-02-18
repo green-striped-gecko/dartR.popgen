@@ -51,7 +51,8 @@ progress log; 3, progress and results summary; 5, full report
 \value{
 A plot and table of Tajima's D for each population ( and results from MS and plots of simulated Tajima's D can be returned if ms.path is provided). If you use ms, please make sure you cite: Hudson, R. R. (2002). Generating samples under a Wright–Fisher neutral model of genetic variation. Bioinformatics, 18(2), 337-338.
 
-A plot and table of Tajima's D (results from MS and plot of simulated Tajima's D can be returned if ms.path is provided)
+A plot and table of Tajima's D (results from MS and plot of simulated
+Tajima's D can be returned if ms.path is provided)
 }
 \description{
 This function calculate Tajima's D, with p-values from beta distribution, standard normal distribution and simulation from ms (Hudson, 2002) for each population in the dartR/genlight object.
