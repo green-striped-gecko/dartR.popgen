@@ -100,7 +100,7 @@ gl.plot.popcluster <- function(pop_cluster_result,
   }
   
   p3 <- ggplot(Q_long, aes_(x = ~ factor(Order), y = ~values, fill = ~K)) +
-    geom_col(color = "black", size = border_ind, width = 1) +
+    geom_col(color = "black", linewidth = border_ind, width = 1) +
     facet_grid( ~ factor(Pop, levels=unique(Q_long$Pop)), 
                 scales = "free", 
                 space = "free") +
@@ -117,7 +117,7 @@ gl.plot.popcluster <- function(pop_cluster_result,
       panel.border = element_rect(
         color = "black",
         fill = NA,
-        size = 1
+        linewidth = 1
       ),
       strip.background = element_blank(),
       strip.text.x = element_text(size = 12, angle = 90),

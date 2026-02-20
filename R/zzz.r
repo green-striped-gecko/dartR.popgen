@@ -1,5 +1,3 @@
-#' Setting up the package dartR.popgen
-#'
 #' Setting up dartR.popgen
 #' @importFrom crayon blue
 #' @importFrom utils packageVersion read.csv read.delim read.table write.csv write.table
@@ -7,7 +5,7 @@
 #' @importFrom grDevices rainbow hcl
 #' @importFrom graphics lines par
 #' @importFrom stats ave pchisq var variable.names complete.cases
-#' @import adegenet
+#' @rawNamespace import(adegenet, except = c(glMean, glSum))
 #' @import dartR.base
 #' @import dartR.data
 #' @import ggplot2
