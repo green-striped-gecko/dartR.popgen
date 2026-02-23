@@ -22,8 +22,8 @@ gl.blast(
 trimmed of adapters as provided by DArT; or a path to a fasta file with the
 query sequences [required].}
 
-\item{ref_genome}{Path to a reference genome in fasta of fna format
-[required].}
+\item{ref_genome}{Path to a reference genome in fasta of fna format or in 
+a compressed format ie "gz" extension [required].}
 
 \item{task}{Four different tasks are supported: 1) “megablast”, for very
 similar sequences (e.g, sequencing errors), 2) “dc-megablast”, typically

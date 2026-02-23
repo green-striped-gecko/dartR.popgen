@@ -22,6 +22,8 @@ gl.run.popcluster(
   relatedness = 0,
   kinship = 0,
   pr_allele_freq = 2,
+  parallel = FALSE,
+  ncores = 1,
   cleanup = TRUE,
   plot.dir = NULL,
   plot.out = TRUE,
@@ -77,6 +79,11 @@ proportions for each individual at each locus (=1) or not (=0) [default 0].}
 \item{pr_allele_freq}{Whether allele frequency prior should be determined 
 by the program (0), the Equal Frequency prior (1) or Unequal Frequency 
 prior (2) [default 2].}
+
+\item{parallel}{Use parallelisation (implemented only in LINUX for the
+moment) [default FALSE].}
+
+\item{ncores}{How many cores should be used [default 1].}
 
 \item{cleanup}{clean data in tmp [default  TRUE].}
 
@@ -139,9 +146,7 @@ best prior (Equal or Unequal) based on the results.
 \dontrun{
 m <- gl.run.popcluster(x=bandicoot.gl, 
 popcluster.path="/User/PopCluster/Bin/",
-output.path="/User/Documents/Output/",
-minK=1, maxK=3,
-rep=10, PopData=1, location=1)
+output.path="/User/Documents/Output/", minK=1, maxK=3, rep=2)
 Q <- gl.plot.popcluster(pop_cluster_result=m, plot.K = 3, ind_name=T)
 gl.map.popcluster(x = bandicoot.gl, qmat = Q)
 # move population 4 (out of 5) 0.5 degrees to the right and populations 1

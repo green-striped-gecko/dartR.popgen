@@ -16,6 +16,8 @@
 #'     \item `"hafpop"`: Select loci with the highest allele frequencies within each population.
 #'   }
 #' @param nl An integer specifying the number of loci to select.
+#' @param exact Logical. If `TRUE`, ensures that the number of selected loci is exactly `nl`. 
+#' If `FALSE`, allows for a random selection that may not match `nl` exactly.
 #' @param plot.out Logical. If `TRUE`, generates plots summarizing selected loci.
 #' @param plot.file A character string specifying the file name for saving plots. If `NULL`, plots are not saved.
 #' @param plot.dir A character string specifying the directory to save plots. Defaults to the working directory.
@@ -32,6 +34,8 @@
 #'   \item `stratified`: Uses stratified sampling to select loci based on allele frequencies.
 #'   \item `hafall`: Selects loci with the highest allele frequencies across the dataset.
 #'   \item `hafpop`: Selects loci with the highest allele frequencies within individual populations.
+#'   \item `pic`: Selects loci based on the highest polymorphic information content (PIC).
+#'   \item `picdart`: Selects loci based on the average PIC calculated from the 'dartR' metrics.
 #' }
 #'
 #' @return A 'dartR or genlight' object containing the selected loci.
@@ -48,192 +52,237 @@
 #' @export
 #' @importFrom utils combn
 
-gl.select.panel <- function(x, 
-                            method="random", 
-                            nl=10,
-                            plot.out = TRUE,
-                            plot.file = NULL,
-                            plot.dir = NULL,
-                            verbose = NULL) {
-  
-  
-  # SET VERBOSITY
-  verbose <- gl.check.verbosity(verbose)
-  
-  # SET WORKING DIRECTORY
-  plot.dir <- gl.check.wd(plot.dir, verbose = 0)
-  
-  # FLAG SCRIPT START
-  
-  funname <- match.call()[[1]]
-  utils.flag.start(
-    func = funname,
-    build = "Jody",
-    verbose = verbose
-  )
-  
-  # CHECK DATATYPE
-  datatype <- utils.check.datatype(x, verbose = verbose)
-  
-  #1. dapc
-  #2. private allele high frequency
-  #3. random
-  #4. monomorph by pops
-  #5. stratified 
-  #6. highest allele frequencies overall
-  #7. highest allele frequencies per pop
-  
-  
-  # FUNCTION SPECIFIC ERROR CHECKING
-  
-  ### DO THE JOB
-  
-  x <- x[order(pop(x)),]
-  res <- list()
-  
-  if (method=="dapc"){ 
-    com <- t(combn(nPop(x), 2))
-    pops <- seppop(x)
-    nl <- ceiling(nl/nrow(com)) 
-        
-    for (i in 1:nrow(com)){
-      dummy <- pops[c(com[i,1],com[i,2])] 
-      dummy <-do.call(rbind,dummy)
-      dd <- dapc(dummy, n.pca=20, n.da=5)
-      ll <- sort(dd$var.contr[,1], decreasing=TRUE)
-      index <-names(ll)[1:nl]
-      res[[i]] <- index
-      
-    }
-    
-    #selpos <- paste0("X",unlist(res))
-    selloc <- unique(unlist(res))
-    #get rid of .locall
-    selloc <- strsplit(selloc, "\\.")
-    selloc <- unlist(lapply(selloc, function(x) x[1]))
+gl.select.panel<- 
+  function(x, 
+           method="random", 
+           nl=10,
+           exact=TRUE,
+           plot.out = TRUE,
+           plot.file = NULL,
+           plot.dir = NULL,
+           verbose = NULL) {
     
     
-  }
-  
-  if (method=="pahigh"){
-    prxx <- gl.report.pa(x, loc.names = TRUE, verbose = 0)
-    qq <-prxx$names_loci
-    panxx <- lapply(qq, function(x) list(pa1=x$pop1_pop2, pa2=x$pop2_pop1))
+    # SET VERBOSITY
+    verbose <- gl.check.verbosity(verbose)
     
-    com <- t(combn(nPop(x), 2))
-    pops <- seppop(x)
-    nl <- ceiling(nl/(nrow(com)*2))
-        
-        
+    # SET WORKING DIRECTORY
+    plot.dir <- gl.check.wd(plot.dir, verbose = 0)
+    
+    # FLAG SCRIPT START
+    
+    funname <- match.call()[[1]]
+    utils.flag.start(
+      func = funname,
+      build = "Jody",
+      verbose = verbose
+    )
+    
+    # CHECK DATATYPE
+    datatype <- utils.check.datatype(x, verbose = verbose)
+    
+    #1. dapc
+    #2. private allele high frequency
+    #3. random
+    #4. monomorph by pops
+    #5. stratified 
+    #6. highest allele frequencies overall
+    #7. highest allele frequencies per pop
+    
+    
+    # FUNCTION SPECIFIC ERROR CHECKING
+    
+    ### DO THE JOB
+    
+    x <- x[order(pop(x)),]
     res <- list()
-    for (i in 1:nrow(com)){
-      pas <- panxx[[i]]$pa1
-      p1 <- pops[[com[i,1]]]
-      p2 <- pops[[com[i,2]]]
-      p1p <- gl.keep.loc(p1, loc.list = pas, verbose = 0)
-      p2p <- gl.keep.loc(p2, loc.list = pas, verbose = 0) 
-      res1<- names(sort(rowSums(cbind(gl.alf(p1p)* !gl.alf(p2p))), decreasing=TRUE)[1:nl])
+    
+    if (method=="dapc"){ 
+      com <- t(combn(nPop(x), 2))
+      pops <- seppop(x)
+      nl2 <- ceiling(nl/nrow(com)) 
       
-      pas <- panxx[[i]]$pa2
-      p1 <- pops[[com[i,2]]]
-      p2 <- pops[[com[i,1]]]
-      p1p <- gl.keep.loc(p1, loc.list = pas, verbose = 0)
-      p2p <- gl.keep.loc(p2, loc.list = pas, verbose = 0) 
-      res2<- names(sort(rowSums(cbind(gl.alf(p1p)* !gl.alf(p2p))), decreasing=TRUE)[1:nl]) 
-      res[[i]] <- c(res1,res2)
-      
-    }
-    
-    selloc <- unique(unlist(res))
-    
-    
-    
-  }
-  if (method=="random"){
-    #random selection
-    selloc <- locNames(x)[sample(nLoc(x), nl, replace = FALSE)]
-  }
-  if (method=="monopop"){ 
-    res <- list()
-    pops <- seppop(x)
-    nl <- nl/length(pops)
-    
-    for (i in 1:nPop(x)){
-      dummy <- pops[[i]]
-      index <- abs(colMeans(as.matrix(dummy), na.rm=TRUE)-1)==1
-      dl<-  locNames(dummy)[index]
-      mons <- sample(dl, nl, replace=FALSE)
-      res[[i]] <- sample(mons, nl)
-    }
-    
-    
-    selloc <- unique(unlist(res))
-    
-    }
-  if (method=="stratified"){
-    res <- list()
-    pops <- seppop(x)
-    nl <- nl/length(pops)
-    for (i in 1:nPop(x)){
-      
-      dummy <- pops[[i]]
-      
-      df <- data.frame(id=locNames(dummy), freq=0.5-(abs(gl.alf(dummy)[,1]-0.5)))
-      df <- df[order(df$freq),]
-      
-      self <- seq(0,0.5, length=nl+1)
-      
-      cf <- cut(df$freq, breaks=self, include.lowest=TRUE)
-      
-      scf <- split(df$id, cf)
-      dres <- list()
-      for (ii in 1:length(scf)){
-        dres[[ii]] <- sample(scf[[ii]], 1)
+      for (i in 1:nrow(com)){
+        dummy <- pops[c(com[i,1],com[i,2])] 
+        dummy <-do.call(rbind,dummy)
+        dd <- dapc(dummy, n.pca=20, n.da=5)
+        ll <- sort(dd$var.contr[,1], decreasing=TRUE)
+        index <-names(ll)[1:nl2]
+        res[[i]] <- index
+        
       }
-      res[[i]] <- unlist(dres)
-    }
-    
-    
-    selloc <- unique(unlist(res))
-  }
-  if (method=="hafall"){
-    
-   index <- order(0.5-abs(0.5-gl.alf(x)[,1]), decreasing = TRUE)
-    selloc <- locNames(x)[index[1:nl]]
-    
-    
-  }
-  if (method=="hafpop"){ 
-    
-    res <- list()
-    pops <- seppop(x)
-    nl <- nl/length(pops)
-    for (i in 1:nPop(x)){
       
-      dummy <- pops[[i]]
-      index <- order(0.5-abs(0.5-gl.alf(pops[[i]])[,1]), decreasing = TRUE)
-      res[[i]] <- locNames(pops[[i]])[index[1:nl]]
+      #selpos <- paste0("X",unlist(res))
+      selloc <- unique(unlist(res))
+      #get rid of .locall
+      selloc <- strsplit(selloc, "\\.")
+      selloc <- unlist(lapply(selloc, function(x) x[1]))
+      
+      
+    }
+    
+    if (method=="pahigh"){
+      prxx <- gl.report.pa(x, loc.names = TRUE, verbose = 0)
+      qq <-prxx$names_loci
+      panxx <- lapply(qq, function(x) list(pa1=x$pop1_pop2, pa2=x$pop2_pop1))
+      
+      com <- t(combn(nPop(x), 2))
+      pops <- seppop(x)
+      nl2 <- ceiling(nl/(nrow(com)*2))
+      
+      
+      res <- list()
+      for (i in 1:nrow(com)){
+        pas <- panxx[[i]]$pa1
+        p1 <- pops[[com[i,1]]]
+        p2 <- pops[[com[i,2]]]
+        p1p <- gl.keep.loc(p1, loc.list = pas, verbose = 0)
+        p2p <- gl.keep.loc(p2, loc.list = pas, verbose = 0) 
+        res1<- names(sort(rowSums(cbind(gl.alf(p1p)* !gl.alf(p2p))), decreasing=TRUE)[1:nl2])
+        
+        pas <- panxx[[i]]$pa2
+        p1 <- pops[[com[i,2]]]
+        p2 <- pops[[com[i,1]]]
+        p1p <- gl.keep.loc(p1, loc.list = pas, verbose = 0)
+        p2p <- gl.keep.loc(p2, loc.list = pas, verbose = 0) 
+        res2<- names(sort(rowSums(cbind(gl.alf(p1p)* !gl.alf(p2p))), decreasing=TRUE)[1:nl2]) 
+        res[[i]] <- c(res1,res2)
+        
+      }
+      
+      selloc <- unique(unlist(res))
+      #reduce numbers due to uprounding if there are many populations
+     
+      
+      
+      
+    }
+    if (method=="random"){
+      #random selection
+      selloc <- locNames(x)[sample(nLoc(x), nl, replace = FALSE)]
+    }
+    if (method=="monopop"){ 
+      res <- list()
+      pops <- seppop(x)
+      nl2 <- ceiling(nl/length(pops))
+      
+      for (i in 1:nPop(x)){
+        dummy <- pops[[i]]
+        index <- abs(colMeans(as.matrix(dummy), na.rm=TRUE)-1)==1
+        dl<-  locNames(dummy)[index]
+        mons <- sample(dl, nl2, replace=FALSE)
+        res[[i]] <- mons
+      }
+   
+      
+      selloc <- unique(unlist(res))
+      
+    }
+    if (method=="stratified"){
+      res <- list()
+      pops <- seppop(x)
+      nl2 <- ceiling(nl/length(pops))
+      for (i in 1:nPop(x)){
+        
+        dummy <- pops[[i]]
+        
+        df <- data.frame(id=locNames(dummy), freq=0.5-(abs(gl.alf(dummy)[,1]-0.5)))
+        df <- df[order(df$freq),]
+        
+        self <- seq(0,0.5, length=nl2+1)
+        
+        cf <- cut(df$freq, breaks=self, include.lowest=TRUE)
+        
+        scf <- split(df$id, cf)
+        dres <- list()
+        for (ii in 1:length(scf)){
+          
+          if (length(scf[[ii]]) < 1) next
+          dres[[ii]] <- sample(scf[[ii]], 1)
+        }
+        res[[i]] <- unlist(dres)
+      }
+      
+      
+      selloc <- unique(unlist(res))
+    }
+    if (method=="hafall"){
+      
+      index <- order(0.5-abs(0.5-gl.alf(x)[,1]), decreasing = TRUE)
+      selloc <- locNames(x)[index[1:nl]]
+      
+      
+    }
+    if (method=="hafpop"){ 
+      
+      res <- list()
+      pops <- seppop(x)
+      nl2 <- ceiling(nl/length(pops))
+      for (i in 1:nPop(x)){
+        
+        dummy <- pops[[i]]
+        index <- order(0.5-abs(0.5-gl.alf(pops[[i]])[,1]), decreasing = TRUE)
+        res[[i]] <- locNames(pops[[i]])[index[1:nl2]]
+      }
+      
+      
+      selloc <- unique(unlist(res))
+      
+    }
+    
+    if (method=="pic"){ 
+      
+      res <- list()
+      alf <- gl.alf(x)
+      p <- alf[,1]
+      q <- alf[,2]
+      pic <- order(1-(p^2+q^2)-2*p^2*q^2, decreasing = TRUE)
+      index <- pic[1:nl]
+      selloc<- locNames(x)[index]
     }
     
     
-    selloc <- unique(unlist(res))
-    
+    if (method=="picdart"){ 
+      
+      res <- list()
+      x <- gl.recalc.metrics(x,verbose=0)
+      pic <- order(x@other$loc.metrics$AvgPIC, decreasing = TRUE)
+      index <- pic[1:nl]
+      selloc<- locNames(x)[index]
     }
-  
-  
-  
-  #filter object to keep only selected loci
-  xx <- gl.keep.loc(x, selloc, verbose = verbose)
-  
-  # FLAG SCRIPT END
-  
-  if (verbose >= 1) {
-    cat(report("Completed:", funname, "\n"))
+    
+    if (exact) {  #add/remove random loci in case exact is wanted
+      if (length(selloc) > nl)
+      {
+        selloc <- sample(selloc, nl, replace = FALSE)
+      }
+      if (length(selloc)< nl)
+      {
+        if (verbose >= 1) {
+          cat(report("Warning: Not enough loci selected, adding random loci to reach the desired number.\n"))
+        }
+        #add random loci
+        lcs <- locNames(x)
+        selloc <- c(selloc, sample(lcs[!lcs %in% selloc], nl - length(selloc), replace = FALSE))
+      }
+      
+    }
+    
+    
+    
+    #filter object to keep only selected loci
+    xx <- gl.keep.loc(x, selloc, verbose = verbose)
+    
+    # FLAG SCRIPT END
+    
+    if (verbose >= 1) {
+      cat(report("Completed:", funname, "\n"))
+    }
+    
+    return(xx)
+    
+    
+    
   }
-  
-  return(xx)
-  
-  
-  
-}
+
 

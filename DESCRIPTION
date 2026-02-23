@@ -29,9 +29,10 @@ Description: Facilitates the analysis of SNP (single nucleotide polymorphism)
     Gruber et al. (2018) <doi:10.1111/1755-0998.12745>.
     Mijangos et al. (2022) <doi:10.1111/2041-210X.13918>.
 Encoding: UTF-8
-Depends: R (>= 3.5), adegenet (>= 2.0.0),  dartR.base, dartR.data
-Imports: methods, utils, MASS, dplyr, patchwork, crayon, ggplot2, data.table, 
-         stringr, furrr, future, ggdendro, LEA, pillar, plyr, terra
+Depends: R (>= 3.5), dartR.base, dartR.data
+Imports: methods, adegenet (>= 2.0.0), utils, MASS, dplyr, patchwork, crayon, ggplot2, data.table, 
+         stringr, furrr, future, ggdendro, LEA, pillar, plyr, terra, purrr, ggpmisc, R.utils,
+         ape
 Suggests: 
   SIBER,
   expm,
@@ -43,7 +44,6 @@ Suggests:
   label.switching,
   leaflet,
   proxy,
-  purrr,
   qvalue,
   raster,
   reshape2,
@@ -55,7 +55,7 @@ Suggests:
   gsubfn,
   sp
 License: GPL (>= 3)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 NeedsCompilation: no
 Packaged: 2021-04-28 23:28:46 UTC; 
 Author: Bernd Gruber [aut, cre],

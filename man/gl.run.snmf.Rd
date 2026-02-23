@@ -2,78 +2,84 @@
 % Please edit documentation in R/gl.run.snmf.r
 \name{gl.run.snmf}
 \alias{gl.run.snmf}
-\title{Creates an input file for the R package LEA and runs it if
-LEA is installed}
+\title{Creates an input file for the function \link[LEA]{snmf} (package LEA) 
+and runs it if package LEA is installed.}
 \usage{
 gl.run.snmf(
   x,
   filename = "output",
-  minK,
-  maxK,
-  rep,
+  minK = 1,
+  maxK = 2,
+  rep = 1,
   regularization = 10,
   ploidy_lv = 2,
+  ncores = 1,
   cleanup = TRUE,
   plot.out = TRUE,
   plot.dir = NULL,
   plot.file = NULL,
-  verbose = 2
+  verbose = NULL,
+  ...
 )
 }
 \arguments{
-\item{x}{Name of the genlight object containing the SNP data [required]}
+\item{x}{Name of the genlight object containing the SNP data [required].}
 
-\item{filename}{file name of output data  [default = "output"]}
+\item{filename}{File name of output data [default "output"].}
 
-\item{minK}{Minimum K [required]}
+\item{minK}{Minimum K [default 1].}
 
-\item{maxK}{Maximum K [required]}
+\item{maxK}{Maximum K [default 2].}
 
-\item{rep}{Number of replicates runs per K [required]}
+\item{rep}{Number of replicates runs per K [default 1].}
 
-\item{regularization}{alpha value for regularization when analyzing small dataset [default=10]}
+\item{regularization}{Alpha value for regularization when analyzing small 
+dataset [default 10].}
 
-\item{ploidy_lv}{ploidy level of dataset [default=2]}
+\item{ploidy_lv}{Ploidy level of dataset [default 2].}
 
-\item{cleanup}{clean data in tmp [default  TRUE]}
+\item{ncores}{How many cores should be used [default 1].}
+
+\item{cleanup}{Clean data in tmp [default  TRUE].}
 
 \item{plot.out}{Specify if plot is to be produced [default TRUE].}
 
-\item{plot.dir}{Directory in which to save files [default = working directory]}
+\item{plot.dir}{Directory in which to save files 
+[default = working directory].}
 
-\item{plot.file}{Name for the RDS binary file to save (base name only, exclude
-extension) [default NULL]}
+\item{plot.file}{Name for the RDS binary file to save (base name only, 
+exclude extension) [default NULL].}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 progress log; 3, progress and results summary; 5, full report
-[default 2 or as specified using gl.set.verbosity]}
+[default 2 or as specified using gl.set.verbosity].}
+
+\item{...}{Parameters passed to function \link[LEA]{snmf} (package LEA).}
 }
 \value{
-The file list of best run, plot of cross-entropy across different number of K and Q matrices,
+The file list of best run, plot of cross-entropy across different 
+number of K and Q matrices,
 }
 \description{
-Refer to the LEA manual for further information on the parameters to
-set
--- ##########################################
+Refer to the documentation of function \link[LEA]{snmf} (package LEA) 
+for further information of the function and its parameters.
 }
 \examples{
 \dontrun{
-m <- gl.run.snmf(x=bandicoot.gl, minK=1, 
-maxK=5, rep=10)
-Q <- gl.plot.snmf(snmf_result=m, plot.K = 3, ind_name=T)
-gl.map.snmf(bandicoot.gl, qmat=Q)
+m <- gl.run.snmf(x = bandicoot.gl, minK = 1, maxK = 5, rep = 10)
+Q <- gl.plot.snmf(snmf_result = m, plot.K = 3, ind_name = TRUE)
+gl.map.snmf(bandicoot.gl, qmat = Q)
 # move population 4 (out of 5) 0.5 degrees to the right and populations 1
 # 0.3 degree to the north of the map.
-mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
-gl.map.snmf(bandicoot.gl, qmat=Q, movepops=mp)
+mp <- data.frame(lon = c(0,0,0,0.5,0), lat = c(-0.3,0,0,0,0))
+gl.map.snmf(bandicoot.gl, qmat = Q, movepops = mp)
 }
-#Wrapper function to run snmf from LEA
-
 }
 \references{
 \itemize{
-\item Frichot E, Mathieu F, Trouillon T, Bouchard G, Francois O. (2014). Fast and Efficient 
-Estimation of Individual Ancestry Coefficients. Genetics, 194(4): 973--983.
+\item Frichot E, Mathieu F, Trouillon T, Bouchard G, Francois O. (2014). 
+Fast and Efficient Estimation of Individual Ancestry Coefficients. Genetics, 
+194(4): 973--983.
 }
 }
 \author{

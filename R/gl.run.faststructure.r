@@ -206,7 +206,7 @@ gl.run.faststructure <- function(x,
   df_likelihood_res <- rowMeans(df_likelihood)
 
   p3 <- ggplot() +
-    geom_line(aes(x = k.range, y = df_likelihood_res), size = 1) +
+    geom_line(aes(x = k.range, y = df_likelihood_res), linewidth = 1) +
     geom_point(aes(x = k.range, y = df_likelihood_res),
       size = 2,
       color = "blue"
