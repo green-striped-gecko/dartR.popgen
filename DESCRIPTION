@@ -29,7 +29,7 @@ Description: Facilitates the analysis of SNP (single nucleotide polymorphism)
     Gruber et al. (2018) <doi:10.1111/1755-0998.12745>.
     Mijangos et al. (2022) <doi:10.1111/2041-210X.13918>.
 Encoding: UTF-8
-Depends: R (>= 4.1), dartR.base (>=1.2.3), dartR.data
+Depends: R (>= 4.1), dartR.base (>= 1.2.3), dartR.data
 Imports: methods, adegenet (>= 2.0.0), utils, MASS, dplyr, patchwork, crayon, ggplot2, data.table, 
          stringr, furrr, future, ggdendro, LEA, pillar, plyr, terra, purrr, ggpmisc, R.utils,
          ape
