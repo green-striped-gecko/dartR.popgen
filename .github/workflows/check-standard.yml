@@ -42,9 +42,6 @@ jobs:
           extra-packages: any::rcmdcheck
           needs: check
 
-      - name: Install latest dartR.base from CRAN      # <---- Add this block
-        run: Rscript -e 'remotes::install_version("dartR.base", version = "1.2.3", repos = "https://cran.r-project.org")'
-
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
