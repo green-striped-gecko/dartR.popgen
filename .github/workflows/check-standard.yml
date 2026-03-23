@@ -36,9 +36,6 @@ jobs:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
-          
-      - name: Install latest dartR.base from CRAN      # <---- Add this block
-        run: Rscript -e 'install.packages("dartR.base", repos = "https://cran.r-project.org")'
         
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
