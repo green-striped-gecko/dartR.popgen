@@ -4,7 +4,7 @@
 #' @description
 #' This function is basically a convenience function that runs the LD Ne
 #'  estimator using Neestimator2
-#'  (\url{http://www.molecularfisherieslaboratory.com.au/neestimator-software/})
+#'  http://www.molecularfisherieslaboratory.com.au/neestimator-software/
 #'  within R using the provided genlight object. To be able to do so, the
 #'  software has to be downloaded from their website and the appropriate
 #'  executable Ne2-1 has to be copied into the path as specified in the function
@@ -447,7 +447,7 @@ gl.LDNe <- function(x,
     })
 
     pop_list_plot <- as.data.frame(rbindlist(pop_list_plot))
-    pop_list_plot$pop <- factor(pop_list_plot$pop,levels = pop_list_plot$pop)
+    pop_list_plot$pop <- factor(pop_list_plot$pop)#,levels= pop_list_plot$pop)
     pop_list_plot[pop_list_plot == Inf] <- NA
     pop_list_plot$color <- rep(plot_colors_pop, each = sum(!duplicated(freq)))
     pop_list_plot$`CI low Parametric` <-

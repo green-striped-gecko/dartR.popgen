@@ -237,16 +237,10 @@ gl.run.epos <- function(x,
  sfsl <-list()
  ff <- rep(1:boot, each=(length(ll)-1)/boot)
  for (i in 1:boot) sfsl[[i]] <- sfss[ff==i,]
- 
- 
- 
- 
+
  } else sfsl <- NULL
  
   # OUTPUT
-
-
-  
   #if outpath not null copy to outpath
   if (!is.null(outfile)) {
     file.copy(file.path(tempd,"ep.dat"), file.path(outpath,outfile), overwrite = TRUE)
@@ -263,7 +257,6 @@ gl.run.epos <- function(x,
   xx <- do.call(rbind,sfsl)
   
   sfsm <- plyr::ddply(xx,.variables =  "r", plyr::summarise, meane=mean(e), sde=sd(e), meano=mean(o), sdo=sd(o))
-  
   
   p2 <- ggplot(dfsfs, aes(x=r, y=fr) )+ geom_bar(stat="identity",color="darkgrey", fill="darkgrey")  + geom_errorbar(data=sfsm, aes(x=r-0.1, y=meane, ymin = meane-1.96*sde, ymax = meane+1.96*sde), color="purple") +  labs(x="bin", y="frequency")+theme_bw() #+ geom_errorbar(data=sfsm, aes(x=r+0.1, y=meano, ymin = meano-1.96*sdo, ymax = meano+1.96*sdo), color="orange") + geom_point(data=sfsm, aes(x=r-0.1, y=meane), color="blue", size=0.8)
   

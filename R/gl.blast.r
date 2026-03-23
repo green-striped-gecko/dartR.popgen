@@ -19,8 +19,8 @@
 #'  'TrimmedSequence' containing the sequence of the SNPs (the sequence tag)
 #'  trimmed of adapters as provided by DArT; or a path to a fasta file with the
 #'  query sequences [required].
-#' @param ref_genome Path to a reference genome in fasta of fna format
-#'  [required].
+#' @param ref_genome Path to a reference genome in fasta of fna format or in 
+#' a compressed format ie "gz" extension [required].
 #' @param task Four different tasks are supported: 1) “megablast”, for very
 #'  similar sequences (e.g, sequencing errors), 2) “dc-megablast”, typically
 #'  used for inter-species comparisons, 3) “blastn”, the traditional program
@@ -219,6 +219,18 @@ gl.blast <- function(x,
       )
     )
   }
+  
+  # if ref_genome is gzipped, decompress to a temp file
+  if (grepl("\\.gz$", ref_genome, ignore.case = TRUE)) {
+    # name of the uncompressed FASTA in tempdir()
+    out_fa <- file.path(tempdir(),
+                        basename(sub("\\.gz$", "", ref_genome)))
+    R.utils::gunzip(ref_genome,
+           destname = out_fa,
+           overwrite = TRUE,
+           remove = FALSE)   # keep original .gz around if you like
+    ref_genome <- out_fa
+  } 
   
   # creating BLAST databases
   system(paste(

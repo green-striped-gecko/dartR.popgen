@@ -22,6 +22,8 @@
 #' @param colors_clusters A color palette for clusters (K) or a list with
 #' as many colors as there are clusters (K) [default NULL].
 #' @param ind_name Whether to plot individual names [default TRUE].
+#' @param k_name Name of the structure plot to plot. It should be character
+#'  [default NULL].
 #' @param label.size Specify the size of the population labels [default 12].
 #' @param border_ind The width of the border line between individuals
 #' [default 0.25].
@@ -96,6 +98,7 @@ gl.plot.faststructure <- function(sr,
                                   plot_theme = NULL,
                                   colors_clusters = NULL,
                                   ind_name = TRUE,
+                                  k_name = NULL,
                                   label.size = 12,
                                   border_ind = 0.15,
                                   den = FALSE,
@@ -265,6 +268,10 @@ gl.plot.faststructure <- function(sr,
       )
     )
   
+  if(!is.null(k_name)){
+    Q_melt <- Q_melt[which(Q_melt$K==k_name),]
+  }
+  
   if(den){
     
     res <- gl.dist.ind(x,method = "Manhattan",plot.display = FALSE,verbose = 0)
@@ -293,7 +300,7 @@ gl.plot.faststructure <- function(sr,
   
 
   p3 <- ggplot(Q_melt, aes_(x = ~ factor(ord), y = ~value, fill = ~Cluster)) +
-    geom_col(color = "black", size = border_ind, width = 1) +
+    geom_col(color = "black", linewidth = border_ind, width = 1) +
     facet_grid(K ~ orig.pop, scales = "free", space = "free") +
     scale_y_continuous(expand = c(0, 0)) +
     scale_x_discrete(
@@ -308,7 +315,7 @@ gl.plot.faststructure <- function(sr,
       panel.border = element_rect(
         color = "black",
         fill = NA,
-        size = 1
+        linewidth = 1
       ),
       strip.background = element_blank(),
       strip.text.x = element_text(size = label.size, angle = 90),

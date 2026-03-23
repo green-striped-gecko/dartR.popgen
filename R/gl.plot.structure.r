@@ -259,6 +259,11 @@ gl.plot.structure <- function(sr,
       K = rep(Ks[[i]], nrow(Q_list[[i]])),
       orig.pop = sr[[1]]$q.mat$orig.pop
     )
+    
+    if(den){
+      Q_list_tmp$orig.pop <- " "
+    }
+    
     n_col <- ncol(Q_list_tmp) - 3
     colnames(Q_list_tmp) <-
       c("Label", paste0(rep("cluster", n_col), 1:n_col), "K", "orig.pop")
@@ -335,8 +340,12 @@ gl.plot.structure <- function(sr,
     Q_melt <- Q_melt[which(Q_melt$K==k_name),]
   }
   
+  if(den){
+    Q_melt$orig.pop <- ""
+  }
+  
   p3 <- ggplot(Q_melt, aes_(x = ~ factor(ord), y = ~value, fill = ~Cluster)) +
-    geom_col(color = "black", size = border_ind, width = 1) +
+    geom_col(color = "black", linewidth = border_ind, width = 1) +
     facet_grid(K ~ orig.pop, scales = "free", space = "free") +
     scale_y_continuous(expand = c(0, 0)) +
     scale_x_discrete(
@@ -351,7 +360,7 @@ gl.plot.structure <- function(sr,
       panel.border = element_rect(
         color = "black",
         fill = NA,
-        size = 1
+        linewidth = 1
       ),
       strip.background = element_blank(),
       strip.text.x = element_text(size = 12, angle = 90),

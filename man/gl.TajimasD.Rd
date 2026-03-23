@@ -2,8 +2,7 @@
 % Please edit documentation in R/gl.TajimasD.r
 \name{gl.TajimasD}
 \alias{gl.TajimasD}
-\title{Calculation of Tajima's D
-simulation results can only be output if ms and sample_stats are compiled (can be installed at: https://uchicago.app.box.com/s/l3e5uf13tikfjm7e1il1eujitlsjdx13)}
+\title{Calculation of Tajima's D}
 \usage{
 gl.TajimasD(
   x,
@@ -22,39 +21,43 @@ gl.TajimasD(
 \arguments{
 \item{x}{Name of the genlight object containing the SNP data [required]}
 
-\item{ms.path}{absolute path that stores the ms program 
-(eg: /User/msdir/) [default  NULL]}
+\item{ms.path}{absolute path that stores the ms program
+(eg: /User/msdir/) [default  NULL].}
 
-\item{simulation.out}{Directory in which to save simulated summary statistics from MS, given ms.path is provided  [default  NULL]}
+\item{simulation.out}{Directory in which to save simulated summary
+statistics from MS, given ms.path is provided  [default  NULL].}
 
-\item{rep}{Number of replicates in ms [default  NULL, required for simulation]}
+\item{rep}{Number of replicates in ms
+[default  NULL, required for simulation].}
 
 \item{seeds}{Seeds for the random number generator in ms [default  NULL,
-seeds are randomly generated]}
+seeds are randomly generated].}
 
-\item{cleanup}{clean data in tmp [default  TRUE]}
+\item{cleanup}{clean data in tmp [default  TRUE].}
 
-\item{plot.dir}{Directory in which to save files [default = working directory]}
+\item{plot.dir}{Directory in which to save files [default working directory].}
 
 \item{plot.out}{Specify if plot is to be produced [default TRUE].}
 
-\item{plot.file}{Name for the RDS binary file to save (base name only, exclude
-extension) [default NULL]}
+\item{plot.file}{Name for the RDS binary file to save (base name only,
+exclude extension) [default NULL].}
 
-\item{plot_theme}{Theme of the plot [default theme_dartR()]}
+\item{plot_theme}{Theme of the plot [default theme_dartR()].}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 progress log; 3, progress and results summary; 5, full report
 [default 2 or as specified using gl.set.verbosity].}
 }
 \value{
-A plot and table of Tajima's D (results from MS and plot of simulated Tajima's D can be returned if ms.path is provided)
+A plot and table of Tajima's D for each population ( and results from MS and plots of simulated Tajima's D can be returned if ms.path is provided). If you use ms, please make sure you cite: Hudson, R. R. (2002). Generating samples under a Wright–Fisher neutral model of genetic variation. Bioinformatics, 18(2), 337-338.
+
+A plot and table of Tajima's D (results from MS and plot of simulated
+Tajima's D can be returned if ms.path is provided)
 }
 \description{
-This function calculate Tajima's D, with p-values from beta distribution, standard normal distribution and simulation from ms (Hudson, 2002)
-
-Refer to the ms manual for further information on the parameters to set
-##########################################
+This function calculate Tajima's D, with p-values from beta distribution, standard normal distribution and simulation from ms (Hudson, 2002) for each population in the dartR/genlight object.
+#' simulation results can only be output if ms and sample_stats are available. Both programs need to be compiled from here: \url{https://home.uchicago.edu/rhudson1/source/mksamples.html} or binaries can be downloaded via: \code{\link[dartRverse]{gl.download.binary}}. If you provide the ms path, the function will simulate a population according to the provided dartR/genlight object. The function will then calculate Tajima's D for each population and compare the results from ms and plot the distribution of simulated Tajima's D for each population. (this can be used to test the TajimasD against a neutral model of evolution [p values is provided under sim_pval]).
+Refer to the ms manual for further information on the program and simulation. Here we estimate theta from the number of segregating sites (S) and the number of alleles (k) in the sample and simulate a population according to the provided dartR/genlight object.
 }
 \examples{
 # To run without ms simulation
@@ -66,9 +69,12 @@ Tajima <- gl.TajimasD(x=bandicoot.gl, rep=10, ms.path="/User/msdir/")
 }
 \references{
 \itemize{
-\item Tajima, F. (1989). Statistical method for testing the neutral mutation hypothesis by DNA polymorphism. Genetics, 123(3), 585-595.
-\item Hudson, R. R. (2002). Generating samples under a Wright–Fisher neutral model of genetic variation. Bioinformatics, 18(2), 337-338.
-\item Paradis, E. (2010). pegas: an R package for population genetics with an integrated–modular approach. Bioinformatics, 26(3), 419-420.
+\item Tajima, F. (1989). Statistical method for testing the neutral
+mutation hypothesis by DNA polymorphism. Genetics, 123(3), 585-595.
+\item Hudson, R. R. (2002). Generating samples under a Wright–Fisher
+neutral model of genetic variation. Bioinformatics, 18(2), 337-338.
+\item Paradis, E. (2010). pegas: an R package for population genetics with
+an integrated–modular approach. Bioinformatics, 26(3), 419-420.
 }
 }
 \author{
