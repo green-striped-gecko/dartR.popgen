@@ -406,7 +406,7 @@ gl.run.popcluster <- function(x,
   # RUN POPCLUSTER
     if(os == "Linux" & parallel){
       
-      mpi_processes <- if (grepl("Open MPI", mpi_version, ignore.case = TRUE) & !is.null(OMP_thread)) paste0(" OMP:", OMP_thread) else ""
+      mpi_processes <- if (grepl("Open MPI", mpi_version, ignore.case = TRUE) && !is.null(OMP_thread)) paste0(" OMP:", OMP_thread) else ""
       
       system(paste0(
         "mpirun -np ",ncores," ",
