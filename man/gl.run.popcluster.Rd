@@ -29,7 +29,8 @@ gl.run.popcluster(
   plot.out = TRUE,
   plot.file = NULL,
   plot_theme = theme_dartR(),
-  verbose = NULL
+  verbose = NULL,
+  OMP_thread = NULL
 )
 }
 \arguments{
@@ -99,6 +100,8 @@ exclude extension) [default NULL].}
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 progress log; 3, progress and results summary; 5, full report
 [default 2 or as specified using gl.set.verbosity].}
+
+\item{OMP_thread}{openMP threads per MPI process (for OpenMPI only) [default NULL].}
 }
 \value{
 The plot of likelihood, DLK1, DLK2, FST.FIS, best run, Q-matrices 

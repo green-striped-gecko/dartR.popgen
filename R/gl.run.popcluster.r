@@ -65,7 +65,8 @@
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 #' progress log; 3, progress and results summary; 5, full report
 #' [default 2 or as specified using gl.set.verbosity].
-#' 
+#' @param OMP_thread openMP threads per MPI process (for OpenMPI only) [default NULL].
+#'
 #' @details
 #'
 #' For best results, run multiple replicates with different starting seeds to
@@ -138,7 +139,8 @@ gl.run.popcluster <- function(x,
                               plot.out = TRUE,
                               plot.file = NULL,
                               plot_theme = theme_dartR(),
-                              verbose = NULL) {
+                              verbose = NULL,
+                              OMP_thread = NULL) {
 
   # SET VERBOSITY
   verbose <- gl.check.verbosity(verbose)
@@ -224,7 +226,13 @@ gl.run.popcluster <- function(x,
   } else if (os == "Linux") {
     if(parallel){
       
-      popcluster_version <- "PopClusterLnx_impi"
+      mpi_version <- tryCatch(system("mpirun --version 2>&1", intern = TRUE)[1], error = function(e) "")
+      popcluster_version <- if (grepl("Open MPI", mpi_version, ignore.case = TRUE)) {
+        "PopClusterLnx_openmpi"
+        
+      } else {
+        "PopClusterLnx_impi"
+      }
        
     }else{
       
@@ -398,17 +406,19 @@ gl.run.popcluster <- function(x,
   # RUN POPCLUSTER
     if(os == "Linux" & parallel){
       
+      mpi_processes <- if (grepl("Open MPI", mpi_version, ignore.case = TRUE) & !is.null(OMP_thread)) paste0(" OMP:", OMP_thread) else ""
+      
       system(paste0(
-      "mpirun -np ",ncores," --use-hwthread-cpus ",
-      file.path(tempd, popcluster_version), 
-      " INP:",
-      paste0(filename, ".popcluster.PcPjt MPI:1")
+        "mpirun -np ",ncores," ",
+        file.path(tempd, popcluster_version), 
+        " INP:",
+        paste0(filename, ".popcluster.PcPjt MPI:1"), mpi_processes
       ))
       
     }else{
       
       system(paste0(
-        file.path(tempd, popcluster_version[1]),
+        file.path(tempd, popcluster_version),
         " INP:",
         paste0(filename, ".popcluster.PcPjt")
       ))
