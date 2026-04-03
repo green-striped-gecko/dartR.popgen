@@ -222,9 +222,9 @@ gl.assign.mahalanobis <- function(x,
     # Keep populations with n >= nmin and the unknown
     
     if(length(pop.keep != 0)){
-      x <- gl.keep.pop(x, pop.list = c(pop.keep,"unknown"), verbose = 0) 
+      x <- gl.keep.pop(x, pop.list = c(pop.keep,"Unknown"), verbose = 0) 
     } else{
-      x <- gl.keep.pop(x, pop.list = "unknown", verbose = 0) 
+      x <- gl.keep.pop(x, pop.list = "Unknown", verbose = 0) 
       cat(warn(" Warning: No populations have sufficient individuals\n"))
     }
     

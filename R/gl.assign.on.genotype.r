@@ -167,7 +167,7 @@ gl.assign.on.genotype <- function(x,
     # Knowns
     knowns <- gl.drop.ind(x,ind.list=unknown,verbose=0)
     if(any(popNames(knowns)=="unknowns")){
-       knowns <- gl.drop.pop(x,pop.list="unknowns",verbose=0)
+       knowns <- gl.drop.pop(knowns,pop.list="unknowns",verbose=0)
     }   
     
     # Remove all known populations with less than nmin individuals
@@ -289,9 +289,9 @@ gl.assign.on.genotype <- function(x,
     # populations
     
     if(!is.null(n.best)){
-      pop.keep <- result$pop[1:n.best]
+      pop.keep <- result$population[1:n.best]
     } else {
-      pop.keep <- result$pop[result$assign == "yes"]
+      pop.keep <- result$population[result$assign == "yes"]
     }
     
     gl.out <- gl.keep.pop(knowns,pop.list=pop.keep,verbose=0)

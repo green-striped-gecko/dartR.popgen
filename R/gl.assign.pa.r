@@ -157,7 +157,7 @@ gl.assign.pa <- function(x,
     pop(unknown.ind) <- "unknown"
     knowns <- gl.drop.ind(x,ind.list=unknown,verbose=0)
     if(any(popNames(knowns)=="unknowns")){
-       knowns <- gl.drop.pop(x,pop.list="unknowns",verbose=0)
+       knowns <- gl.drop.pop(knowns,pop.list="unknowns",verbose=0)
     }   
     
     # Remove all known populations with less than nmin individuals
@@ -167,8 +167,10 @@ gl.assign.pa <- function(x,
       cat("  Discarding",length(pop.toss),"populations with sample size <",nmin,":\n")
       if (verbose >= 3) {
         cat(paste(pop.toss, collapse = ", "), "\n")
-        knowns <- gl.keep.pop(knowns, pop.list = pop.keep, verbose = 0)      }
+      }
     }
+    knowns <- gl.keep.pop(knowns, pop.list = pop.keep, verbose = 0)     
+    
     if (length(pop.keep) == 0) {
       stop(error("Fatal Error: All target populations excluded based on minimum sample size.\n"))
     }
@@ -179,7 +181,6 @@ gl.assign.pa <- function(x,
     c <- names(b)[is.na(b)]
     if (length(c) > 0) {
       knowns <- gl.drop.loc(knowns, loc.list = c, verbose = 0)
-      unknown.ind <- gl.drop.loc(unknown.ind, loc.list=c,verbose=0)
     }
     
   # Split the genlight object into a list of matricies

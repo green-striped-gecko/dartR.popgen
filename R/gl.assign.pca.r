@@ -146,7 +146,7 @@ gl.assign.pca <- function(x,
         cat(warn(
             "  Warning: Value of plevel must be between 0 and 1, set to 0.95\n"
         ))
-        plevel <- 0.95
+        plevel <- 0.999
     }
     
     if (is.null(pop(x))) {
@@ -211,12 +211,14 @@ gl.assign.pca <- function(x,
         cat(paste(pop.toss, collapse = ", "), "\n")
       }
     }
-    x <- gl.keep.pop(x, pop.list = c(pop.keep), verbose = 0) 
     
-    if (length(pop.keep) == 0) {
+    if (length(pop.keep) <= 1) {
       stop(error("Fatal Error: All target populations excluded based on minimum sample size.\n"))
     }
     
+    x <- gl.keep.pop(x, pop.list = c(pop.keep), verbose = 0) 
+    
+  
     # Remove loci scored as NA for the unknown
     # Fuck, it changed the locus names, replaced hyphens with periods, use check.names=FALSE
     tmp1 <- data.frame(as.matrix(unknown.ind),check.names=FALSE)  
