@@ -55,7 +55,7 @@
 #' @param nmin Minimum number of individuals required in a reference population
 #' for it to be retained. Populations with fewer individuals are dropped with a
 #' warning. Applied only when unknowns are present [default 10].
-#' @param dir Directory where \code{assignPOP::assign.X()} writes its output
+#' @param outpath Directory where \code{assignPOP::assign.X()} writes its output
 #' files (including \code{AssignmentResult.txt}). Only used in split and
 #' two-object modes [default getwd()].
 #' @param model Classification model passed to \code{assignPOP::assign.X()}.
@@ -116,6 +116,8 @@
 #'   \item{\code{unknowns}}{The assignPOP data object for the unknown
 #'     individuals.}
 #' }
+
+dir <- outpath
 
 gl.run.assignpop <- function(x,
                              unknown.id = NULL,
