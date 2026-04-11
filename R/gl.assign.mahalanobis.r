@@ -465,7 +465,7 @@ gl.assign.mahalanobis <- function(x,
             names(D) <- c(hold,"unknown")
             
             # Calculate the associated probabilities
-            pval <- (pchisq(D, df=length(D)-1, lower.tail=FALSE))
+            pval <- (pchisq(D, df=dim, lower.tail=FALSE))
             # Is the result non-significant, then assign=yes
             if (pval["unknown"] >= 1-plevel) {
                 assign <- "yes"
