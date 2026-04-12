@@ -1,79 +1,76 @@
 #' @name gl.assign.pca
-#' @title Eliminate from consideration putative source populations for a specified 
-#' individual of unknown provenance using PCA
+#' @title Eliminate from consideration putative source populations for a
+#' specified individual of unknown provenance using PCA
 #' @description
-#' This script eliminates from consideration putative source populations for a specified
-#' individual of unknown provinence based on its proximity to each putative source
-#' population defined by a confidence ellipse in ordinated space of two dimensions.
+#' Eliminates from consideration putative source populations for a specified
+#' individual of unknown provenance based on its position relative to the
+#' confidence ellipse of each putative source population in the top two
+#' dimensions of a PCA. The genotype space is ordinated to yield orthogonal
+#' axes and populations for which the unknown lies outside the specified
+#' confidence ellipse are set aside for further examination.
 #'
-#' The following process is followed:
-#' \enumerate{
-#' \item The space defined by the loci is ordinated to yield a series of
-#' orthogonal axes (independent) and the top two dimensions are considered.
-#' Populations for which the unknown individual lies outside the specified confidence
-#' limits are set aside to allow further examination.
-#' }
 #' @details
-#' There are three considerations to assignment. First, consider only those
-#' populations for which the unknown has no private alleles. Substanial numbers of
-#' private alleles are an indication that the unknown does not belong to a target population
-#' (provided that the sample size is adequate, say >=10). This can be evaluated
-#'  with gl.assign.pa().
-#'
-#' A next step is to consider the PCA plot for populations where no private
-#' alleles have been detected and the position of the unknown in relation to 
-#' confidence ellipses as produced by this script. Note, this plot is
-#' considering only the top two dimensions of the ordination. This is justified because
-#' an unknown lying outside the confidence ellipse in two dimensions cannot lie
-#' within the confidence envelope incorporating deeper dimensions. It can be 
-#' unambiguously interpreted as it lying outside the confidence envelope. 
-#' However, if the unknown lies inside the confidence ellipse in two dimensions, 
-#' then it may still lie outside the confidence envelope in deeper dimensions. 
-#' 
-#' As with the first step using gl.assign.pa(), this second step is good for 
-#' eliminating populations from consideration, but does not provide confidence 
-#' in assignment.
-#'
-#' The third step is to consider the assignment probabilities, using the script
-#' gl.assign.mahalanobis(). This approach calculates the squared Generalised 
-#' Linear Distance (Mahalanobis distance) of the unknown from the centroid 
-#' for each remaining putative source population, and calculates the probability 
-#' associated with its quantile under the zero truncated normal distribution. 
-#' This index takes into account position of the unknown in relation to the 
-#' confidence envelope in all selected dimensions of the ordination. 
-#'
-#' Each of these approaches provides evidence, none are 100% definitive. They
-#'  need to be interpreted cautiously. They are best applied sequentially.
-#'  
-#' In deciding the assignment, the script considers an individual to be an
-#' outlier with respect to a particular population at alpha = 0.001 as default.
+#' There are four approaches to population assignment of which this is one.
+#' \enumerate{
+#' \item Eliminate those populations from consideration where the genotype of
+#' the unknown is not consistent with their allelic profiles. This can be
+#' evaluated with \code{gl.assign.by.genotype()}.
+#' \item Eliminate those populations for which the unknown has substantial
+#' private alleles. Substantial numbers of private alleles are an indication
+#' that the unknown does not belong to a target population (provided that the
+#' sample size is adequate, say >= 10). This can be evaluated with
+#' \code{gl.assign.pa()}.
+#' \item Consider the assignment probabilities using
+#' \code{gl.assign.mahalanobis()}. This approach calculates the squared
+#' Generalised Distance (Mahalanobis distance) of the unknown from the
+#' centroid of each remaining putative source population and calculates the
+#' probability of membership using the chi-squared distribution. This index
+#' takes into account the position of the unknown in relation to the
+#' confidence envelope in all selected dimensions of the ordination.
+#' \item Consider the PCA plot for populations and the position of the unknown
+#' in relation to confidence ellipses as produced by \code{gl.assign.pca()}.
+#' Note that this plot considers only the top two dimensions of the ordination.
+#' This is justifiable because an unknown lying outside the confidence ellipse
+#' in two dimensions is \strong{unlikely} to lie within the confidence envelope
+#' incorporating deeper dimensions, provided a sufficiently stringent p-value
+#' is applied (e.g. the default of 0.001). It can be defensibly interpreted as
+#' lying outside the confidence envelope defined within the space of the
+#' informative dimensions. The reverse is not true: if the unknown lies inside
+#' the confidence ellipse in two dimensions, it may still lie outside the
+#' confidence envelope in deeper dimensions.
+#' }
+#' Each of these approaches is useful for decisions on which populations to
+#' eliminate as putative sources. They provide evidence for a decision on
+#' population assignment, but none are 100% definitive, and they need to be
+#' interpreted cautiously.
 #'
 #' @param x Name of the input genlight object [required].
 #' @param unknown Identity label of the focal individual whose provenance is
 #' unknown [required].
-#' @param nmin Minimum sample size for a target population to be included in the
-#' analysis [default 10].
-#' @param plevel Probability level for bounding ellipses in the PCoA plot
-#' [default 0.999].
-#' @param plot.out If TRUE, plot the 2D PCA showing the position 
-#' of the unknown [default TRUE]
+#' @param nmin Minimum sample size for a target population to be included in
+#' the analysis [default 10].
+#' @param plevel Alpha level for the bounding ellipses in the PCA plot
+#' [default 0.001].
+#' @param plot.out If TRUE, plot the 2D PCA showing the position of the
+#' unknown [default TRUE].
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 #' progress log; 3, progress and results summary; 5, full report
 #' [default 2 or as specified using gl.set.verbosity].
 #'
 #' @return A genlight object containing only those populations that are
-#' putative source populations for the unknown individual. 
+#' putative source populations for the unknown individual.
 #'
 #' @importFrom stats dnorm qnorm
 #' @export
 #'
-#' @author Script: Arthur Georges. Custodian: Arthur Georges -- Post to 
+#' @author Script: Arthur Georges. Custodian: Arthur Georges -- Post to
 #' \url{https://groups.google.com/d/forum/dartr}
-# @examples 
-# \dontrun{
-# #Test run with a focal individual from the Macleay River (EmmacMaclGeor) 
-# test <- gl.assign.pca(testset.gl, unknown='UC_00146',verbose=3) 
-# }
+#'
+#' @examples
+#' \dontrun{
+#' # Test run with a focal individual from the Macleay River
+#' test <- gl.assign.pca(testset.gl, unknown = 'UC_00146', verbose = 3)
+#' }
 
 gl.assign.pca <- function(x,
                           unknown,
@@ -127,7 +124,7 @@ gl.assign.pca <- function(x,
 
     # FUNCTION SPECIFIC ERROR CHECKING
     
-    if (any(duplicated(indNames(x)))) {
+	if (any(duplicated(indNames(x)))) {
       stop(error("Fatal Error: Duplicate individual names in genlight object.\n"))
     }
     if (any(is.na(indNames(x)))) {
@@ -144,9 +141,14 @@ gl.assign.pca <- function(x,
     }
     if (plevel > 1 || plevel < 0) {
         cat(warn(
-            "  Warning: Value of plevel must be between 0 and 1, set to 0.95\n"
+            "  Warning: Value of plevel must be between 0 and 1, set to 0.001\n"
         ))
-        plevel <- 0.999
+        plevel <- 0.001
+    }
+	    if (plevel > 0.001) {
+        cat(warn(
+            "  Warning: Value of plevel greater than 0.001 may result in unacceptable false elimination of putative source populations\n"
+        ))
     }
     
     if (is.null(pop(x))) {
