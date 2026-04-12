@@ -181,6 +181,7 @@ gl.assign.pa <- function(x,
     c <- names(b)[is.na(b)]
     if (length(c) > 0) {
       knowns <- gl.drop.loc(knowns, loc.list = c, verbose = 0)
+      unknown.ind <- gl.drop.loc(unknown.ind, loc.list = c, verbose = 0)
     }
     
   # Split the genlight object into a list of matricies
@@ -222,6 +223,8 @@ gl.assign.pa <- function(x,
       population = names(matrix.list),
       logmean = NA_real_,
       logsd = NA_real_,
+      counts = NA_integer_,
+      counts.log = NA_real_,
       z = NA_real_,
       p = NA_real_,
       flag = ""
@@ -245,17 +248,21 @@ gl.assign.pa <- function(x,
       result$logmean[i] <- mu
       result$logsd[i] <- sigma
       
-      # Calculate private allele counts for the focal individual against the others in each population i
-      n.pa <- numeric(n)
-      #names(n.pa) <- names(matrix.list[[i]])
-      
+      # Count private alleles for the unknown against population i
       result$counts[i] <- count.pa(focal = as.matrix(unknown.ind), genmat = pop.mat)
-      result$counts.log[i] <- log10(result$counts[i] +1)
+      result$counts.log[i] <- log10(result$counts[i] + 1)
       # Z-score and upper-tail probability of unknown count
-      z.score <- (result$counts.log[i] - mu) / sigma
-      p.value <- 1 - pnorm(z.score)
-      result$z[i] <- z.score
-      result$p[i] <- round(p.value,6)
+      if (sigma == 0) {
+        # All population members have identical private allele counts; z-score undefined
+        result$z[i] <- NA
+        result$p[i] <- NA
+        result$flag[i] <- if (result$counts.log[i] <= mu) "yes" else "no"
+      } else {
+        z.score <- (result$counts.log[i] - mu) / sigma
+        p.value <- 1 - pnorm(z.score)
+        result$z[i] <- z.score
+        result$p[i] <- round(p.value, 6)
+      }
     }
     
     # Apply significance
