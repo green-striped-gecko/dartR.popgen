@@ -99,7 +99,7 @@ gl.plot.popcluster <- function(pop_cluster_result,
     color_clusters <- gl.select.colors(ncolors = max(plot.K), verbose = 0)
   }
   
-  p3 <- ggplot(Q_long, aes_(x = ~ factor(Order), y = ~values, fill = ~K)) +
+  p3 <- ggplot(Q_long, aes(x = factor(Order), y = values, fill = K)) +
     geom_col(color = "black", linewidth = border_ind, width = 1) +
     facet_grid( ~ factor(Pop, levels=unique(Q_long$Pop)), 
                 scales = "free", 
