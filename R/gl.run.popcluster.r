@@ -244,23 +244,24 @@ gl.run.popcluster <- function(x,
   genotype <- as.matrix.genlight(x)
   genotype[is.na(genotype)] <- 3
   sample_name <- x@ind.names
+  ind_numbers <- seq_len(nInd(x))
   family <- x@pop
   rownames(genotype) <- NULL
-  # IndivLoc is not used in structure inference. It is used solely for 
-  # visualizing population structuring in relation to individual geographic 
+  # IndivLoc is not used in structure inference. It is used solely for
+  # visualizing population structuring in relation to individual geographic
   # locations in PopCluster’s GUI.
   # if (location == 1) {
   #   lat <- x@other$latlon$lat
   #   lon <- x@other$latlon$lon
-  #   names <- data.frame(id = paste0(sample_name, 
-  #                                   " ", family, 
+  #   names <- data.frame(id = paste0(ind_numbers,
+  #                                   " ", family,
   #                                   " ", PopFlag,
-  #                                   " ", lat, 
+  #                                   " ", lat,
   #                                   " ", lon))
   # } else if (location == 0) {
   #   lat <- NULL
   #   lon <- NULL
-    names <- data.frame(id = paste0(sample_name,
+    names <- data.frame(id = paste0(ind_numbers,
                                     " ", family,
                                     " ", PopFlag))
   # }
@@ -524,7 +525,7 @@ gl.run.popcluster <- function(x,
                      paste0("Pop_", seq(1, (ncol(
                        Q
                      ) - 5), by = 1)))
-    Q$Label <- as.character(Q$Label)
+    Q$Label <- sample_name[as.integer(Q$Index)]
     Q$Cluster <- as.character(Q$Cluster)
     Q$Pop <- as.character(x$pop)
     # change the Order
