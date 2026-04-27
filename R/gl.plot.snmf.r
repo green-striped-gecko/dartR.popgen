@@ -103,6 +103,9 @@ gl.plot.snmf <- function(snmf.result,
     plot.theme <- theme_dartR()
   }
   
+  #avoid cran note
+  K <- Label <- Order <- Pop <- Pop_group <- id <- mean_val <- pos_pop <- values <- xend <- y <- yend <- NULL
+  
   # Extract admixture analysis
   Q <- snmf.result$matrix[paste0("K", plot.K)][[1]]
 

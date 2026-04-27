@@ -5,7 +5,7 @@
 #' @importFrom grDevices rainbow hcl
 #' @importFrom graphics lines par
 #' @importFrom stats ave pchisq var variable.names complete.cases
-#' @import adegenet
+#' @rawNamespace import(adegenet, except = c(glMean, glSum))
 #' @import dartR.base
 #' @import dartR.data
 #' @import ggplot2
