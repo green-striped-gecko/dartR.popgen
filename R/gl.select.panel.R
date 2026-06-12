@@ -106,8 +106,8 @@ gl.select.panel<-
         dummy <- pops[c(com[i,1],com[i,2])] 
         dummy <-do.call(rbind,dummy)
         dd <- dapc(dummy, n.pca=20, n.da=5)
-        ll <- sort(dd$var.contr[,1], decreasing=TRUE)
-        index <-names(ll)[1:nl2]
+        ll <- order(dd$var.contr, decreasing=TRUE)
+        index <-locNames(dummy)[ll[1:nl2]]
         res[[i]] <- index
         
       }

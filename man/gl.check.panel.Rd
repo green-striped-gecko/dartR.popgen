@@ -2,13 +2,19 @@
 % Please edit documentation in R/gl.check.panel.r
 \name{gl.check.panel}
 \alias{gl.check.panel}
-\title{Check a snp panel for a specified parameter}
+\title{Check a SNP panel for specified conservation monitoring parameters}
 \usage{
 gl.check.panel(
   x,
   xorig,
   parameter = "Fst",
   neest.path = NULL,
+  error.rate = 0.01,
+  threshold = 0.001,
+  n_sim = 100,
+  n_sim_hyb = 100,
+  n_cores = NULL,
+  target = 0.9,
   plot.out = TRUE,
   plot.file = NULL,
   plot.dir = NULL,
@@ -16,37 +22,116 @@ gl.check.panel(
 )
 }
 \arguments{
-\item{x}{A 'dartR or genlight' object containing the SNP panel genomic data.}
+\item{x}{A \code{dartR} or \code{genlight} object containing the SNP panel
+(subset of loci).}
 
-\item{xorig}{A 'dartR or genlight' object containing the original genomic data for comparison.}
+\item{xorig}{A \code{dartR} or \code{genlight} object containing the full
+original dataset for comparison. Not required for \code{"id"},
+\code{"parentage"}, \code{"assignment"}, or \code{"hybridisation"}.}
 
-\item{parameter}{A character string specifying the parameter to check. Options include: Fst, He, Ho, Ne, Nall, Fis.}
+\item{parameter}{Character string or vector specifying the parameter(s) to
+evaluate. Options:
+\itemize{
+  \item \code{"Fst"} — pairwise FST' (between-population).
+  \item \code{"He"} — expected heterozygosity per population.
+  \item \code{"Ho"} — observed heterozygosity per population.
+  \item \code{"Fis"} — inbreeding coefficient per population.
+  \item \code{"Nall"} or \code{"Ar"} — rarefaction-corrected allelic
+    richness per population.
+  \item \code{"Ne"} — effective population size per population.
+  \item \code{"Ho_ind"} — individual observed heterozygosity. Spearman
+    r² of per-individual Ho between panel and full dataset, ignoring
+    population membership.
+  \item \code{"relatedness"} — pairwise genomic relatedness (VanRaden
+    GRM). Both GRMs computed using full-dataset allele frequencies as
+    reference. Population membership ignored.
+  \item \code{"id"} — individual identification power.
+  \item \code{"parentage"} — parentage assignment power.
+  \item \code{"assignment"} — population assignment accuracy (LOO).
+  \item \code{"hybridisation"} — F1 hybrid detection (requires exactly
+    2 populations in \code{x}).
+  \item \code{"all"} — all parameters except \code{"hybridisation"}.
+  \item \code{"all-Ne"} — all except \code{"Ne"} and
+    \code{"hybridisation"}.
+}}
 
-\item{neest.path}{Path to neestimator (see gl.LDNe)}
+\item{neest.path}{Character string. Path to NEstimator executable, required
+only for \code{"Ne"}.}
 
-\item{plot.out}{Logical. If `TRUE`, generates plots summarizing selected loci.}
+\item{error.rate}{Numeric. Per-allele genotyping error rate. Default
+\code{0.01}.}
 
-\item{plot.file}{A character string specifying the file name for saving plots. If `NULL`, plots are not saved.}
+\item{threshold}{Numeric. Confusion threshold for \code{"id"} and
+\code{"parentage"}. Default \code{0.001}.}
 
-\item{plot.dir}{A character string specifying the directory to save plots. Defaults to the working directory.}
+\item{n_sim}{Integer. Simulated trios for \code{"parentage"}.
+Default \code{100}.}
 
-\item{verbose}{Integer level of verbosity for reporting progress and information.}
+\item{n_sim_hyb}{Integer. Simulated individuals per class for
+\code{"hybridisation"}. Default \code{100}.}
+
+\item{n_cores}{Integer or \code{NULL}. Cores for parallel parentage
+simulation. \code{NULL} = auto. On Windows always sequential.}
+
+\item{target}{Numeric (0--1) or \code{NULL}. Reference line in the summary
+bar chart. Default \code{0.9}.}
+
+\item{plot.out}{Logical. Print combined plot. Default \code{TRUE}.}
+
+\item{plot.file}{Character string. File name for saving the plot.}
+
+\item{plot.dir}{Character string. Directory for saving the plot.}
+
+\item{verbose}{Integer. \code{0} = silent, \code{1} = parameter names and
+performance scores only, \code{2} = full progress (default).}
 }
 \value{
-A plot and the result of the linear regression
+A named list with one element per parameter, each containing:
+\code{name}, \code{performance}, \code{data}, \code{plot}.
 }
 \description{
-This function checks a panel how good it is to recreate the specified parameter of conservation concern (Ne, Fst, Ho etc.)
+Evaluates how well a SNP panel recreates specified parameters of
+conservation concern compared to the full original dataset, or assesses
+the panel's power for individual identification, parentage assignment,
+population assignment, or F1 hybrid detection. Multiple parameters can be
+evaluated simultaneously. All plots are combined on a single page with the
+summary bar chart as the first panel in the same grid.
 }
 \details{
-The function applies various methods to select loci based on the input 'dartR or genlight' object.
-Each method has specific criteria for selecting loci:
+\strong{Performance metric (0--1):}
+\itemize{
+  \item Population and between-population parameters (\code{"Fst"},
+    \code{"He"}, \code{"Ho"}, \code{"Fis"}, \code{"Nall"}, \code{"Ne"})
+    — Spearman r² between panel and full dataset values. Plots also show
+    Pearson R².
+  \item \code{"Ho_ind"} — Spearman r² of per-individual observed
+    heterozygosity. Population membership ignored.
+  \item \code{"relatedness"} — Spearman r² of all pairwise GRM values
+    (upper triangle). Both GRMs use full-dataset allele frequencies as
+    reference (VanRaden 2008). Population membership ignored.
+  \item \code{"id"} — fraction of individuals with MaxPmatch below
+    \code{threshold}.
+  \item \code{"parentage"} — fraction of simulated trios correctly
+    assigned.
+  \item \code{"assignment"} — fraction correctly assigned by LOO.
+  \item \code{"hybridisation"} — F1 detection rate.
+}
+
+\strong{Heterozygosity caching:} When any of \code{"He"}, \code{"Ho"},
+\code{"Fis"} are requested, \code{gl.report.heterozygosity} is called
+once per dataset and reused for all three.
+
+\strong{Relatedness reference frequencies:} Both panel and full-dataset
+GRMs are computed using allele frequencies from \code{xorig}, ensuring
+both are on the same scale (VanRaden 2008).
 }
 \examples{
-# Example usage:
+panel <- gl.select.panel(possums.gl, method = "random", nl = 50)
+res   <- gl.check.panel(panel, possums.gl, parameter = "all-Ne")
+sapply(res, function(r) r$performance)
 
-# Select 20 loci randomly
-selected <- gl.select.panel(possums.gl, method = "random", nl = 50)
-gl.check.panel(selected, possums.gl, parameter="Fst")
-
+}
+\references{
+VanRaden, P.M. (2008). Efficient methods to compute genomic predictions.
+\emph{Journal of Dairy Science}, 91(11), 4414--4423.
 }
