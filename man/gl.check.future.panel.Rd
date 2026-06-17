@@ -8,6 +8,8 @@ gl.check.future.panel(
   x,
   xorig,
   parameter = c("Fst", "He"),
+  corr.method = c("spearman", "pearson"),
+  neest.path = NULL,
   type = "drift",
   user.gl = NULL,
   n_gen = 10,
@@ -37,7 +39,16 @@ dataset. All loci in \code{x} must be present in \code{xorig}.}
 \code{"Fis"}, \code{"Nall"}, \code{"Ho_ind"}, \code{"relatedness"},
 \code{"id"}, \code{"parentage"}, \code{"assignment"},
 \code{"hybridisation"}, \code{"all"}, \code{"all-Ne"}.
+For \code{"hybridisation"}, all pairwise population crosses are
+evaluated when two or more populations are present.
 Default \code{c("Fst", "He")}.}
+
+\item{corr.method}{Character. Correlation method passed to
+\code{gl.check.panel} for correlation-based performance metrics.
+Options are \code{"spearman"} (default) and \code{"pearson"}.}
+
+\item{neest.path}{Character string. Path to NEstimator executable,
+required only when \code{"Ne"} is included in \code{parameter}.}
 
 \item{type}{Character. \code{"drift"} (default) simulates genetic drift
 internally. \code{"user"} accepts user-supplied genlights via
@@ -71,8 +82,8 @@ evaluate panel performance. Generation 0 (baseline) is always included.
 \item{n_sim_parent}{Integer. Simulated trios for \code{"parentage"}.
 Default \code{50}.}
 
-\item{n_sim_hyb}{Integer. Simulated individuals per class for
-\code{"hybridisation"}. Default \code{100}.}
+\item{n_sim_hyb}{Integer. Simulated F1 individuals per pairwise
+population cross for \code{"hybridisation"}. Default \code{100}.}
 
 \item{n_cores}{Integer or \code{NULL}. Cores for parallel parentage
 simulation. Default \code{NULL} = auto.}
@@ -108,7 +119,8 @@ generations as proper \code{"dartR"} objects.
 
 \strong{User mode:} User supplies full-dataset genlights. Panel loci
 extracted from each element and \code{gl.check.panel} run at each check
-generation.
+generation. For correlation-based parameters, the chosen
+\code{corr.method} is used at every generation.
 }
 \examples{
 panel <- gl.select.panel(possums.gl, method = "random", nl = 50)

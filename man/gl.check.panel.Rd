@@ -8,6 +8,7 @@ gl.check.panel(
   x,
   xorig,
   parameter = "Fst",
+  corr.method = c("spearman", "pearson"),
   neest.path = NULL,
   error.rate = 0.01,
   threshold = 0.001,
@@ -39,21 +40,31 @@ evaluate. Options:
   \item \code{"Nall"} or \code{"Ar"} — rarefaction-corrected allelic
     richness per population.
   \item \code{"Ne"} — effective population size per population.
-  \item \code{"Ho_ind"} — individual observed heterozygosity. Spearman
-    r² of per-individual Ho between panel and full dataset, ignoring
-    population membership.
+  \item \code{"Ho_ind"} — individual observed heterozygosity.
+    Correlation r² of per-individual Ho between panel and full dataset,
+    ignoring population membership.
   \item \code{"relatedness"} — pairwise genomic relatedness (VanRaden
     GRM). Both GRMs computed using full-dataset allele frequencies as
     reference. Population membership ignored.
   \item \code{"id"} — individual identification power.
   \item \code{"parentage"} — parentage assignment power.
   \item \code{"assignment"} — population assignment accuracy (LOO).
-  \item \code{"hybridisation"} — F1 hybrid detection (requires exactly
-    2 populations in \code{x}).
+  \item \code{"hybridisation"} — F1 hybrid detection across all
+    pairwise population crosses (requires at least 2 populations in
+    \code{x}).
   \item \code{"all"} — all parameters except \code{"hybridisation"}.
   \item \code{"all-Ne"} — all except \code{"Ne"} and
     \code{"hybridisation"}.
 }}
+
+\item{corr.method}{Character. Correlation method used as the performance
+indicator for correlation-based parameters. Options are
+\code{"spearman"} (default, preserving previous behaviour) and
+\code{"pearson"}. Applies to \code{"Fst"}, \code{"He"},
+\code{"Ho"}, \code{"Fis"}, \code{"Nall"}, \code{"Ne"},
+\code{"Ho_ind"}, and \code{"relatedness"}. Accuracy/proportion
+metrics such as \code{"id"}, \code{"parentage"},
+\code{"assignment"}, and \code{"hybridisation"} are unchanged.}
 
 \item{neest.path}{Character string. Path to NEstimator executable, required
 only for \code{"Ne"}.}
@@ -67,8 +78,9 @@ only for \code{"Ne"}.}
 \item{n_sim}{Integer. Simulated trios for \code{"parentage"}.
 Default \code{100}.}
 
-\item{n_sim_hyb}{Integer. Simulated individuals per class for
-\code{"hybridisation"}. Default \code{100}.}
+\item{n_sim_hyb}{Integer. Simulated F1 individuals per pairwise
+population cross for \code{"hybridisation"}. Total F1 simulations
+are \code{n_sim_hyb * choose(nPop(x), 2)}. Default \code{100}.}
 
 \item{n_cores}{Integer or \code{NULL}. Cores for parallel parentage
 simulation. \code{NULL} = auto. On Windows always sequential.}
@@ -87,7 +99,13 @@ performance scores only, \code{2} = full progress (default).}
 }
 \value{
 A named list with one element per parameter, each containing:
-\code{name}, \code{performance}, \code{data}, \code{plot}.
+\code{name}, \code{performance}, \code{data}, \code{summary},
+\code{confusion}, and \code{plot}. For most parameters,
+\code{summary} and \code{confusion} are \code{NULL}; for
+\code{"hybridisation"}, \code{summary} gives per-cross F1 detection
+and correct-pair rates, and \code{confusion} gives the full true-cross by
+assigned-class table. The \code{performance} value for
+\code{"hybridisation"} is the correct F1-pair rate.
 }
 \description{
 Evaluates how well a SNP panel recreates specified parameters of
@@ -102,19 +120,22 @@ summary bar chart as the first panel in the same grid.
 \itemize{
   \item Population and between-population parameters (\code{"Fst"},
     \code{"He"}, \code{"Ho"}, \code{"Fis"}, \code{"Nall"}, \code{"Ne"})
-    — Spearman r² between panel and full dataset values. Plots also show
-    Pearson R².
-  \item \code{"Ho_ind"} — Spearman r² of per-individual observed
-    heterozygosity. Population membership ignored.
-  \item \code{"relatedness"} — Spearman r² of all pairwise GRM values
-    (upper triangle). Both GRMs use full-dataset allele frequencies as
+    — chosen \code{corr.method} r² between panel and full dataset
+    values. Plots show both Spearman r² and Pearson R².
+  \item \code{"Ho_ind"} — chosen \code{corr.method} r² of
+    per-individual observed heterozygosity. Population membership ignored.
+  \item \code{"relatedness"} — chosen \code{corr.method} r² of all
+    pairwise GRM values (upper triangle). Both GRMs use full-dataset
+    allele frequencies as
     reference (VanRaden 2008). Population membership ignored.
   \item \code{"id"} — fraction of individuals with MaxPmatch below
     \code{threshold}.
   \item \code{"parentage"} — fraction of simulated trios correctly
     assigned.
   \item \code{"assignment"} — fraction correctly assigned by LOO.
-  \item \code{"hybridisation"} — F1 detection rate.
+  \item \code{"hybridisation"} — correct F1-pair assignment rate,
+    calculated as the proportion of simulated F1 hybrids assigned to the
+    correct pairwise F1 class across all pairwise population crosses.
 }
 
 \strong{Heterozygosity caching:} When any of \code{"He"}, \code{"Ho"},
