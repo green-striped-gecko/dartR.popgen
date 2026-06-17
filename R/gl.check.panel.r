@@ -23,21 +23,30 @@
 #'     \item \code{"Nall"} or \code{"Ar"} — rarefaction-corrected allelic
 #'       richness per population.
 #'     \item \code{"Ne"} — effective population size per population.
-#'     \item \code{"Ho_ind"} — individual observed heterozygosity. Spearman
-#'       r² of per-individual Ho between panel and full dataset, ignoring
-#'       population membership.
+#'     \item \code{"Ho_ind"} — individual observed heterozygosity.
+#'       Correlation r² of per-individual Ho between panel and full dataset,
+#'       ignoring population membership.
 #'     \item \code{"relatedness"} — pairwise genomic relatedness (VanRaden
 #'       GRM). Both GRMs computed using full-dataset allele frequencies as
 #'       reference. Population membership ignored.
 #'     \item \code{"id"} — individual identification power.
 #'     \item \code{"parentage"} — parentage assignment power.
 #'     \item \code{"assignment"} — population assignment accuracy (LOO).
-#'     \item \code{"hybridisation"} — F1 hybrid detection (requires exactly
-#'       2 populations in \code{x}).
+#'     \item \code{"hybridisation"} — F1 hybrid detection across all
+#'       pairwise population crosses (requires at least 2 populations in
+#'       \code{x}).
 #'     \item \code{"all"} — all parameters except \code{"hybridisation"}.
 #'     \item \code{"all-Ne"} — all except \code{"Ne"} and
 #'       \code{"hybridisation"}.
 #'   }
+#' @param corr.method Character. Correlation method used as the performance
+#'   indicator for correlation-based parameters. Options are
+#'   \code{"spearman"} (default, preserving previous behaviour) and
+#'   \code{"pearson"}. Applies to \code{"Fst"}, \code{"He"},
+#'   \code{"Ho"}, \code{"Fis"}, \code{"Nall"}, \code{"Ne"},
+#'   \code{"Ho_ind"}, and \code{"relatedness"}. Accuracy/proportion
+#'   metrics such as \code{"id"}, \code{"parentage"},
+#'   \code{"assignment"}, and \code{"hybridisation"} are unchanged.
 #' @param neest.path Character string. Path to NEstimator executable, required
 #'   only for \code{"Ne"}.
 #' @param error.rate Numeric. Per-allele genotyping error rate. Default
@@ -46,8 +55,9 @@
 #'   \code{"parentage"}. Default \code{0.001}.
 #' @param n_sim Integer. Simulated trios for \code{"parentage"}.
 #'   Default \code{100}.
-#' @param n_sim_hyb Integer. Simulated individuals per class for
-#'   \code{"hybridisation"}. Default \code{100}.
+#' @param n_sim_hyb Integer. Simulated F1 individuals per pairwise
+#'   population cross for \code{"hybridisation"}. Total F1 simulations
+#'   are \code{n_sim_hyb * choose(nPop(x), 2)}. Default \code{100}.
 #' @param n_cores Integer or \code{NULL}. Cores for parallel parentage
 #'   simulation. \code{NULL} = auto. On Windows always sequential.
 #' @param target Numeric (0--1) or \code{NULL}. Reference line in the summary
@@ -63,19 +73,22 @@
 #' \itemize{
 #'   \item Population and between-population parameters (\code{"Fst"},
 #'     \code{"He"}, \code{"Ho"}, \code{"Fis"}, \code{"Nall"}, \code{"Ne"})
-#'     — Spearman r² between panel and full dataset values. Plots also show
-#'     Pearson R².
-#'   \item \code{"Ho_ind"} — Spearman r² of per-individual observed
-#'     heterozygosity. Population membership ignored.
-#'   \item \code{"relatedness"} — Spearman r² of all pairwise GRM values
-#'     (upper triangle). Both GRMs use full-dataset allele frequencies as
+#'     — chosen \code{corr.method} r² between panel and full dataset
+#'     values. Plots show both Spearman r² and Pearson R².
+#'   \item \code{"Ho_ind"} — chosen \code{corr.method} r² of
+#'     per-individual observed heterozygosity. Population membership ignored.
+#'   \item \code{"relatedness"} — chosen \code{corr.method} r² of all
+#'     pairwise GRM values (upper triangle). Both GRMs use full-dataset
+#'     allele frequencies as
 #'     reference (VanRaden 2008). Population membership ignored.
 #'   \item \code{"id"} — fraction of individuals with MaxPmatch below
 #'     \code{threshold}.
 #'   \item \code{"parentage"} — fraction of simulated trios correctly
 #'     assigned.
 #'   \item \code{"assignment"} — fraction correctly assigned by LOO.
-#'   \item \code{"hybridisation"} — F1 detection rate.
+#'   \item \code{"hybridisation"} — correct F1-pair assignment rate,
+#'     calculated as the proportion of simulated F1 hybrids assigned to the
+#'     correct pairwise F1 class across all pairwise population crosses.
 #' }
 #'
 #' \strong{Heterozygosity caching:} When any of \code{"He"}, \code{"Ho"},
@@ -88,7 +101,13 @@
 #'
 #' @return
 #' A named list with one element per parameter, each containing:
-#' \code{name}, \code{performance}, \code{data}, \code{plot}.
+#' \code{name}, \code{performance}, \code{data}, \code{summary},
+#' \code{confusion}, and \code{plot}. For most parameters,
+#' \code{summary} and \code{confusion} are \code{NULL}; for
+#' \code{"hybridisation"}, \code{summary} gives per-cross F1 detection
+#' and correct-pair rates, and \code{confusion} gives the full true-cross by
+#' assigned-class table. The \code{performance} value for
+#' \code{"hybridisation"} is the correct F1-pair rate.
 #'
 #' @references
 #' VanRaden, P.M. (2008). Efficient methods to compute genomic predictions.
@@ -101,13 +120,15 @@
 #'
 #' @export
 #' @importFrom ggplot2 ggplot aes geom_col geom_histogram geom_bar geom_vline
-#'   geom_point geom_smooth annotate labs scale_x_log10 scale_fill_manual
-#'   scale_fill_gradient2 coord_cartesian theme element_text
+#'   geom_point geom_smooth geom_tile geom_text annotate labs scale_x_log10
+#'   scale_fill_manual scale_fill_gradient scale_fill_gradient2 coord_cartesian
+#'   theme element_text
 #' @importFrom patchwork wrap_plots
 
 gl.check.panel <- function(x,
                            xorig,
                            parameter   = "Fst",
+                           corr.method = c("spearman", "pearson"),
                            neest.path  = NULL,
                            error.rate  = 0.01,
                            threshold   = 0.001,
@@ -134,6 +155,9 @@ gl.check.panel <- function(x,
   
   parameter[parameter == "Ar"] <- "Nall"
   parameter <- unique(parameter)
+  corr.method <- match.arg(tolower(corr.method), c("spearman", "pearson"))
+  correlation_params <- c("Fst", "He", "Ho", "Fis", "Nall", "Ne",
+                          "Ho_ind", "relatedness")
   
   valid_params <- c(all_params, "hybridisation")
   bad <- setdiff(parameter, valid_params)
@@ -147,8 +171,8 @@ gl.check.panel <- function(x,
   if (!is.numeric(n_sim_hyb) || n_sim_hyb < 1) stop("n_sim_hyb must be a positive integer.")
   if (!is.null(target) && (target <= 0 || target > 1)) stop("target must be in (0,1].")
   
-  if ("hybridisation" %in% parameter && nPop(x) != 2)
-    stop(paste0("'hybridisation' requires exactly 2 populations. Found: ",
+  if ("hybridisation" %in% parameter && nPop(x) < 2)
+    stop(paste0("'hybridisation' requires at least 2 populations. Found: ",
                 nPop(x), "."))
   
   n_cores <- if (is.null(n_cores)) max(1L, parallel::detectCores()-1L) else
@@ -174,14 +198,31 @@ gl.check.panel <- function(x,
     ), nrow=3, byrow=TRUE)
   }
   
+  r2_cor <- function(a, b, method = corr.method) {
+    method <- match.arg(method, c("spearman", "pearson"))
+    ok <- complete.cases(a, b)
+    if (sum(ok) < 2L) return(NA_real_)
+    as.numeric(suppressWarnings(
+      cor(a[ok], b[ok], method = method)^2
+    ))
+  }
+  
   r2_spearman <- function(a, b)
-    cor(a, b, use="complete.obs", method="spearman")^2
+    r2_cor(a, b, method = "spearman")
   
   r2_pearson <- function(a, b)
-    cor(a, b, use="complete.obs", method="pearson")^2
+    r2_cor(a, b, method = "pearson")
+  
+  r2_performance <- function(a, b)
+    r2_cor(a, b, method = corr.method)
+  
+  corr_metric_label <- function(method = corr.method)
+    if (method == "spearman") "Spearman r2" else "Pearson R2"
   
   r2_label <- function(sp, pe)
-    sprintf("Spearman r\u00b2 = %.3f\nPearson R\u00b2 = %.3f", sp, pe)
+    sprintf("Spearman r\u00b2 = %.3f%s\nPearson R\u00b2 = %.3f%s",
+            sp, if (corr.method == "spearman") " (perf)" else "",
+            pe, if (corr.method == "pearson") " (perf)" else "")
   
   centre_theme <- function()
     theme(plot.title    = element_text(hjust=0.5),
@@ -237,9 +278,11 @@ gl.check.panel <- function(x,
     
     if (verbose >= 1) cat(sprintf("\n--- %s ---\n", param))
     
-    gg   <- NULL
-    res  <- NULL
-    perf <- NA_real_
+    gg           <- NULL
+    res          <- NULL
+    perf         <- NA_real_
+    param_summary <- NULL
+    confusion     <- NULL
     
     # ---------------------------------------------------------
     # Fst
@@ -254,7 +297,7 @@ gl.check.panel <- function(x,
           upper.tri(fs_panel$Stat_matrices$Fstp)])
       )
       res  <- res[complete.cases(res),]
-      perf <- r2_spearman(res$fst_orig, res$fst_panel)
+      perf <- r2_performance(res$fst_orig, res$fst_panel)
       gg   <- scatter_plot(res, "fst_orig", "fst_panel",
                            "Fst\u2019",
                            "Fst\u2019 (original)", "Fst\u2019 (panel)")
@@ -267,7 +310,7 @@ gl.check.panel <- function(x,
       res  <- data.frame(he_orig  = het_cache$orig$He,
                          he_panel = het_cache$panel$He)
       res  <- res[complete.cases(res),]
-      perf <- r2_spearman(res$he_orig, res$he_panel)
+      perf <- r2_performance(res$he_orig, res$he_panel)
       gg   <- scatter_plot(res, "he_orig", "he_panel",
                            "He", "He (original)", "He (panel)")
     }
@@ -279,7 +322,7 @@ gl.check.panel <- function(x,
       res  <- data.frame(ho_orig  = het_cache$orig$Ho,
                          ho_panel = het_cache$panel$Ho)
       res  <- res[complete.cases(res),]
-      perf <- r2_spearman(res$ho_orig, res$ho_panel)
+      perf <- r2_performance(res$ho_orig, res$ho_panel)
       gg   <- scatter_plot(res, "ho_orig", "ho_panel",
                            "Ho", "Ho (original)", "Ho (panel)")
     }
@@ -291,7 +334,7 @@ gl.check.panel <- function(x,
       res  <- data.frame(fis_orig  = het_cache$orig$FIS,
                          fis_panel = het_cache$panel$FIS)
       res  <- res[complete.cases(res),]
-      perf <- r2_spearman(res$fis_orig, res$fis_panel)
+      perf <- r2_performance(res$fis_orig, res$fis_panel)
       gg   <- scatter_plot(res, "fis_orig", "fis_panel",
                            "Fis", "Fis (original)", "Fis (panel)")
     }
@@ -307,7 +350,7 @@ gl.check.panel <- function(x,
         ar_panel = ar_panel$`Allelic Richness per population`$mean_corrected_richness
       )
       res  <- res[complete.cases(res),]
-      perf <- r2_spearman(res$ar_orig, res$ar_panel)
+      perf <- r2_performance(res$ar_orig, res$ar_panel)
       gg   <- scatter_plot(res, "ar_orig", "ar_panel",
                            "Allelic richness",
                            "Ar (original)", "Ar (panel)")
@@ -327,7 +370,7 @@ gl.check.panel <- function(x,
       res <- data.frame(ne_orig=extract_ne(ne_orig), ne_panel=extract_ne(ne_panel))
       res[res==Inf|res==-Inf] <- NA
       res  <- res[complete.cases(res),]
-      perf <- r2_spearman(res$ne_orig, res$ne_panel)
+      perf <- r2_performance(res$ne_orig, res$ne_panel)
       gg   <- scatter_plot(res, "ne_orig", "ne_panel",
                            "Ne", "Ne (original)", "Ne (panel)")
     }
@@ -346,9 +389,10 @@ gl.check.panel <- function(x,
         ho_ind_panel = ho_ind_panel
       )
       res  <- res[complete.cases(res[,c("ho_ind_orig","ho_ind_panel")]),]
-      perf <- r2_spearman(res$ho_ind_orig, res$ho_ind_panel)
+      perf <- r2_performance(res$ho_ind_orig, res$ho_ind_panel)
       if (verbose >= 2)
-        cat(sprintf("Individuals: %d  |  Spearman r2 = %.4f\n", nrow(res), perf))
+        cat(sprintf("Individuals: %d  |  %s = %.4f\n",
+                    nrow(res), corr_metric_label(), perf))
       gg   <- scatter_plot(res, "ho_ind_orig", "ho_ind_panel",
                            "Individual heterozygosity",
                            "Ho_ind (original)", "Ho_ind (panel)")
@@ -379,10 +423,11 @@ gl.check.panel <- function(x,
       
       res  <- data.frame(grm_orig=pairs_orig, grm_panel=pairs_panel)
       res  <- res[complete.cases(res),]
-      perf <- r2_spearman(res$grm_orig, res$grm_panel)
+      perf <- r2_performance(res$grm_orig, res$grm_panel)
       
       if (verbose >= 2)
-        cat(sprintf("Pairs: %d  |  Spearman r2 = %.4f\n", nrow(res), perf))
+        cat(sprintf("Pairs: %d  |  %s = %.4f\n",
+                    nrow(res), corr_metric_label(), perf))
       
       plot_res <- if (nrow(res)>10000L) res[sample(nrow(res),10000L),] else res
       sp <- r2_spearman(res$grm_orig, res$grm_panel)
@@ -485,7 +530,7 @@ gl.check.panel <- function(x,
       
       pair_mat  <- which(upper.tri(matrix(0,n,n)), arr.ind=TRUE)
       cores_use <- if (.Platform$OS.type=="windows") {
-        if (n_cores>1) message("Parallel parentage disabled on Windows. Sequential.")
+        #if (n_cores>1) message("Parallel parentage disabled on Windows. Sequential.")
         1L
       } else min(n_cores, n_sim)
       
@@ -647,103 +692,216 @@ gl.check.panel <- function(x,
       trans <- make_trans(e)
       gmat  <- as.matrix(x)
       L     <- ncol(gmat)
-      pops  <- as.character(pop(x)); upops <- levels(pop(x))
-      idx1  <- which(pops==upops[1]); idx2 <- which(pops==upops[2])
+      pops  <- as.character(pop(x))
+      upops <- levels(droplevels(as.factor(pop(x))))
+      K     <- length(upops)
       
-      p1 <- pmax(pmin(colMeans(gmat[idx1,,drop=FALSE],na.rm=TRUE)/2,1-1e-6),1e-6)
-      p2 <- pmax(pmin(colMeans(gmat[idx2,,drop=FALSE],na.rm=TRUE)/2,1-1e-6),1e-6)
+      if (K < 2)
+        stop("'hybridisation' requires at least 2 populations.")
       
-      ll_class <- array(NA, dim=c(L,3,3))
-      for (l in seq_len(L)) {
-        hwe1 <- c((1-p1[l])^2,2*p1[l]*(1-p1[l]),p1[l]^2)
-        hwe2 <- c((1-p2[l])^2,2*p2[l]*(1-p2[l]),p2[l]^2)
-        f1   <- c((1-p1[l])*(1-p2[l]),p1[l]*(1-p2[l])+(1-p1[l])*p2[l],p1[l]*p2[l])
-        ll_class[l,,1] <- as.numeric(hwe1 %*% trans)
-        ll_class[l,,2] <- as.numeric(hwe2 %*% trans)
-        ll_class[l,,3] <- as.numeric(f1   %*% trans)
+      pop_idx <- setNames(lapply(upops, function(z) which(pops == z)), upops)
+      empty_pops <- names(pop_idx)[vapply(pop_idx, length, integer(1)) == 0]
+      if (length(empty_pops) > 0)
+        stop(paste0("Population(s) with no individuals: ",
+                    paste(empty_pops, collapse=", "), "."))
+      
+      pair_mat <- utils::combn(upops, 2, simplify = TRUE)
+      pair_df <- data.frame(
+        pop1       = pair_mat[1,],
+        pop2       = pair_mat[2,],
+        true_cross = paste(pair_mat[1,], pair_mat[2,], sep=" x "),
+        f1_class   = paste0("F1: ", pair_mat[1,], " x ", pair_mat[2,]),
+        stringsAsFactors = FALSE
+      )
+      n_pairs <- nrow(pair_df)
+      
+      # Allele frequencies for pure populations.
+      af <- matrix(NA_real_, nrow=K, ncol=L,
+                   dimnames=list(upops, locNames(x)))
+      for (k in seq_len(K)) {
+        idx_k <- pop_idx[[upops[k]]]
+        af[k,] <- colMeans(gmat[idx_k,,drop=FALSE], na.rm=TRUE)/2
+      }
+      af[is.nan(af) | is.na(af)] <- 0.5
+      af <- pmax(pmin(af, 1-1e-6), 1e-6)
+      
+      # Classifier contains all pure classes and all pairwise F1 classes.
+      # This is essential for >2 populations because an F1 can be detected
+      # as a hybrid but assigned to the wrong parental pair.
+      class_labels <- c(upops, pair_df$f1_class)
+      class_type   <- c(rep("pure", K), rep("F1", n_pairs))
+      class_cross  <- c(rep(NA_character_, K), pair_df$true_cross)
+      n_classes    <- length(class_labels)
+      
+      ll_class <- array(NA_real_, dim=c(L, 3, n_classes),
+                        dimnames=list(locNames(x), as.character(0:2),
+                                      class_labels))
+      
+      # Pure-population genotype likelihoods.
+      for (k in seq_len(K)) {
+        for (l in seq_len(L)) {
+          p <- af[k,l]
+          hwe <- c((1-p)^2, 2*p*(1-p), p^2)
+          ll_class[l,,k] <- as.numeric(hwe %*% trans)
+        }
       }
       
-      a1_v <- c(0,0.5,1)
+      # F1 genotype likelihoods for every pairwise population cross.
+      for (pp in seq_len(n_pairs)) {
+        i <- match(pair_df$pop1[pp], upops)
+        j <- match(pair_df$pop2[pp], upops)
+        class_i <- K + pp
+        for (l in seq_len(L)) {
+          p1 <- af[i,l]
+          p2 <- af[j,l]
+          f1 <- c((1-p1)*(1-p2),
+                  p1*(1-p2) + (1-p1)*p2,
+                  p1*p2)
+          ll_class[l,,class_i] <- as.numeric(f1 %*% trans)
+        }
+      }
+      
+      a1_v <- c(0, 0.5, 1)
+      sample_one <- function(idx) idx[sample.int(length(idx), 1)]
       
       sim_offspring <- function(par1, par2) {
         o <- integer(L)
         for (l in seq_len(L)) {
-          g1 <- gmat[par1,l]; g2 <- gmat[par2,l]
-          ap1 <- if(is.na(g1)) 0.5 else a1_v[g1+1]
-          ap2 <- if(is.na(g2)) 0.5 else a1_v[g2+1]
-          ot  <- rbinom(1,1,ap1)+rbinom(1,1,ap2)
-          o[l] <- sample(0:2,1,prob=trans[ot+1,])
+          g1 <- gmat[par1,l]
+          g2 <- gmat[par2,l]
+          ap1 <- if (is.na(g1)) 0.5 else a1_v[g1+1]
+          ap2 <- if (is.na(g2)) 0.5 else a1_v[g2+1]
+          ot  <- rbinom(1, 1, ap1) + rbinom(1, 1, ap2)
+          o[l] <- sample(0:2, 1, prob=trans[ot+1,])
         }
         o
       }
       
       assign_class <- function(g_obs) {
-        log_L <- numeric(3)
+        log_L <- numeric(n_classes)
         for (l in seq_len(L)) {
           if (is.na(g_obs[l])) next
-          log_L <- log_L+log(pmax(ll_class[l,g_obs[l]+1,],.Machine$double.eps))
+          log_L <- log_L +
+            log(pmax(ll_class[l, g_obs[l]+1, ], .Machine$double.eps))
         }
         which.max(log_L)
       }
       
-      class_labels <- c(upops[1],upops[2],"F1")
-      
       if (verbose >= 2)
-        cat(sprintf("Simulating %d F1, %d pure %s, %d pure %s...\n",
-                    n_sim_hyb, n_sim_hyb, upops[1], n_sim_hyb, upops[2]))
+        cat(sprintf("Simulating %d F1 offspring for each of %d population pairs (%d total F1 simulations)...\n",
+                    n_sim_hyb, n_pairs, n_pairs*n_sim_hyb))
       
-      true_class     <- rep(c("F1",upops[1],upops[2]), each=n_sim_hyb)
-      assigned_class <- character(3*n_sim_hyb)
+      records <- vector("list", n_pairs*n_sim_hyb)
+      rec_i <- 0L
       
-      for (s in seq_len(n_sim_hyb))
-        assigned_class[s] <-
-        class_labels[assign_class(sim_offspring(sample(idx1,1),sample(idx2,1)))]
-      for (s in seq_len(n_sim_hyb))
-        assigned_class[n_sim_hyb+s] <-
-        class_labels[assign_class(sim_offspring(sample(idx1,1),sample(idx1,1)))]
-      for (s in seq_len(n_sim_hyb))
-        assigned_class[2*n_sim_hyb+s] <-
-        class_labels[assign_class(sim_offspring(sample(idx2,1),sample(idx2,1)))]
+      # Simulate F1 hybrids for every pairwise population cross.
+      for (pp in seq_len(n_pairs)) {
+        idx_1 <- pop_idx[[pair_df$pop1[pp]]]
+        idx_2 <- pop_idx[[pair_df$pop2[pp]]]
+        
+        for (s in seq_len(n_sim_hyb)) {
+          ass_i <- assign_class(sim_offspring(sample_one(idx_1), sample_one(idx_2)))
+          rec_i <- rec_i + 1L
+          records[[rec_i]] <- data.frame(
+            sim              = s,
+            pop1             = pair_df$pop1[pp],
+            pop2             = pair_df$pop2[pp],
+            true_cross       = pair_df$true_cross[pp],
+            true_class       = pair_df$f1_class[pp],
+            assigned_class   = class_labels[ass_i],
+            assigned_type    = class_type[ass_i],
+            assigned_cross   = class_cross[ass_i],
+            hybrid_detected  = class_type[ass_i] == "F1",
+            correct_f1_pair  = class_labels[ass_i] == pair_df$f1_class[pp],
+            stringsAsFactors = FALSE
+          )
+        }
+      }
       
-      res <- data.frame(
-        true_class=true_class, assigned_class=assigned_class,
-        correct=true_class==assigned_class, stringsAsFactors=FALSE
+      res <- do.call(rbind, records)
+      res$true_cross      <- factor(res$true_cross, levels=pair_df$true_cross)
+      res$true_class      <- factor(res$true_class, levels=pair_df$f1_class)
+      res$assigned_class  <- factor(res$assigned_class,
+                                    levels=c(pair_df$f1_class, upops))
+      res$assigned_type   <- factor(res$assigned_type, levels=c("F1", "pure"))
+      
+      # Performance requested here: proportion of all simulated F1s assigned
+      # to the correct pairwise F1 class. The broader hybrid-detected rate is
+      # kept only as an additional diagnostic.
+      f1_detected_r <- mean(res$hybrid_detected)
+      correct_pair_r <- mean(res$correct_f1_pair)
+      perf <- correct_pair_r
+      
+      param_summary <- aggregate(
+        cbind(hybrid_detected, correct_f1_pair) ~ true_cross,
+        data = res,
+        FUN = mean
       )
-      hyb_r   <- mean(res$correct[res$true_class=="F1"])
-      pure1_r <- mean(res$correct[res$true_class==upops[1]])
-      pure2_r <- mean(res$correct[res$true_class==upops[2]])
-      perf    <- hyb_r
+      names(param_summary)[names(param_summary) == "hybrid_detected"] <-
+        "f1_detected_rate"
+      names(param_summary)[names(param_summary) == "correct_f1_pair"] <-
+        "correct_f1_pair_rate"
+      param_summary$n_sim <- n_sim_hyb
       
-      if (verbose >= 2)
-        cat(sprintf("F1: %.1f%%  |  pure %s: %.1f%%  |  pure %s: %.1f%%\n",
-                    100*hyb_r, upops[1], 100*pure1_r, upops[2], 100*pure2_r))
-      
-      plot_df <- as.data.frame(
-        table(true_class=res$true_class, assigned_class=res$assigned_class),
+      confusion <- as.data.frame(
+        table(true_cross=res$true_cross,
+              assigned_class=res$assigned_class),
         stringsAsFactors=FALSE
       )
-      plot_df$true_class <- factor(plot_df$true_class,
-                                   levels=c(upops[1],upops[2],"F1"))
-      fill_cols <- setNames(c("steelblue","salmon","goldenrod"),
-                            c(upops[1],upops[2],"F1"))
+      names(confusion)[names(confusion) == "Freq"] <- "n"
+      totals <- aggregate(n ~ true_cross, data=confusion, sum)
+      names(totals)[2] <- "total"
+      confusion <- merge(confusion, totals, by="true_cross", all.x=TRUE)
+      confusion$proportion <- confusion$n / confusion$total
+      confusion$assigned_type <- ifelse(grepl("^F1: ", confusion$assigned_class),
+                                        "F1", "pure")
+      confusion$true_cross <- factor(confusion$true_cross,
+                                     levels=pair_df$true_cross)
+      confusion$assigned_class <- factor(confusion$assigned_class,
+                                         levels=c(pair_df$f1_class, upops))
+      confusion <- confusion[order(confusion$true_cross,
+                                   confusion$assigned_class), ]
       
-      gg <- ggplot(plot_df, aes(x=true_class,y=Freq,fill=assigned_class)) +
-        geom_bar(stat="identity", position="fill",
-                 colour="white", linewidth=0.2) +
-        scale_fill_manual(values=fill_cols, name="Assigned to") +
+      if (verbose >= 2)
+        cat(sprintf("F1 detected over all pairs: %.1f%%  |  correct F1 pair/performance: %.1f%%\n",
+                    100*f1_detected_r, 100*correct_pair_r))
+      
+      gg <- ggplot(confusion,
+                   aes(x=assigned_class, y=true_cross, fill=proportion)) +
+        geom_tile(colour="white", linewidth=0.2) +
+        scale_fill_gradient(low="white", high="steelblue", limits=c(0,1),
+                            name="Proportion") +
         labs(title    = "Hybridisation",
-             subtitle = sprintf("F1: %.1f%%  |  pure %s: %.1f%%  |  pure %s: %.1f%%",
-                                100*hyb_r, upops[1], 100*pure1_r, upops[2], 100*pure2_r),
-             x="True class", y="Proportion assigned") +
-        centre_theme()
+             subtitle = sprintf(paste0("F1 detected: %.1f%%  |  correct F1 pair: %.1f%%  |  ",
+                                      "%d pairs, %d F1 per pair"),
+                                100*f1_detected_r, 100*correct_pair_r,
+                                n_pairs, n_sim_hyb),
+             x="Assigned class", y="True F1 cross") +
+        theme(axis.text.x  = element_text(angle=45, hjust=1),
+              plot.title   = element_text(hjust=0.5),
+              plot.subtitle= element_text(hjust=0.5))
+      
+      if (nrow(confusion) <= 120) {
+        gg <- gg + geom_text(aes(label=sprintf("%.2f", proportion)),
+                             size=2.4)
+      }
     }
     
-    if (verbose >= 1) cat(sprintf("Performance (%s): %.4f\n", param, perf))
+    if (verbose >= 1) {
+      if (param %in% correlation_params)
+        cat(sprintf("Performance (%s, %s): %.4f\n",
+                    param, corr_metric_label(), perf))
+      else
+        cat(sprintf("Performance (%s): %.4f\n", param, perf))
+    }
     
     output[[param]] <- list(
       name        = param,
       performance = round(perf, 4),
+      corr.method = if (param %in% correlation_params) corr.method else NA_character_,
       data        = res,
+      summary     = param_summary,
+      confusion   = confusion,
       plot        = gg
     )
   }
@@ -768,9 +926,9 @@ gl.check.panel <- function(x,
                            midpoint=0.7, limits=c(0,1), name=NULL) +
       coord_cartesian(ylim=c(0,1)) +
       labs(title    = "Performance summary",
-           subtitle = sprintf("Mean: %.3f  |  %d loci  |  %d pops",
+           subtitle = sprintf("Mean: %.3f  |  %d loci  |  %d pops  |  corr: %s",
                               mean(perf_df$performance, na.rm=TRUE),
-                              nLoc(x), nPop(x)),
+                              nLoc(x), nPop(x), corr.method),
            x=NULL, y="Performance (0\u20131)") +
       theme(legend.position = "none",
             axis.text.x     = element_text(angle=45, hjust=1),

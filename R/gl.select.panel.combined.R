@@ -9,13 +9,18 @@
 #' @param x A \code{dartR} or \code{genlight} object. Full dataset from which
 #'   the panel is selected and against which performance is evaluated. If
 #'   \code{"hybridisation"} is in \code{parameter}, \code{x} must have
-#'   exactly 2 populations.
+#'   at least 2 populations; all pairwise population crosses are evaluated.
 #' @param nl Integer. Number of loci to select. Default \code{10}.
 #' @param parameter Character vector. Parameters to optimise. Subset of
 #'   \code{"Fst"}, \code{"He"}, \code{"Ho"}, \code{"Fis"}, \code{"Nall"},
 #'   \code{"id"}, \code{"parentage"}, \code{"assignment"},
-#'   \code{"hybridisation"}. \code{"Ne"} not supported. Default
+#'   \code{"hybridisation"}, \code{"Ne"}. Default
 #'   \code{c("Fst", "He")}.
+#' @param neest.path Character string. Path to NEstimator executable,
+#'   required only when \code{"Ne"} is included in \code{parameter}.
+#' @param corr.method Character. Correlation method passed to
+#'   \code{gl.check.panel} for correlation-based performance metrics.
+#'   Options are \code{"spearman"} (default) and \code{"pearson"}.
 #' @param weights Numeric vector, one per element of \code{parameter}.
 #'   \code{NULL} (default) = equal weights.
 #' @param init.method Initialisation method from \code{\link{gl.select.panel}}.
@@ -42,8 +47,8 @@
 #'   \code{"parentage"}. Default \code{0.001}.
 #' @param n_sim_parent Integer. Number of simulated trios for
 #'   \code{"parentage"}. Default \code{50}.
-#' @param n_sim_hyb Integer. Simulated individuals per class for
-#'   \code{"hybridisation"}. Default \code{100}.
+#' @param n_sim_hyb Integer. Simulated F1 individuals per pairwise
+#'   population cross for \code{"hybridisation"}. Default \code{100}.
 #' @param plot.out Logical. Live convergence plot refreshed every
 #'   \code{plot.every} iterations. Default \code{TRUE}.
 #' @param plot.every Integer. Plot refresh interval in iterations.
@@ -81,7 +86,8 @@
 #'     \code{current_performance}, \code{best_performance}, \code{n_swap},
 #'     \code{restarted}
 #'   \item \code{sa_parameters} — list: \code{parameter}, \code{weights},
-#'     \code{cooling}, \code{n_swap_max}, \code{restart_tol}
+#'     \code{corr.method}, \code{cooling}, \code{n_swap_max},
+#'     \code{restart_tol}
 #'   \item \code{sa_stop_reason} — \code{"completed"},
 #'     \code{"stop_criterion"}, or \code{"interrupted"}
 #' }
@@ -115,6 +121,8 @@
 gl.select.panel.combined <- function(x,
                                      nl             = 10,
                                      parameter      = c("Fst", "He"),
+                                     neest.path     = NULL,
+                                     corr.method    = c("spearman", "pearson"),
                                      weights        = NULL,
                                      init.method    = "random",
                                      n_iter         = 100,
@@ -138,6 +146,7 @@ gl.select.panel.combined <- function(x,
   valid_params <- c("Fst","He","Ho","Fis","Nall",
                     "Ho_ind","relatedness",
                     "id","parentage","assignment","hybridisation","Ne")
+  corr.method <- match.arg(tolower(corr.method), c("spearman", "pearson"))
   
   #if ("Ne" %in% parameter)
   #  stop("'Ne' is not supported (too slow for repeated evaluation).")
@@ -146,6 +155,8 @@ gl.select.panel.combined <- function(x,
     stop(paste("Unknown parameter(s):", paste(bad, collapse=", "),
                "\nValid options:", paste(valid_params, collapse=", ")))
   if (length(parameter) == 0)  stop("At least one parameter must be specified.")
+  if ("Ne" %in% parameter && is.null(neest.path))
+    stop("neest.path is required when parameter includes 'Ne'.")
   if (nl > nLoc(x))            stop("nl exceeds the number of loci in x.")
   if (nl < 1)                  stop("nl must be at least 1.")
   if (n_iter < 1)              stop("n_iter must be at least 1.")
@@ -155,9 +166,9 @@ gl.select.panel.combined <- function(x,
   if (!is.null(stop.criterion) &&
       (stop.criterion <= 0 || stop.criterion > 1))
     stop("stop.criterion must be in (0, 1].")
-  if ("hybridisation" %in% parameter && nPop(x) != 2)
-    stop(paste0("'hybridisation' requires exactly 2 populations. ",
-                "Found: ", nPop(x), ". Subset using gl.keep.pop()."))
+  if ("hybridisation" %in% parameter && nPop(x) < 2)
+    stop(paste0("'hybridisation' requires at least 2 populations. ",
+                "Found: ", nPop(x), "."))
   
   # auto-cooling: decay start_temp to ~0.001 over n_iter iterations
   if (is.null(cooling)) {
@@ -201,12 +212,13 @@ gl.select.panel.combined <- function(x,
         x          = panel,
         xorig      = x,
         parameter  = parameter,
+        corr.method = corr.method,
         error.rate = error.rate,
         threshold  = threshold,
         n_sim      = n_sim_parent,
         n_sim_hyb  = n_sim_hyb,
         plot.out   = FALSE,
-        neest.path = "d:/programms/NEestimator/",
+        neest.path = neest.path,
         verbose    = 0
       )
     }, error = function(e) { },
@@ -248,10 +260,10 @@ gl.select.panel.combined <- function(x,
               nl, iter_done, n_iter, best_perf)
     
     sub <- sprintf(
-      "Params: %s  |  Weights: %s  |  cooling=%.4f  |  swap: %d->1%s",
+      "Params: %s  |  Weights: %s  |  corr=%s  |  cooling=%.4f  |  swap: %d->1%s",
       paste(parameter, collapse=", "),
       paste(names(w_norm), round(w_norm, 2), sep="=", collapse=", "),
-      cooling, n_swap_max,
+      corr.method, cooling, n_swap_max,
       if (!is.null(restart_tol))
         sprintf("  |  restart_tol=%.2f", restart_tol) else ""
     )
@@ -288,6 +300,8 @@ gl.select.panel.combined <- function(x,
     xx@other$sa_history          <- hist[seq_len(iter_d + 1), ]
     xx@other$sa_parameters       <- list(parameter   = parameter,
                                          weights     = w_norm,
+                                         neest.path  = neest.path,
+                                         corr.method = corr.method,
                                          cooling     = cooling,
                                          n_swap_max  = n_swap_max,
                                          restart_tol = restart_tol)
@@ -311,7 +325,8 @@ gl.select.panel.combined <- function(x,
   # ---------------------------------------------------------------
   # initialise
   # ---------------------------------------------------------------
-  cat(sprintf("Initialising with method = '%s'...\n", init.method))
+  cat(sprintf("Initialising with method = '%s' (corr.method = '%s')...\n",
+              init.method, corr.method))
   
   init_panel  <- gl.select.panel(x, method = init.method, nl = nl,
                                  plot.out = FALSE, verbose = 0)

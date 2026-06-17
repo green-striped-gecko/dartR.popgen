@@ -15,7 +15,14 @@
 #'   \code{"Fis"}, \code{"Nall"}, \code{"Ho_ind"}, \code{"relatedness"},
 #'   \code{"id"}, \code{"parentage"}, \code{"assignment"},
 #'   \code{"hybridisation"}, \code{"all"}, \code{"all-Ne"}.
+#'   For \code{"hybridisation"}, all pairwise population crosses are
+#'   evaluated when two or more populations are present.
 #'   Default \code{c("Fst", "He")}.
+#' @param corr.method Character. Correlation method passed to
+#'   \code{gl.check.panel} for correlation-based performance metrics.
+#'   Options are \code{"spearman"} (default) and \code{"pearson"}.
+#' @param neest.path Character string. Path to NEstimator executable,
+#'   required only when \code{"Ne"} is included in \code{parameter}.
 #' @param type Character. \code{"drift"} (default) simulates genetic drift
 #'   internally. \code{"user"} accepts user-supplied genlights via
 #'   \code{user.gl}.
@@ -40,8 +47,8 @@
 #'   \code{"parentage"}. Default \code{0.001}.
 #' @param n_sim_parent Integer. Simulated trios for \code{"parentage"}.
 #'   Default \code{50}.
-#' @param n_sim_hyb Integer. Simulated individuals per class for
-#'   \code{"hybridisation"}. Default \code{100}.
+#' @param n_sim_hyb Integer. Simulated F1 individuals per pairwise
+#'   population cross for \code{"hybridisation"}. Default \code{100}.
 #' @param n_cores Integer or \code{NULL}. Cores for parallel parentage
 #'   simulation. Default \code{NULL} = auto.
 #' @param target Numeric (0--1) or \code{NULL}. Reference line in the plot.
@@ -60,7 +67,8 @@
 #'
 #' \strong{User mode:} User supplies full-dataset genlights. Panel loci
 #' extracted from each element and \code{gl.check.panel} run at each check
-#' generation.
+#' generation. For correlation-based parameters, the chosen
+#' \code{corr.method} is used at every generation.
 #'
 #' @return
 #' A list: \code{$performance} (data frame), \code{$summary} (per-generation
@@ -85,6 +93,8 @@
 gl.check.future.panel <- function(x,
                                   xorig,
                                   parameter    = c("Fst", "He"),
+                                  corr.method  = c("spearman", "pearson"),
+                                  neest.path   = NULL,
                                   type         = "drift",
                                   user.gl      = NULL,
                                   n_gen        = 10,
@@ -113,6 +123,7 @@ gl.check.future.panel <- function(x,
     parameter <- setdiff(all_params, "Ne")
   parameter[parameter == "Ar"] <- "Nall"
   parameter <- unique(parameter)
+  corr.method <- match.arg(tolower(corr.method), c("spearman", "pearson"))
   
   # ---------------------------------------------------------------
   # validate
@@ -121,6 +132,8 @@ gl.check.future.panel <- function(x,
   bad <- setdiff(parameter, valid_params)
   if (length(bad) > 0)
     stop(paste("Unknown parameter(s):", paste(bad, collapse=", ")))
+  if ("Ne" %in% parameter && is.null(neest.path))
+    stop("neest.path is required when parameter includes 'Ne'.")
   
   if (!type %in% c("drift","user"))
     stop("type must be 'drift' or 'user'.")
@@ -154,8 +167,8 @@ gl.check.future.panel <- function(x,
   if (length(missing_loci) > 0)
     stop(paste0(length(missing_loci), " panel loci not found in xorig."))
   
-  if ("hybridisation" %in% parameter && nPop(x) != 2)
-    stop(paste0("'hybridisation' requires exactly 2 populations. Found: ",
+  if ("hybridisation" %in% parameter && nPop(x) < 2)
+    stop(paste0("'hybridisation' requires at least 2 populations. Found: ",
                 nPop(x), "."))
   
   verbose <- if (is.null(verbose)) 2L else as.integer(verbose)
@@ -200,8 +213,8 @@ gl.check.future.panel <- function(x,
   panel_idx <- which(loc_orig %in% panel_loci)
   
   cat(sprintf(
-    "gl.check.future.panel [%s]: %d panel loci | %d full loci | %d pops | %d gen | %d sim | check: %s\n",
-    type, length(panel_loci), L_orig, K, n_gen, n_sim,
+    "gl.check.future.panel [%s]: %d panel loci | %d full loci | %d pops | %d gen | %d sim | corr=%s | check: %s\n",
+    type, length(panel_loci), L_orig, K, n_gen, n_sim, corr.method,
     if (length(check_gens) <= 10) paste(check_gens, collapse=", ")
     else sprintf("%d generations", length(check_gens))
   ))
@@ -284,12 +297,14 @@ gl.check.future.panel <- function(x,
         x            = x_panel,
         xorig        = x_full,
         parameter    = parameter,
+        corr.method  = corr.method,
         error.rate   = error.rate,
         threshold    = threshold,
         n_sim        = n_sim_parent,
         n_sim_hyb    = n_sim_hyb,
         n_cores      = n_cores,
         target       = target,
+        neest.path   = neest.path,
         plot.out     = FALSE,
         verbose      = 0
       ),
@@ -423,11 +438,11 @@ gl.check.future.panel <- function(x,
   if (plot.out) {
     
     sub_title <- if (type=="drift")
-      sprintf("%d panel loci  |  %d populations  |  %d replicates  |  ribbons: IQR (dark), range (light)",
-              length(panel_loci), K, n_sim)
+      sprintf("%d panel loci  |  %d populations  |  %d replicates  |  corr=%s  |  ribbons: IQR (dark), range (light)",
+              length(panel_loci), K, n_sim, corr.method)
     else
-      sprintf("%d panel loci  |  %d populations  |  user-supplied simulation",
-              length(panel_loci), K)
+      sprintf("%d panel loci  |  %d populations  |  corr=%s  |  user-supplied simulation",
+              length(panel_loci), K, corr.method)
     
     gg <- ggplot(summary_df, aes(x=generation, colour=parameter,
                                  fill=parameter)) +
@@ -463,6 +478,8 @@ gl.check.future.panel <- function(x,
   return(invisible(list(
     performance  = df,
     summary      = summary_df,
+    corr.method  = corr.method,
+    neest.path   = neest.path,
     final_panels = final_panels,
     plot         = gg
   )))
