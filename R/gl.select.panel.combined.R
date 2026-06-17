@@ -137,10 +137,10 @@ gl.select.panel.combined <- function(x,
   # ---------------------------------------------------------------
   valid_params <- c("Fst","He","Ho","Fis","Nall",
                     "Ho_ind","relatedness",
-                    "id","parentage","assignment","hybridisation")
+                    "id","parentage","assignment","hybridisation","Ne")
   
-  if ("Ne" %in% parameter)
-    stop("'Ne' is not supported (too slow for repeated evaluation).")
+  #if ("Ne" %in% parameter)
+  #  stop("'Ne' is not supported (too slow for repeated evaluation).")
   bad <- setdiff(parameter, valid_params)
   if (length(bad) > 0)
     stop(paste("Unknown parameter(s):", paste(bad, collapse=", "),
@@ -206,6 +206,7 @@ gl.select.panel.combined <- function(x,
         n_sim      = n_sim_parent,
         n_sim_hyb  = n_sim_hyb,
         plot.out   = FALSE,
+        neest.path = "d:/programms/NEestimator/",
         verbose    = 0
       )
     }, error = function(e) { },

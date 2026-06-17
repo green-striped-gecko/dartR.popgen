@@ -319,9 +319,9 @@ gl.check.panel <- function(x,
     if (param == "Ne") {
       if (is.null(neest.path)) stop("neest.path required for 'Ne'.")
       ne_orig  <- gl.LDNe(xorig, neest.path=neest.path, critical=0.05,
-                          verbose=0, mating="random")
+                          verbose=0, mating="random", plot.out = F)
       ne_panel <- gl.LDNe(x,     neest.path=neest.path, critical=0.05,
-                          verbose=0, mating="random", singleton.rm=FALSE)
+                          verbose=0, mating="random", singleton.rm=FALSE, plot.out = F)
       extract_ne <- function(nl)
         as.numeric(unlist(lapply(nl, function(z) z$`Frequency 1`[6])))
       res <- data.frame(ne_orig=extract_ne(ne_orig), ne_panel=extract_ne(ne_panel))
