@@ -13,8 +13,11 @@
 #' @param nl Integer. Number of loci to select. Default \code{10}.
 #' @param parameter Character vector. Parameters to optimise. Subset of
 #'   \code{"Fst"}, \code{"He"}, \code{"Ho"}, \code{"Fis"}, \code{"Nall"},
-#'   \code{"id"}, \code{"parentage"}, \code{"assignment"},
-#'   \code{"hybridisation"}, \code{"Ne"}. Default
+#'   \code{"Ho_ind"}, \code{"relatedness"}, \code{"id"},
+#'   \code{"parentage"}, \code{"assignment"}, \code{"hybridisation"},
+#'   \code{"Ne"}. The shortcuts \code{"all"} (all parameters except
+#'   \code{"hybridisation"}) and \code{"all-Ne"} (as \code{"all"} but
+#'   also excluding \code{"Ne"}) are expanded automatically. Default
 #'   \code{c("Fst", "He")}.
 #' @param neest.path Character string. Path to NEstimator executable,
 #'   required only when \code{"Ne"} is included in \code{parameter}.
@@ -45,7 +48,7 @@
 #'   Default \code{0.01}.
 #' @param threshold Numeric. Confusion threshold for \code{"id"} and
 #'   \code{"parentage"}. Default \code{0.001}.
-#' @param n_sim_parent Integer. Number of simulated trios for
+#' @param n_sim_parents Integer. Number of simulated trios for
 #'   \code{"parentage"}. Default \code{50}.
 #' @param n_sim_hyb Integer. Simulated F1 individuals per pairwise
 #'   population cross for \code{"hybridisation"}. Default \code{100}.
@@ -86,8 +89,8 @@
 #'     \code{current_performance}, \code{best_performance}, \code{n_swap},
 #'     \code{restarted}
 #'   \item \code{sa_parameters} — list: \code{parameter}, \code{weights},
-#'     \code{corr.method}, \code{cooling}, \code{n_swap_max},
-#'     \code{restart_tol}
+#'     \code{neest.path}, \code{corr.method}, \code{cooling},
+#'     \code{n_swap_max}, \code{restart_tol}
 #'   \item \code{sa_stop_reason} — \code{"completed"},
 #'     \code{"stop_criterion"}, or \code{"interrupted"}
 #' }
@@ -132,7 +135,7 @@ gl.select.panel.combined <- function(x,
                                      stop.criterion = NULL,
                                      error.rate     = 0.01,
                                      threshold      = 0.001,
-                                     n_sim_parent   = 50,
+                                     n_sim_parents  = 50,
                                      n_sim_hyb      = 100,
                                      plot.out       = TRUE,
                                      plot.every     = 10,
@@ -143,6 +146,16 @@ gl.select.panel.combined <- function(x,
   # ---------------------------------------------------------------
   # input validation
   # ---------------------------------------------------------------
+  all_params <- c("Fst","He","Ho","Fis","Nall","Ne",
+                  "Ho_ind","relatedness",
+                  "id","parentage","assignment")
+  if (length(parameter) == 1 && parameter == "all")
+    parameter <- all_params
+  if (length(parameter) == 1 && parameter == "all-Ne")
+    parameter <- setdiff(all_params, "Ne")
+  parameter[parameter == "Ar"] <- "Nall"
+  parameter <- unique(parameter)
+
   valid_params <- c("Fst","He","Ho","Fis","Nall",
                     "Ho_ind","relatedness",
                     "id","parentage","assignment","hybridisation","Ne")
@@ -215,7 +228,7 @@ gl.select.panel.combined <- function(x,
         corr.method = corr.method,
         error.rate = error.rate,
         threshold  = threshold,
-        n_sim      = n_sim_parent,
+        n_sim_parents = n_sim_parents,
         n_sim_hyb  = n_sim_hyb,
         plot.out   = FALSE,
         neest.path = neest.path,

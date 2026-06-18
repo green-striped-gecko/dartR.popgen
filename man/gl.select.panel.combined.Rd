@@ -19,7 +19,7 @@ gl.select.panel.combined(
   stop.criterion = NULL,
   error.rate = 0.01,
   threshold = 0.001,
-  n_sim_parent = 50,
+  n_sim_parents = 50,
   n_sim_hyb = 100,
   plot.out = TRUE,
   plot.every = 10,
@@ -38,8 +38,11 @@ at least 2 populations; all pairwise population crosses are evaluated.}
 
 \item{parameter}{Character vector. Parameters to optimise. Subset of
 \code{"Fst"}, \code{"He"}, \code{"Ho"}, \code{"Fis"}, \code{"Nall"},
-\code{"id"}, \code{"parentage"}, \code{"assignment"},
-\code{"hybridisation"}, \code{"Ne"}. Default
+\code{"Ho_ind"}, \code{"relatedness"}, \code{"id"},
+\code{"parentage"}, \code{"assignment"}, \code{"hybridisation"},
+\code{"Ne"}. The shortcuts \code{"all"} (all parameters except
+\code{"hybridisation"}) and \code{"all-Ne"} (as \code{"all"} but
+also excluding \code{"Ne"}) are expanded automatically. Default
 \code{c("Fst", "He")}.}
 
 \item{neest.path}{Character string. Path to NEstimator executable,
@@ -82,7 +85,7 @@ Default \code{0.01}.}
 \item{threshold}{Numeric. Confusion threshold for \code{"id"} and
 \code{"parentage"}. Default \code{0.001}.}
 
-\item{n_sim_parent}{Integer. Number of simulated trios for
+\item{n_sim_parents}{Integer. Number of simulated trios for
 \code{"parentage"}. Default \code{50}.}
 
 \item{n_sim_hyb}{Integer. Simulated F1 individuals per pairwise
@@ -109,8 +112,8 @@ Stored in \code{x@other}:
     \code{current_performance}, \code{best_performance}, \code{n_swap},
     \code{restarted}
   \item \code{sa_parameters} — list: \code{parameter}, \code{weights},
-    \code{corr.method}, \code{cooling}, \code{n_swap_max},
-    \code{restart_tol}
+    \code{neest.path}, \code{corr.method}, \code{cooling},
+    \code{n_swap_max}, \code{restart_tol}
   \item \code{sa_stop_reason} — \code{"completed"},
     \code{"stop_criterion"}, or \code{"interrupted"}
 }

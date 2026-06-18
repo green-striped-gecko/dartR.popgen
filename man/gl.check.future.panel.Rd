@@ -13,11 +13,11 @@ gl.check.future.panel(
   type = "drift",
   user.gl = NULL,
   n_gen = 10,
-  n_sim = 5,
+  replicates = 5,
   n_check = NULL,
   error.rate = 0.01,
   threshold = 0.001,
-  n_sim_parent = 50,
+  n_sim_parents = 50,
   n_sim_hyb = 100,
   n_cores = NULL,
   target = 0.9,
@@ -36,9 +36,10 @@ dataset. All loci in \code{x} must be present in \code{xorig}.}
 
 \item{parameter}{Character vector. Parameters to evaluate. Same options as
 \code{\link{gl.check.panel}}: \code{"Fst"}, \code{"He"}, \code{"Ho"},
-\code{"Fis"}, \code{"Nall"}, \code{"Ho_ind"}, \code{"relatedness"},
-\code{"id"}, \code{"parentage"}, \code{"assignment"},
-\code{"hybridisation"}, \code{"all"}, \code{"all-Ne"}.
+\code{"Fis"}, \code{"Nall"}, \code{"Ne"}, \code{"Ho_ind"},
+\code{"relatedness"}, \code{"id"}, \code{"parentage"},
+\code{"assignment"}, \code{"hybridisation"}, \code{"all"},
+\code{"all-Ne"}.
 For \code{"hybridisation"}, all pairwise population crosses are
 evaluated when two or more populations are present.
 Default \code{c("Fst", "He")}.}
@@ -64,7 +65,7 @@ is set to \code{length(user.gl)}. If \code{n_check} requests
 generations beyond \code{n_gen}, \code{n_gen} is extended automatically.
 Default \code{10}.}
 
-\item{n_sim}{Integer. Number of replicate drift simulations
+\item{replicates}{Integer. Number of replicate drift simulations
 (\code{type = "drift"} only). Default \code{5}.}
 
 \item{n_check}{Integer vector or \code{NULL}. Generations at which to
@@ -79,7 +80,7 @@ evaluate panel performance. Generation 0 (baseline) is always included.
 \item{threshold}{Numeric. Confusion threshold for \code{"id"} and
 \code{"parentage"}. Default \code{0.001}.}
 
-\item{n_sim_parent}{Integer. Simulated trios for \code{"parentage"}.
+\item{n_sim_parents}{Integer. Simulated trios for \code{"parentage"}.
 Default \code{50}.}
 
 \item{n_sim_hyb}{Integer. Simulated F1 individuals per pairwise
@@ -102,8 +103,9 @@ Default \code{TRUE}.}
 }
 \value{
 A list: \code{$performance} (data frame), \code{$summary} (per-generation
-summaries), \code{$final_panels} (panel genlights at last check
-generation), \code{$plot}.
+summaries), \code{$corr.method}, \code{$neest.path},
+\code{$final_panels} (panel genlights at last check generation),
+\code{$plot}.
 }
 \description{
 Evaluates how well a SNP panel maintains its performance across multiple
@@ -129,7 +131,7 @@ panel <- gl.select.panel(possums.gl, method = "random", nl = 50)
 fut <- gl.check.future.panel(panel, possums.gl,
                               parameter = c("Fst", "He"),
                               n_gen  = 10,
-                              n_sim  = 5,
+                              replicates  = 5,
                               n_check = c(5, 10, 20))
 
 }

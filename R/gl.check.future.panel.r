@@ -12,9 +12,10 @@
 #'   dataset. All loci in \code{x} must be present in \code{xorig}.
 #' @param parameter Character vector. Parameters to evaluate. Same options as
 #'   \code{\link{gl.check.panel}}: \code{"Fst"}, \code{"He"}, \code{"Ho"},
-#'   \code{"Fis"}, \code{"Nall"}, \code{"Ho_ind"}, \code{"relatedness"},
-#'   \code{"id"}, \code{"parentage"}, \code{"assignment"},
-#'   \code{"hybridisation"}, \code{"all"}, \code{"all-Ne"}.
+#'   \code{"Fis"}, \code{"Nall"}, \code{"Ne"}, \code{"Ho_ind"},
+#'   \code{"relatedness"}, \code{"id"}, \code{"parentage"},
+#'   \code{"assignment"}, \code{"hybridisation"}, \code{"all"},
+#'   \code{"all-Ne"}.
 #'   For \code{"hybridisation"}, all pairwise population crosses are
 #'   evaluated when two or more populations are present.
 #'   Default \code{c("Fst", "He")}.
@@ -34,7 +35,7 @@
 #'   is set to \code{length(user.gl)}. If \code{n_check} requests
 #'   generations beyond \code{n_gen}, \code{n_gen} is extended automatically.
 #'   Default \code{10}.
-#' @param n_sim Integer. Number of replicate drift simulations
+#' @param replicates Integer. Number of replicate drift simulations
 #'   (\code{type = "drift"} only). Default \code{5}.
 #' @param n_check Integer vector or \code{NULL}. Generations at which to
 #'   evaluate panel performance. Generation 0 (baseline) is always included.
@@ -45,7 +46,7 @@
 #' @param error.rate Numeric. Per-allele error rate. Default \code{0.01}.
 #' @param threshold Numeric. Confusion threshold for \code{"id"} and
 #'   \code{"parentage"}. Default \code{0.001}.
-#' @param n_sim_parent Integer. Simulated trios for \code{"parentage"}.
+#' @param n_sim_parents Integer. Simulated trios for \code{"parentage"}.
 #'   Default \code{50}.
 #' @param n_sim_hyb Integer. Simulated F1 individuals per pairwise
 #'   population cross for \code{"hybridisation"}. Default \code{100}.
@@ -72,8 +73,9 @@
 #'
 #' @return
 #' A list: \code{$performance} (data frame), \code{$summary} (per-generation
-#' summaries), \code{$final_panels} (panel genlights at last check
-#' generation), \code{$plot}.
+#' summaries), \code{$corr.method}, \code{$neest.path},
+#' \code{$final_panels} (panel genlights at last check generation),
+#' \code{$plot}.
 #'
 #' @examples
 #' panel <- gl.select.panel(possums.gl, method = "random", nl = 50)
@@ -82,7 +84,7 @@
 #' fut <- gl.check.future.panel(panel, possums.gl,
 #'                               parameter = c("Fst", "He"),
 #'                               n_gen  = 10,
-#'                               n_sim  = 5,
+#'                               replicates  = 5,
 #'                               n_check = c(5, 10, 20))
 #'
 #' @export
@@ -98,11 +100,11 @@ gl.check.future.panel <- function(x,
                                   type         = "drift",
                                   user.gl      = NULL,
                                   n_gen        = 10,
-                                  n_sim        = 5,
+                                  replicates        = 5,
                                   n_check      = NULL,
                                   error.rate   = 0.01,
                                   threshold    = 0.001,
-                                  n_sim_parent = 50,
+                                  n_sim_parents = 50,
                                   n_sim_hyb    = 100,
                                   n_cores      = NULL,
                                   target       = 0.9,
@@ -151,12 +153,12 @@ gl.check.future.panel <- function(x,
       stop(paste0("Panel loci missing from user.gl element(s): ",
                   paste(which(missing_check > 0), collapse=", ")))
     n_gen <- length(user.gl)
-    n_sim <- 1L
+    replicates <- 1L
   }
   
   if (type == "drift") {
     if (n_gen < 1) stop("n_gen must be >= 1.")
-    if (n_sim < 1) stop("n_sim must be >= 1.")
+    if (replicates < 1) stop("replicates must be >= 1.")
   }
   
   if (!is.null(target) && (target <= 0 || target > 1))
@@ -213,8 +215,8 @@ gl.check.future.panel <- function(x,
   panel_idx <- which(loc_orig %in% panel_loci)
   
   cat(sprintf(
-    "gl.check.future.panel [%s]: %d panel loci | %d full loci | %d pops | %d gen | %d sim | corr=%s | check: %s\n",
-    type, length(panel_loci), L_orig, K, n_gen, n_sim, corr.method,
+    "gl.check.future.panel [%s]: %d panel loci | %d full loci | %d pops | %d gen | %d rep | corr=%s | check: %s\n",
+    type, length(panel_loci), L_orig, K, n_gen, replicates, corr.method,
     if (length(check_gens) <= 10) paste(check_gens, collapse=", ")
     else sprintf("%d generations", length(check_gens))
   ))
@@ -300,7 +302,7 @@ gl.check.future.panel <- function(x,
         corr.method  = corr.method,
         error.rate   = error.rate,
         threshold    = threshold,
-        n_sim        = n_sim_parent,
+        n_sim_parents = n_sim_parents,
         n_sim_hyb    = n_sim_hyb,
         n_cores      = n_cores,
         target       = target,
@@ -327,8 +329,8 @@ gl.check.future.panel <- function(x,
   base_perf <- check_perf(x, xorig)
   
   records      <- list()
-  final_panels <- vector("list", n_sim)
-  names(final_panels) <- paste0("rep_", seq_len(n_sim))
+  final_panels <- vector("list", replicates)
+  names(final_panels) <- paste0("rep_", seq_len(replicates))
   
   for (p in parameter)
     records[[length(records)+1L]] <- data.frame(
@@ -340,8 +342,8 @@ gl.check.future.panel <- function(x,
   # ---------------------------------------------------------------
   if (type == "drift") {
     
-    for (rep in seq_len(n_sim)) {
-      cat(sprintf("Replicate %d / %d\n", rep, n_sim))
+    for (rep in seq_len(replicates)) {
+      cat(sprintf("Replicate %d / %d\n", rep, replicates))
       af_curr <- af_init
       
       for (gen in seq_len(n_gen)) {
@@ -439,7 +441,7 @@ gl.check.future.panel <- function(x,
     
     sub_title <- if (type=="drift")
       sprintf("%d panel loci  |  %d populations  |  %d replicates  |  corr=%s  |  ribbons: IQR (dark), range (light)",
-              length(panel_loci), K, n_sim, corr.method)
+              length(panel_loci), K, replicates, corr.method)
     else
       sprintf("%d panel loci  |  %d populations  |  corr=%s  |  user-supplied simulation",
               length(panel_loci), K, corr.method)
@@ -473,7 +475,7 @@ gl.check.future.panel <- function(x,
   
   cat(sprintf(
     "\nDone. %d records | %d parameters | %d check generations | %d replicate(s).\n",
-    nrow(df), length(parameter), length(check_gens), n_sim))
+    nrow(df), length(parameter), length(check_gens), replicates))
   
   return(invisible(list(
     performance  = df,

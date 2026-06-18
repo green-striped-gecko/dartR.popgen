@@ -11,8 +11,13 @@
 #' @param x A \code{dartR} or \code{genlight} object containing the SNP panel
 #'   (subset of loci).
 #' @param xorig A \code{dartR} or \code{genlight} object containing the full
-#'   original dataset for comparison. Not required for \code{"id"},
-#'   \code{"parentage"}, \code{"assignment"}, or \code{"hybridisation"}.
+#'   original dataset for comparison. Default \code{NULL}. Required for all
+#'   correlation/comparison parameters (\code{"Fst"}, \code{"He"},
+#'   \code{"Ho"}, \code{"Fis"}, \code{"Nall"}, \code{"Ne"},
+#'   \code{"Ho_ind"}, \code{"relatedness"}). May be left \code{NULL} when
+#'   only \code{"id"}, \code{"parentage"}, \code{"assignment"}, or
+#'   \code{"hybridisation"} are requested, as these are evaluated on
+#'   \code{x} alone.
 #' @param parameter Character string or vector specifying the parameter(s) to
 #'   evaluate. Options:
 #'   \itemize{
@@ -53,7 +58,7 @@
 #'   \code{0.01}.
 #' @param threshold Numeric. Confusion threshold for \code{"id"} and
 #'   \code{"parentage"}. Default \code{0.001}.
-#' @param n_sim Integer. Simulated trios for \code{"parentage"}.
+#' @param n_sim_parents Integer. Simulated trios for \code{"parentage"}.
 #'   Default \code{100}.
 #' @param n_sim_hyb Integer. Simulated F1 individuals per pairwise
 #'   population cross for \code{"hybridisation"}. Total F1 simulations
@@ -101,8 +106,10 @@
 #'
 #' @return
 #' A named list with one element per parameter, each containing:
-#' \code{name}, \code{performance}, \code{data}, \code{summary},
-#' \code{confusion}, and \code{plot}. For most parameters,
+#' \code{name}, \code{performance}, \code{corr.method}, \code{data},
+#' \code{summary}, \code{confusion}, and \code{plot}. \code{corr.method}
+#' is the correlation method used for correlation-based parameters and
+#' \code{NA} otherwise. For most parameters,
 #' \code{summary} and \code{confusion} are \code{NULL}; for
 #' \code{"hybridisation"}, \code{summary} gives per-cross F1 detection
 #' and correct-pair rates, and \code{confusion} gives the full true-cross by
@@ -126,13 +133,13 @@
 #' @importFrom patchwork wrap_plots
 
 gl.check.panel <- function(x,
-                           xorig,
+                           xorig       = NULL,
                            parameter   = "Fst",
                            corr.method = c("spearman", "pearson"),
                            neest.path  = NULL,
                            error.rate  = 0.01,
                            threshold   = 0.001,
-                           n_sim       = 100,
+                           n_sim_parents = 100,
                            n_sim_hyb   = 100,
                            n_cores     = NULL,
                            target      = 0.9,
@@ -164,10 +171,20 @@ gl.check.panel <- function(x,
   if (length(bad) > 0)
     stop(paste("Unknown parameter(s):", paste(bad, collapse=", "),
                "\nValid:", paste(valid_params, collapse=", ")))
-  
+
+  # xorig is needed only for correlation/comparison parameters; the
+  # power metrics (id, parentage, assignment, hybridisation) run on x alone.
+  if (is.null(xorig) && any(parameter %in% correlation_params)) {
+    need <- intersect(parameter, correlation_params)
+    stop(paste0("xorig is required for parameter(s): ",
+                paste(need, collapse=", "),
+                ".\nLeave xorig = NULL only when requesting id, parentage, ",
+                "assignment, or hybridisation."))
+  }
+
   if (error.rate  < 0 || error.rate  > 1) stop("error.rate must be in [0,1].")
   if (threshold   <= 0 || threshold  >= 1) stop("threshold must be in (0,1).")
-  if (!is.numeric(n_sim)     || n_sim     < 1) stop("n_sim must be a positive integer.")
+  if (!is.numeric(n_sim_parents) || n_sim_parents < 1) stop("n_sim_parents must be a positive integer.")
   if (!is.numeric(n_sim_hyb) || n_sim_hyb < 1) stop("n_sim_hyb must be a positive integer.")
   if (!is.null(target) && (target <= 0 || target > 1)) stop("target must be in (0,1].")
   
@@ -185,7 +202,7 @@ gl.check.panel <- function(x,
   # order populations
   # ---------------------------------------------------------------
   x     <- x[order(pop(x)),]
-  xorig <- xorig[order(pop(xorig)),]
+  if (!is.null(xorig)) xorig <- xorig[order(pop(xorig)),]
   
   # ---------------------------------------------------------------
   # shared helpers
@@ -532,10 +549,10 @@ gl.check.panel <- function(x,
       cores_use <- if (.Platform$OS.type=="windows") {
         #if (n_cores>1) message("Parallel parentage disabled on Windows. Sequential.")
         1L
-      } else min(n_cores, n_sim)
+      } else min(n_cores, n_sim_parents)
       
       if (verbose >= 2)
-        cat(sprintf("Simulating %d trios  (%s)...\n", n_sim,
+        cat(sprintf("Simulating %d trios  (%s)...\n", n_sim_parents,
                     if (cores_use>1) sprintf("%d cores, fork",cores_use) else "sequential"))
       
       run_one_sim <- function(idx) {
@@ -567,25 +584,25 @@ gl.check.panel <- function(x,
       }
       
       sim_results <- if (cores_use>1) {
-        rp <- parallel::mclapply(seq_len(n_sim), run_one_sim, mc.cores=cores_use)
+        rp <- parallel::mclapply(seq_len(n_sim_parents), run_one_sim, mc.cores=cores_use)
         fl <- sapply(rp, inherits, "try-error")
         if (any(fl)) { warning(sum(fl)," sim(s) failed; rerunning."); rp[fl] <- lapply(which(fl),run_one_sim) }
         rp
-      } else lapply(seq_len(n_sim), run_one_sim)
+      } else lapply(seq_len(n_sim_parents), run_one_sim)
       
       res <- data.frame(
-        sim       = seq_len(n_sim),
+        sim       = seq_len(n_sim_parents),
         p1        = sapply(sim_results,`[[`,"p1"),
         p2        = sapply(sim_results,`[[`,"p2"),
         confusion = sapply(sim_results,`[[`,"confusion"),
         metric    = sapply(sim_results,`[[`,"metric")
       )
       n_assigned <- sum(res$confusion<threshold)
-      perf       <- n_assigned/n_sim
+      perf       <- n_assigned/n_sim_parents
       
       if (verbose >= 2)
         cat(sprintf("Assigned: %d / %d (%.1f%%)  (confusion < %g)\n",
-                    n_assigned, n_sim, 100*perf, threshold))
+                    n_assigned, n_sim_parents, 100*perf, threshold))
       
       gg <- ggplot(res, aes(x=metric)) +
         geom_histogram(aes(fill=confusion<threshold), bins=40,
@@ -598,7 +615,7 @@ gl.check.panel <- function(x,
           name=NULL) +
         labs(title    = "Parentage",
              subtitle = sprintf("%d / %d (%.1f%%) assigned  (confusion < %g, e=%.3f)",
-                                n_assigned, n_sim, 100*perf, threshold, e),
+                                n_assigned, n_sim_parents, 100*perf, threshold, e),
              x="1 \u2212 confusion fraction", y="Count") +
         centre_theme()
     }
@@ -611,8 +628,16 @@ gl.check.panel <- function(x,
       trans <- make_trans(e)
       gmat  <- as.matrix(x)
       n     <- nrow(gmat); L <- ncol(gmat)
-      pops  <- as.character(pop(x))
-      upops <- levels(pop(x)); K <- length(upops)
+      pop_f <- pop(x)
+      empty_levels <- setdiff(levels(pop_f), as.character(unique(pop_f)))
+      if (length(empty_levels) > 0) {
+        warning(sprintf(
+          "assignment: dropping %d population(s) with zero individuals: %s",
+          length(empty_levels), paste(empty_levels, collapse=", ")))
+        pop_f <- droplevels(pop_f)
+      }
+      pops  <- as.character(pop_f)
+      upops <- levels(pop_f); K <- length(upops)
       
       if (K<2) stop("At least 2 populations required for 'assignment'.")
       
@@ -692,18 +717,22 @@ gl.check.panel <- function(x,
       trans <- make_trans(e)
       gmat  <- as.matrix(x)
       L     <- ncol(gmat)
-      pops  <- as.character(pop(x))
-      upops <- levels(droplevels(as.factor(pop(x))))
+      pop_f <- as.factor(pop(x))
+      empty_levels <- setdiff(levels(pop_f), as.character(unique(pop_f)))
+      if (length(empty_levels) > 0) {
+        warning(sprintf(
+          "hybridisation: dropping %d population(s) with zero individuals: %s",
+          length(empty_levels), paste(empty_levels, collapse=", ")))
+        pop_f <- droplevels(pop_f)
+      }
+      pops  <- as.character(pop_f)
+      upops <- levels(pop_f)
       K     <- length(upops)
       
       if (K < 2)
         stop("'hybridisation' requires at least 2 populations.")
       
       pop_idx <- setNames(lapply(upops, function(z) which(pops == z)), upops)
-      empty_pops <- names(pop_idx)[vapply(pop_idx, length, integer(1)) == 0]
-      if (length(empty_pops) > 0)
-        stop(paste0("Population(s) with no individuals: ",
-                    paste(empty_pops, collapse=", "), "."))
       
       pair_mat <- utils::combn(upops, 2, simplify = TRUE)
       pair_df <- data.frame(
@@ -841,7 +870,7 @@ gl.check.panel <- function(x,
         "f1_detected_rate"
       names(param_summary)[names(param_summary) == "correct_f1_pair"] <-
         "correct_f1_pair_rate"
-      param_summary$n_sim <- n_sim_hyb
+      param_summary$n_sim_hyb <- n_sim_hyb
       
       confusion <- as.data.frame(
         table(true_cross=res$true_cross,

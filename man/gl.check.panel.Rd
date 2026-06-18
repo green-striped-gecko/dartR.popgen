@@ -6,13 +6,13 @@
 \usage{
 gl.check.panel(
   x,
-  xorig,
+  xorig = NULL,
   parameter = "Fst",
   corr.method = c("spearman", "pearson"),
   neest.path = NULL,
   error.rate = 0.01,
   threshold = 0.001,
-  n_sim = 100,
+  n_sim_parents = 100,
   n_sim_hyb = 100,
   n_cores = NULL,
   target = 0.9,
@@ -27,8 +27,13 @@ gl.check.panel(
 (subset of loci).}
 
 \item{xorig}{A \code{dartR} or \code{genlight} object containing the full
-original dataset for comparison. Not required for \code{"id"},
-\code{"parentage"}, \code{"assignment"}, or \code{"hybridisation"}.}
+original dataset for comparison. Default \code{NULL}. Required for all
+correlation/comparison parameters (\code{"Fst"}, \code{"He"},
+\code{"Ho"}, \code{"Fis"}, \code{"Nall"}, \code{"Ne"},
+\code{"Ho_ind"}, \code{"relatedness"}). May be left \code{NULL} when
+only \code{"id"}, \code{"parentage"}, \code{"assignment"}, or
+\code{"hybridisation"} are requested, as these are evaluated on
+\code{x} alone.}
 
 \item{parameter}{Character string or vector specifying the parameter(s) to
 evaluate. Options:
@@ -75,7 +80,7 @@ only for \code{"Ne"}.}
 \item{threshold}{Numeric. Confusion threshold for \code{"id"} and
 \code{"parentage"}. Default \code{0.001}.}
 
-\item{n_sim}{Integer. Simulated trios for \code{"parentage"}.
+\item{n_sim_parents}{Integer. Simulated trios for \code{"parentage"}.
 Default \code{100}.}
 
 \item{n_sim_hyb}{Integer. Simulated F1 individuals per pairwise
@@ -99,8 +104,10 @@ performance scores only, \code{2} = full progress (default).}
 }
 \value{
 A named list with one element per parameter, each containing:
-\code{name}, \code{performance}, \code{data}, \code{summary},
-\code{confusion}, and \code{plot}. For most parameters,
+\code{name}, \code{performance}, \code{corr.method}, \code{data},
+\code{summary}, \code{confusion}, and \code{plot}. \code{corr.method}
+is the correlation method used for correlation-based parameters and
+\code{NA} otherwise. For most parameters,
 \code{summary} and \code{confusion} are \code{NULL}; for
 \code{"hybridisation"}, \code{summary} gives per-cross F1 detection
 and correct-pair rates, and \code{confusion} gives the full true-cross by

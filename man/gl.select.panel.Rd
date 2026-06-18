@@ -27,6 +27,8 @@ gl.select.panel(
   \item `"stratified"`: Stratified sampling of loci based on allele frequencies.
   \item `"hafall"`: Select loci with the highest allele frequencies across all populations.
   \item `"hafpop"`: Select loci with the highest allele frequencies within each population.
+  \item `"pic"`: Select loci with the highest polymorphic information content (PIC), computed from allele frequencies.
+  \item `"picdart"`: Select loci with the highest average PIC taken from the `dartR` locus metrics (`AvgPIC`).
 }}
 
 \item{nl}{An integer specifying the number of loci to select.}
