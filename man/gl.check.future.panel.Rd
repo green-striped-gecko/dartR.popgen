@@ -9,6 +9,8 @@ gl.check.future.panel(
   xorig,
   parameter = c("Fst", "He"),
   corr.method = c("spearman", "pearson"),
+  ref = c("global", "by.pop"),
+  metric = c("grm", "kinship"),
   neest.path = NULL,
   type = "drift",
   user.gl = NULL,
@@ -47,6 +49,17 @@ Default \code{c("Fst", "He")}.}
 \item{corr.method}{Character. Correlation method passed to
 \code{gl.check.panel} for correlation-based performance metrics.
 Options are \code{"spearman"} (default) and \code{"pearson"}.}
+
+\item{ref}{Character. Allele-frequency reference for \code{"relatedness"},
+passed to \code{gl.check.panel}. \code{"global"} (default) pools across
+the dataset using all pairs; \code{"by.pop"} uses within-population
+frequencies and within-population pairs only. Under \code{type =
+"drift"} the reference is recomputed from the drifted frequencies at
+each check generation.}
+
+\item{metric}{Character. Relatedness reporting scale passed to
+\code{gl.check.panel}: \code{"grm"} (default) or \code{"kinship"}
+(GRM/2). Does not change the correlation-based performance value.}
 
 \item{neest.path}{Character string. Path to NEstimator executable,
 required only when \code{"Ne"} is included in \code{parameter}.}
@@ -103,9 +116,9 @@ Default \code{TRUE}.}
 }
 \value{
 A list: \code{$performance} (data frame), \code{$summary} (per-generation
-summaries), \code{$corr.method}, \code{$neest.path},
-\code{$final_panels} (panel genlights at last check generation),
-\code{$plot}.
+summaries), \code{$corr.method}, \code{$ref}, \code{$metric},
+\code{$neest.path}, \code{$final_panels} (panel genlights at last check
+generation), \code{$plot}.
 }
 \description{
 Evaluates how well a SNP panel maintains its performance across multiple

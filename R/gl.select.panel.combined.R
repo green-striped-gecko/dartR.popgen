@@ -24,6 +24,15 @@
 #' @param corr.method Character. Correlation method passed to
 #'   \code{gl.check.panel} for correlation-based performance metrics.
 #'   Options are \code{"spearman"} (default) and \code{"pearson"}.
+#' @param ref Character. Allele-frequency reference for \code{"relatedness"},
+#'   passed to \code{gl.check.panel}. \code{"global"} (default) pools across
+#'   the dataset and uses all pairs; \code{"by.pop"} uses within-population
+#'   frequencies and within-population pairs only. Affects the relatedness
+#'   objective when \code{"relatedness"} is optimised.
+#' @param metric Character. Relatedness reporting scale passed to
+#'   \code{gl.check.panel}: \code{"grm"} (default) or \code{"kinship"}
+#'   (GRM/2). As a constant rescaling it does not change the optimisation
+#'   objective; recorded for reproducibility.
 #' @param weights Numeric vector, one per element of \code{parameter}.
 #'   \code{NULL} (default) = equal weights.
 #' @param init.method Initialisation method from \code{\link{gl.select.panel}}.
@@ -89,8 +98,8 @@
 #'     \code{current_performance}, \code{best_performance}, \code{n_swap},
 #'     \code{restarted}
 #'   \item \code{sa_parameters} — list: \code{parameter}, \code{weights},
-#'     \code{neest.path}, \code{corr.method}, \code{cooling},
-#'     \code{n_swap_max}, \code{restart_tol}
+#'     \code{neest.path}, \code{corr.method}, \code{ref}, \code{metric},
+#'     \code{cooling}, \code{n_swap_max}, \code{restart_tol}
 #'   \item \code{sa_stop_reason} — \code{"completed"},
 #'     \code{"stop_criterion"}, or \code{"interrupted"}
 #' }
@@ -126,6 +135,8 @@ gl.select.panel.combined <- function(x,
                                      parameter      = c("Fst", "He"),
                                      neest.path     = NULL,
                                      corr.method    = c("spearman", "pearson"),
+                                     ref            = c("global", "by.pop"),
+                                     metric         = c("grm", "kinship"),
                                      weights        = NULL,
                                      init.method    = "random",
                                      n_iter         = 100,
@@ -160,6 +171,8 @@ gl.select.panel.combined <- function(x,
                     "Ho_ind","relatedness",
                     "id","parentage","assignment","hybridisation","Ne")
   corr.method <- match.arg(tolower(corr.method), c("spearman", "pearson"))
+  ref         <- match.arg(ref,    c("global", "by.pop"))
+  metric      <- match.arg(metric, c("grm", "kinship"))
   
   #if ("Ne" %in% parameter)
   #  stop("'Ne' is not supported (too slow for repeated evaluation).")
@@ -226,6 +239,8 @@ gl.select.panel.combined <- function(x,
         xorig      = x,
         parameter  = parameter,
         corr.method = corr.method,
+        ref        = ref,
+        metric     = metric,
         error.rate = error.rate,
         threshold  = threshold,
         n_sim_parents = n_sim_parents,
@@ -315,6 +330,8 @@ gl.select.panel.combined <- function(x,
                                          weights     = w_norm,
                                          neest.path  = neest.path,
                                          corr.method = corr.method,
+                                         ref         = ref,
+                                         metric      = metric,
                                          cooling     = cooling,
                                          n_swap_max  = n_swap_max,
                                          restart_tol = restart_tol)

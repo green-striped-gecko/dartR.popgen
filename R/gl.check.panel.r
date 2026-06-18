@@ -32,8 +32,11 @@
 #'       Correlation r² of per-individual Ho between panel and full dataset,
 #'       ignoring population membership.
 #'     \item \code{"relatedness"} — pairwise genomic relatedness (VanRaden
-#'       GRM). Both GRMs computed using full-dataset allele frequencies as
-#'       reference. Population membership ignored.
+#'       GRM), optionally rescaled to kinship via \code{metric}. The
+#'       allele-frequency reference is controlled by \code{ref}: pooled
+#'       across the dataset (\code{"global"}, population membership
+#'       ignored) or computed within each population
+#'       (\code{"by.pop"}, within-population pairs only).
 #'     \item \code{"id"} — individual identification power.
 #'     \item \code{"parentage"} — parentage assignment power.
 #'     \item \code{"assignment"} — population assignment accuracy (LOO).
@@ -52,6 +55,24 @@
 #'   \code{"Ho_ind"}, and \code{"relatedness"}. Accuracy/proportion
 #'   metrics such as \code{"id"}, \code{"parentage"},
 #'   \code{"assignment"}, and \code{"hybridisation"} are unchanged.
+#' @param ref Character. Allele-frequency reference for
+#'   \code{"relatedness"}. \code{"global"} (default) pools allele
+#'   frequencies across the whole dataset and uses all pairs; between
+#'   differentiated populations this produces strongly negative values
+#'   that mainly reflect structure. \code{"by.pop"} computes allele
+#'   frequencies within each population, references each population to
+#'   its own base, and retains only within-population pairs — appropriate
+#'   for within-population kinship. Populations with fewer than two
+#'   individuals are skipped with a warning. Ignored by all other
+#'   parameters.
+#' @param metric Character. Reporting scale for \code{"relatedness"}.
+#'   \code{"grm"} (default) returns the VanRaden genomic relationship
+#'   matrix; \code{"kinship"} returns kinship = GRM / 2 (so an outbred
+#'   self is ~0.5, parent--offspring/full-sib ~0.25). Because this is a
+#'   constant rescaling applied to both panel and full dataset, it does
+#'   not change the correlation-based performance value; it affects only
+#'   the reported values, axis labels, and plot. Ignored by all other
+#'   parameters.
 #' @param neest.path Character string. Path to NEstimator executable, required
 #'   only for \code{"Ne"}.
 #' @param error.rate Numeric. Per-allele genotyping error rate. Default
@@ -83,9 +104,11 @@
 #'   \item \code{"Ho_ind"} — chosen \code{corr.method} r² of
 #'     per-individual observed heterozygosity. Population membership ignored.
 #'   \item \code{"relatedness"} — chosen \code{corr.method} r² of all
-#'     pairwise GRM values (upper triangle). Both GRMs use full-dataset
-#'     allele frequencies as
-#'     reference (VanRaden 2008). Population membership ignored.
+#'     retained pairwise relatedness values (upper triangle), on the
+#'     scale set by \code{metric} (GRM or kinship = GRM/2) and the
+#'     reference set by \code{ref} (\code{"global"}: all pairs, pooled
+#'     frequencies; \code{"by.pop"}: within-population pairs, local
+#'     frequencies) (VanRaden 2008).
 #'   \item \code{"id"} — fraction of individuals with MaxPmatch below
 #'     \code{threshold}.
 #'   \item \code{"parentage"} — fraction of simulated trios correctly
@@ -100,9 +123,20 @@
 #' \code{"Fis"} are requested, \code{gl.report.heterozygosity} is called
 #' once per dataset and reused for all three.
 #'
-#' \strong{Relatedness reference frequencies:} Both panel and full-dataset
-#' GRMs are computed using allele frequencies from \code{xorig}, ensuring
-#' both are on the same scale (VanRaden 2008).
+#' \strong{Relatedness reference and scale:} The VanRaden GRM is centred on
+#' a reference allele-frequency vector, so a value of zero corresponds to
+#' the average pair in that reference and roughly half of the off-diagonal
+#' values are negative by construction. With \code{ref = "global"} the
+#' reference is pooled across all populations; in structured data this makes
+#' between-population pairs strongly negative, so the metric largely tracks
+#' recovery of population structure. With \code{ref = "by.pop"} each
+#' population is referenced to its own allele frequencies and only
+#' within-population pairs are kept, giving within-population kinship; this
+#' requires adequate within-population sample sizes. \code{metric = "kinship"}
+#' rescales the matrix by 1/2 (numerator-relationship to kinship); as a
+#' constant applied to both datasets it leaves the correlation performance
+#' unchanged. The panel relatedness data frame columns are
+#' \code{rel_orig} and \code{rel_panel}.
 #'
 #' @return
 #' A named list with one element per parameter, each containing:
@@ -136,6 +170,8 @@ gl.check.panel <- function(x,
                            xorig       = NULL,
                            parameter   = "Fst",
                            corr.method = c("spearman", "pearson"),
+                           ref         = c("global", "by.pop"),
+                           metric      = c("grm", "kinship"),
                            neest.path  = NULL,
                            error.rate  = 0.01,
                            threshold   = 0.001,
@@ -163,6 +199,8 @@ gl.check.panel <- function(x,
   parameter[parameter == "Ar"] <- "Nall"
   parameter <- unique(parameter)
   corr.method <- match.arg(tolower(corr.method), c("spearman", "pearson"))
+  ref         <- match.arg(ref,    c("global", "by.pop"))
+  metric      <- match.arg(metric, c("grm", "kinship"))
   correlation_params <- c("Fst", "He", "Ho", "Fis", "Nall", "Ne",
                           "Ho_ind", "relatedness")
   
@@ -416,51 +454,88 @@ gl.check.panel <- function(x,
     }
     
     # ---------------------------------------------------------
-    # relatedness — pairwise VanRaden GRM
-    # both GRMs use full-dataset allele frequencies
-    # population membership ignored
+    # relatedness — pairwise VanRaden GRM, optionally rescaled to
+    # kinship (GRM / 2). Reference allele frequencies are either
+    # pooled across the whole dataset (ref = "global") or computed
+    # within each population (ref = "by.pop"). Under "by.pop" only
+    # within-population pairs are retained and each population is
+    # referenced to its own allele-frequency base.
     # ---------------------------------------------------------
     if (param == "relatedness") {
-      if (verbose >= 2) cat("Computing reference allele frequencies from full dataset...\n")
-      p_ref <- colMeans(as.matrix(xorig), na.rm=TRUE)/2
-      p_ref[is.nan(p_ref)] <- 0.5
-      
+      scale_fac  <- if (metric == "kinship") 0.5 else 1
+      rel_label  <- if (metric == "kinship") "Kinship" else "GRM"
+      ref_label  <- if (ref == "by.pop") "within-population freq"
+      else "full-dataset freq"
+
+      # align panel individuals to xorig order so the upper-triangle
+      # pairs from the two matrices correspond row-for-row
+      mat_orig <- as.matrix(xorig)
+      mat_pan  <- as.matrix(x)[indNames(xorig), , drop = FALSE]
+      loc_pan  <- colnames(mat_pan)
+
+      if (ref == "global") {
+        if (verbose >= 2)
+          cat("Computing global reference allele frequencies...\n")
+        p_ref <- colMeans(mat_orig, na.rm = TRUE) / 2
+        p_ref[is.nan(p_ref)] <- 0.5
+
+        grm_orig    <- grm_vanraden(mat_orig, p_ref)            * scale_fac
+        grm_panel   <- grm_vanraden(mat_pan,  p_ref[loc_pan])   * scale_fac
+        pairs_orig  <- grm_orig[ upper.tri(grm_orig)]
+        pairs_panel <- grm_panel[upper.tri(grm_panel)]
+
+      } else {  # by.pop
+        if (verbose >= 2)
+          cat("Computing within-population reference allele frequencies...\n")
+        pops_chr <- as.character(pop(xorig))
+        upops    <- unique(pops_chr)
+        pairs_orig <- pairs_panel <- numeric(0)
+        skipped   <- character(0)
+
+        for (pp in upops) {
+          idx <- which(pops_chr == pp)
+          if (length(idx) < 2) { skipped <- c(skipped, pp); next }
+          mo   <- mat_orig[idx, , drop = FALSE]
+          mp   <- mat_pan[ idx, , drop = FALSE]
+          p_pp <- colMeans(mo, na.rm = TRUE) / 2
+          p_pp[is.nan(p_pp)] <- 0.5
+          g_o  <- grm_vanraden(mo, p_pp)            * scale_fac
+          g_p  <- grm_vanraden(mp, p_pp[loc_pan])   * scale_fac
+          pairs_orig  <- c(pairs_orig,  g_o[upper.tri(g_o)])
+          pairs_panel <- c(pairs_panel, g_p[upper.tri(g_p)])
+        }
+        if (length(skipped) > 0)
+          warning(sprintf(
+            "relatedness (by.pop): %d population(s) with <2 individuals skipped: %s",
+            length(skipped), paste(skipped, collapse = ", ")))
+        if (length(pairs_orig) == 0)
+          warning("relatedness (by.pop): no within-population pairs available.")
+      }
+
+      res  <- data.frame(rel_orig = pairs_orig, rel_panel = pairs_panel)
+      res  <- res[complete.cases(res), ]
+      perf <- r2_performance(res$rel_orig, res$rel_panel)
+
       if (verbose >= 2)
-        cat(sprintf("Computing GRM: full dataset (%d ind, %d loci)...\n",
-                    nInd(xorig), nLoc(xorig)))
-      grm_orig  <- grm_vanraden(as.matrix(xorig), p_ref)
-      
-      if (verbose >= 2)
-        cat(sprintf("Computing GRM: panel (%d ind, %d loci)...\n",
-                    nInd(x), nLoc(x)))
-      grm_panel <- grm_vanraden(as.matrix(x), p_ref[locNames(x)])
-      
-      pairs_orig  <- grm_orig[ upper.tri(grm_orig)]
-      pairs_panel <- grm_panel[upper.tri(grm_panel)]
-      
-      res  <- data.frame(grm_orig=pairs_orig, grm_panel=pairs_panel)
-      res  <- res[complete.cases(res),]
-      perf <- r2_performance(res$grm_orig, res$grm_panel)
-      
-      if (verbose >= 2)
-        cat(sprintf("Pairs: %d  |  %s = %.4f\n",
-                    nrow(res), corr_metric_label(), perf))
-      
-      plot_res <- if (nrow(res)>10000L) res[sample(nrow(res),10000L),] else res
-      sp <- r2_spearman(res$grm_orig, res$grm_panel)
-      pe <- r2_pearson( res$grm_orig, res$grm_panel)
-      
-      gg <- ggplot(plot_res, aes(x=grm_orig, y=grm_panel)) +
-        geom_point(alpha=0.3, size=0.8) +
-        geom_smooth(method="lm", formula=y~x, se=TRUE, colour="steelblue") +
-        annotate("text", x=-Inf, y=Inf,
-                 label=r2_label(sp, pe),
-                 hjust=-0.1, vjust=1.3, size=3.5) +
-        labs(title    = "Relatedness (GRM)",
-             subtitle = sprintf("%d pairs  |  ref freq from full dataset%s",
-                                nrow(res),
-                                if (nrow(res)>10000L) "  |  10,000 pairs plotted" else ""),
-             x="GRM (original)", y="GRM (panel)") +
+        cat(sprintf("Pairs: %d  |  %s (%s)  |  %s = %.4f\n",
+                    nrow(res), rel_label, ref, corr_metric_label(), perf))
+
+      plot_res <- if (nrow(res) > 10000L) res[sample(nrow(res), 10000L), ] else res
+      sp <- r2_spearman(res$rel_orig, res$rel_panel)
+      pe <- r2_pearson( res$rel_orig, res$rel_panel)
+
+      gg <- ggplot(plot_res, aes(x = rel_orig, y = rel_panel)) +
+        geom_point(alpha = 0.3, size = 0.8) +
+        geom_smooth(method = "lm", formula = y ~ x, se = TRUE, colour = "steelblue") +
+        annotate("text", x = -Inf, y = Inf,
+                 label = r2_label(sp, pe),
+                 hjust = -0.1, vjust = 1.3, size = 3.5) +
+        labs(title    = sprintf("Relatedness (%s)", rel_label),
+             subtitle = sprintf("%d pairs  |  %s, %s%s",
+                                 nrow(res), ref, ref_label,
+                                 if (nrow(res) > 10000L) "  |  10,000 pairs plotted" else ""),
+             x = sprintf("%s (original)", rel_label),
+             y = sprintf("%s (panel)",    rel_label)) +
         centre_theme()
     }
     

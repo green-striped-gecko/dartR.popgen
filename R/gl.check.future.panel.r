@@ -22,6 +22,15 @@
 #' @param corr.method Character. Correlation method passed to
 #'   \code{gl.check.panel} for correlation-based performance metrics.
 #'   Options are \code{"spearman"} (default) and \code{"pearson"}.
+#' @param ref Character. Allele-frequency reference for \code{"relatedness"},
+#'   passed to \code{gl.check.panel}. \code{"global"} (default) pools across
+#'   the dataset using all pairs; \code{"by.pop"} uses within-population
+#'   frequencies and within-population pairs only. Under \code{type =
+#'   "drift"} the reference is recomputed from the drifted frequencies at
+#'   each check generation.
+#' @param metric Character. Relatedness reporting scale passed to
+#'   \code{gl.check.panel}: \code{"grm"} (default) or \code{"kinship"}
+#'   (GRM/2). Does not change the correlation-based performance value.
 #' @param neest.path Character string. Path to NEstimator executable,
 #'   required only when \code{"Ne"} is included in \code{parameter}.
 #' @param type Character. \code{"drift"} (default) simulates genetic drift
@@ -73,9 +82,9 @@
 #'
 #' @return
 #' A list: \code{$performance} (data frame), \code{$summary} (per-generation
-#' summaries), \code{$corr.method}, \code{$neest.path},
-#' \code{$final_panels} (panel genlights at last check generation),
-#' \code{$plot}.
+#' summaries), \code{$corr.method}, \code{$ref}, \code{$metric},
+#' \code{$neest.path}, \code{$final_panels} (panel genlights at last check
+#' generation), \code{$plot}.
 #'
 #' @examples
 #' panel <- gl.select.panel(possums.gl, method = "random", nl = 50)
@@ -96,11 +105,13 @@ gl.check.future.panel <- function(x,
                                   xorig,
                                   parameter    = c("Fst", "He"),
                                   corr.method  = c("spearman", "pearson"),
+                                  ref          = c("global", "by.pop"),
+                                  metric       = c("grm", "kinship"),
                                   neest.path   = NULL,
                                   type         = "drift",
                                   user.gl      = NULL,
                                   n_gen        = 10,
-                                  replicates        = 5,
+                                  replicates   = 5,
                                   n_check      = NULL,
                                   error.rate   = 0.01,
                                   threshold    = 0.001,
@@ -126,6 +137,8 @@ gl.check.future.panel <- function(x,
   parameter[parameter == "Ar"] <- "Nall"
   parameter <- unique(parameter)
   corr.method <- match.arg(tolower(corr.method), c("spearman", "pearson"))
+  ref         <- match.arg(ref,    c("global", "by.pop"))
+  metric      <- match.arg(metric, c("grm", "kinship"))
   
   # ---------------------------------------------------------------
   # validate
@@ -300,6 +313,8 @@ gl.check.future.panel <- function(x,
         xorig        = x_full,
         parameter    = parameter,
         corr.method  = corr.method,
+        ref          = ref,
+        metric       = metric,
         error.rate   = error.rate,
         threshold    = threshold,
         n_sim_parents = n_sim_parents,
@@ -481,6 +496,8 @@ gl.check.future.panel <- function(x,
     performance  = df,
     summary      = summary_df,
     corr.method  = corr.method,
+    ref          = ref,
+    metric       = metric,
     neest.path   = neest.path,
     final_panels = final_panels,
     plot         = gg

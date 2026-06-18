@@ -9,6 +9,8 @@ gl.check.panel(
   xorig = NULL,
   parameter = "Fst",
   corr.method = c("spearman", "pearson"),
+  ref = c("global", "by.pop"),
+  metric = c("grm", "kinship"),
   neest.path = NULL,
   error.rate = 0.01,
   threshold = 0.001,
@@ -49,8 +51,11 @@ evaluate. Options:
     Correlation r² of per-individual Ho between panel and full dataset,
     ignoring population membership.
   \item \code{"relatedness"} — pairwise genomic relatedness (VanRaden
-    GRM). Both GRMs computed using full-dataset allele frequencies as
-    reference. Population membership ignored.
+    GRM), optionally rescaled to kinship via \code{metric}. The
+    allele-frequency reference is controlled by \code{ref}: pooled
+    across the dataset (\code{"global"}, population membership
+    ignored) or computed within each population
+    (\code{"by.pop"}, within-population pairs only).
   \item \code{"id"} — individual identification power.
   \item \code{"parentage"} — parentage assignment power.
   \item \code{"assignment"} — population assignment accuracy (LOO).
@@ -70,6 +75,26 @@ indicator for correlation-based parameters. Options are
 \code{"Ho_ind"}, and \code{"relatedness"}. Accuracy/proportion
 metrics such as \code{"id"}, \code{"parentage"},
 \code{"assignment"}, and \code{"hybridisation"} are unchanged.}
+
+\item{ref}{Character. Allele-frequency reference for
+\code{"relatedness"}. \code{"global"} (default) pools allele
+frequencies across the whole dataset and uses all pairs; between
+differentiated populations this produces strongly negative values
+that mainly reflect structure. \code{"by.pop"} computes allele
+frequencies within each population, references each population to
+its own base, and retains only within-population pairs — appropriate
+for within-population kinship. Populations with fewer than two
+individuals are skipped with a warning. Ignored by all other
+parameters.}
+
+\item{metric}{Character. Reporting scale for \code{"relatedness"}.
+\code{"grm"} (default) returns the VanRaden genomic relationship
+matrix; \code{"kinship"} returns kinship = GRM / 2 (so an outbred
+self is ~0.5, parent--offspring/full-sib ~0.25). Because this is a
+constant rescaling applied to both panel and full dataset, it does
+not change the correlation-based performance value; it affects only
+the reported values, axis labels, and plot. Ignored by all other
+parameters.}
 
 \item{neest.path}{Character string. Path to NEstimator executable, required
 only for \code{"Ne"}.}
@@ -132,9 +157,11 @@ summary bar chart as the first panel in the same grid.
   \item \code{"Ho_ind"} — chosen \code{corr.method} r² of
     per-individual observed heterozygosity. Population membership ignored.
   \item \code{"relatedness"} — chosen \code{corr.method} r² of all
-    pairwise GRM values (upper triangle). Both GRMs use full-dataset
-    allele frequencies as
-    reference (VanRaden 2008). Population membership ignored.
+    retained pairwise relatedness values (upper triangle), on the
+    scale set by \code{metric} (GRM or kinship = GRM/2) and the
+    reference set by \code{ref} (\code{"global"}: all pairs, pooled
+    frequencies; \code{"by.pop"}: within-population pairs, local
+    frequencies) (VanRaden 2008).
   \item \code{"id"} — fraction of individuals with MaxPmatch below
     \code{threshold}.
   \item \code{"parentage"} — fraction of simulated trios correctly
@@ -149,9 +176,20 @@ summary bar chart as the first panel in the same grid.
 \code{"Fis"} are requested, \code{gl.report.heterozygosity} is called
 once per dataset and reused for all three.
 
-\strong{Relatedness reference frequencies:} Both panel and full-dataset
-GRMs are computed using allele frequencies from \code{xorig}, ensuring
-both are on the same scale (VanRaden 2008).
+\strong{Relatedness reference and scale:} The VanRaden GRM is centred on
+a reference allele-frequency vector, so a value of zero corresponds to
+the average pair in that reference and roughly half of the off-diagonal
+values are negative by construction. With \code{ref = "global"} the
+reference is pooled across all populations; in structured data this makes
+between-population pairs strongly negative, so the metric largely tracks
+recovery of population structure. With \code{ref = "by.pop"} each
+population is referenced to its own allele frequencies and only
+within-population pairs are kept, giving within-population kinship; this
+requires adequate within-population sample sizes. \code{metric = "kinship"}
+rescales the matrix by 1/2 (numerator-relationship to kinship); as a
+constant applied to both datasets it leaves the correlation performance
+unchanged. The panel relatedness data frame columns are
+\code{rel_orig} and \code{rel_panel}.
 }
 \examples{
 panel <- gl.select.panel(possums.gl, method = "random", nl = 50)
