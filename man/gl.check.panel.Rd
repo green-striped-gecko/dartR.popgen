@@ -32,10 +32,10 @@ gl.check.panel(
 original dataset for comparison. Default \code{NULL}. Required for all
 correlation/comparison parameters (\code{"Fst"}, \code{"He"},
 \code{"Ho"}, \code{"Fis"}, \code{"Nall"}, \code{"Ne"},
-\code{"Ho_ind"}, \code{"relatedness"}). May be left \code{NULL} when
-only \code{"id"}, \code{"parentage"}, \code{"assignment"}, or
-\code{"hybridisation"} are requested, as these are evaluated on
-\code{x} alone.}
+\code{"Ho_ind"}, \code{"Fis_ind"}, \code{"relatedness"}). May be left
+\code{NULL} when only \code{"drift_resistance"}, \code{"id"},
+\code{"parentage"}, \code{"assignment"}, or \code{"hybridisation"} are
+requested, as these are evaluated on \code{x} alone.}
 
 \item{parameter}{Character string or vector specifying the parameter(s) to
 evaluate. Options:
@@ -48,8 +48,21 @@ evaluate. Options:
     richness per population.
   \item \code{"Ne"} — effective population size per population.
   \item \code{"Ho_ind"} — individual observed heterozygosity.
-    Correlation r² of per-individual Ho between panel and full dataset,
-    ignoring population membership.
+    Correlation r² of per-individual Ho between the panel and full
+    dataset, ignoring population membership.
+  \item \code{"Fis_ind"} — individual within-population inbreeding
+    coefficient. For each individual, \eqn{F_i = 1-H_{O,i}/H_{E,i}} is
+    calculated from the full dataset and from the panel. Performance is
+    the selected \code{corr.method} squared correlation between the two
+    sets of individual estimates, consistent with the other
+    correlation-based parameters.
+  \item \code{"drift_resistance"} — absolute panel score from 0 to 1
+    based on within-population minor allele frequencies. For locus
+    \eqn{l} in population \eqn{k}, the score is
+    \eqn{[2\min(p_{lk},1-p_{lk})]^2}. Scores are averaged across loci
+    within each population and then equally across populations. A score
+    of 1 means every panel locus has allele frequency 0.5 in every
+    population; 0 means all panel loci are fixed.
   \item \code{"relatedness"} — pairwise genomic relatedness (VanRaden
     GRM), optionally rescaled to kinship via \code{metric}. The
     allele-frequency reference is controlled by \code{ref}: pooled
@@ -72,7 +85,8 @@ indicator for correlation-based parameters. Options are
 \code{"spearman"} (default, preserving previous behaviour) and
 \code{"pearson"}. Applies to \code{"Fst"}, \code{"He"},
 \code{"Ho"}, \code{"Fis"}, \code{"Nall"}, \code{"Ne"},
-\code{"Ho_ind"}, and \code{"relatedness"}. Accuracy/proportion
+\code{"Ho_ind"}, \code{"Fis_ind"}, and \code{"relatedness"}.
+Accuracy/proportion
 metrics such as \code{"id"}, \code{"parentage"},
 \code{"assignment"}, and \code{"hybridisation"} are unchanged.}
 
@@ -134,7 +148,10 @@ A named list with one element per parameter, each containing:
 is the correlation method used for correlation-based parameters and
 \code{NA} otherwise. For most parameters,
 \code{summary} and \code{confusion} are \code{NULL}; for
-\code{"hybridisation"}, \code{summary} gives per-cross F1 detection
+\code{"drift_resistance"}, \code{summary} contains scores by population;
+for \code{"Fis_ind"}, \code{summary} contains correlation and error
+diagnostics; for \code{"hybridisation"}, \code{summary} gives
+per-cross F1 detection
 and correct-pair rates, and \code{confusion} gives the full true-cross by
 assigned-class table. The \code{performance} value for
 \code{"hybridisation"} is the correct F1-pair rate.
@@ -155,7 +172,23 @@ summary bar chart as the first panel in the same grid.
     — chosen \code{corr.method} r² between panel and full dataset
     values. Plots show both Spearman r² and Pearson R².
   \item \code{"Ho_ind"} — chosen \code{corr.method} r² of
-    per-individual observed heterozygosity. Population membership ignored.
+    per-individual observed heterozygosity. Population membership is
+    ignored.
+  \item \code{"Fis_ind"} — agreement between individual inbreeding
+    estimates from the panel and the full dataset. Within each population,
+    expected heterozygosity is calculated as \eqn{H_{e,l}=2p_l(1-p_l)}.
+    For each individual and its called loci,
+    \eqn{F_i=1-H_{O,i}/H_{E,i}}. The returned data contain the actual
+    \code{fis_orig} and \code{fis_panel} values for every individual.
+    Performance is the chosen \code{corr.method} squared correlation
+    between \code{fis_orig} and \code{fis_panel}, exactly as for the other
+    correlation-based parameters. The summary also reports RMSE, MAE,
+    bias, Pearson \eqn{R^2}, and Spearman \eqn{r^2}.
+  \item \code{"drift_resistance"} — absolute panel score
+    \eqn{\mathrm{mean}_{k}[\mathrm{mean}_{l}
+    \{(2\min(p_{lk},1-p_{lk}))^2\}]}. This is not a correlation with
+    \code{xorig}; it directly rewards loci with intermediate allele
+    frequencies and strongly penalises rare or nearly fixed alleles.
   \item \code{"relatedness"} — chosen \code{corr.method} r² of all
     retained pairwise relatedness values (upper triangle), on the
     scale set by \code{metric} (GRM or kinship = GRM/2) and the

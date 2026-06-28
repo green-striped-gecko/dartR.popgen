@@ -14,10 +14,10 @@
 #'   original dataset for comparison. Default \code{NULL}. Required for all
 #'   correlation/comparison parameters (\code{"Fst"}, \code{"He"},
 #'   \code{"Ho"}, \code{"Fis"}, \code{"Nall"}, \code{"Ne"},
-#'   \code{"Ho_ind"}, \code{"relatedness"}). May be left \code{NULL} when
-#'   only \code{"id"}, \code{"parentage"}, \code{"assignment"}, or
-#'   \code{"hybridisation"} are requested, as these are evaluated on
-#'   \code{x} alone.
+#'   \code{"Ho_ind"}, \code{"Fis_ind"}, \code{"relatedness"}). May be left
+#'   \code{NULL} when only \code{"drift_resistance"}, \code{"id"},
+#'   \code{"parentage"}, \code{"assignment"}, or \code{"hybridisation"} are
+#'   requested, as these are evaluated on \code{x} alone.
 #' @param parameter Character string or vector specifying the parameter(s) to
 #'   evaluate. Options:
 #'   \itemize{
@@ -29,8 +29,21 @@
 #'       richness per population.
 #'     \item \code{"Ne"} — effective population size per population.
 #'     \item \code{"Ho_ind"} — individual observed heterozygosity.
-#'       Correlation r² of per-individual Ho between panel and full dataset,
-#'       ignoring population membership.
+#'       Correlation r² of per-individual Ho between the panel and full
+#'       dataset, ignoring population membership.
+#'     \item \code{"Fis_ind"} — individual within-population inbreeding
+#'       coefficient. For each individual, \eqn{F_i = 1-H_{O,i}/H_{E,i}} is
+#'       calculated from the full dataset and from the panel. Performance is
+#'       the selected \code{corr.method} squared correlation between the two
+#'       sets of individual estimates, consistent with the other
+#'       correlation-based parameters.
+#'     \item \code{"drift_resistance"} — absolute panel score from 0 to 1
+#'       based on within-population minor allele frequencies. For locus
+#'       \eqn{l} in population \eqn{k}, the score is
+#'       \eqn{[2\min(p_{lk},1-p_{lk})]^2}. Scores are averaged across loci
+#'       within each population and then equally across populations. A score
+#'       of 1 means every panel locus has allele frequency 0.5 in every
+#'       population; 0 means all panel loci are fixed.
 #'     \item \code{"relatedness"} — pairwise genomic relatedness (VanRaden
 #'       GRM), optionally rescaled to kinship via \code{metric}. The
 #'       allele-frequency reference is controlled by \code{ref}: pooled
@@ -52,7 +65,8 @@
 #'   \code{"spearman"} (default, preserving previous behaviour) and
 #'   \code{"pearson"}. Applies to \code{"Fst"}, \code{"He"},
 #'   \code{"Ho"}, \code{"Fis"}, \code{"Nall"}, \code{"Ne"},
-#'   \code{"Ho_ind"}, and \code{"relatedness"}. Accuracy/proportion
+#'   \code{"Ho_ind"}, \code{"Fis_ind"}, and \code{"relatedness"}.
+#'   Accuracy/proportion
 #'   metrics such as \code{"id"}, \code{"parentage"},
 #'   \code{"assignment"}, and \code{"hybridisation"} are unchanged.
 #' @param ref Character. Allele-frequency reference for
@@ -102,7 +116,23 @@
 #'     — chosen \code{corr.method} r² between panel and full dataset
 #'     values. Plots show both Spearman r² and Pearson R².
 #'   \item \code{"Ho_ind"} — chosen \code{corr.method} r² of
-#'     per-individual observed heterozygosity. Population membership ignored.
+#'     per-individual observed heterozygosity. Population membership is
+#'     ignored.
+#'   \item \code{"Fis_ind"} — agreement between individual inbreeding
+#'     estimates from the panel and the full dataset. Within each population,
+#'     expected heterozygosity is calculated as \eqn{H_{e,l}=2p_l(1-p_l)}.
+#'     For each individual and its called loci,
+#'     \eqn{F_i=1-H_{O,i}/H_{E,i}}. The returned data contain the actual
+#'     \code{fis_orig} and \code{fis_panel} values for every individual.
+#'     Performance is the chosen \code{corr.method} squared correlation
+#'     between \code{fis_orig} and \code{fis_panel}, exactly as for the other
+#'     correlation-based parameters. The summary also reports RMSE, MAE,
+#'     bias, Pearson \eqn{R^2}, and Spearman \eqn{r^2}.
+#'   \item \code{"drift_resistance"} — absolute panel score
+#'     \eqn{\mathrm{mean}_{k}[\mathrm{mean}_{l}
+#'     \{(2\min(p_{lk},1-p_{lk}))^2\}]}. This is not a correlation with
+#'     \code{xorig}; it directly rewards loci with intermediate allele
+#'     frequencies and strongly penalises rare or nearly fixed alleles.
 #'   \item \code{"relatedness"} — chosen \code{corr.method} r² of all
 #'     retained pairwise relatedness values (upper triangle), on the
 #'     scale set by \code{metric} (GRM or kinship = GRM/2) and the
@@ -145,7 +175,10 @@
 #' is the correlation method used for correlation-based parameters and
 #' \code{NA} otherwise. For most parameters,
 #' \code{summary} and \code{confusion} are \code{NULL}; for
-#' \code{"hybridisation"}, \code{summary} gives per-cross F1 detection
+#' \code{"drift_resistance"}, \code{summary} contains scores by population;
+#' for \code{"Fis_ind"}, \code{summary} contains correlation and error
+#' diagnostics; for \code{"hybridisation"}, \code{summary} gives
+#' per-cross F1 detection
 #' and correct-pair rates, and \code{confusion} gives the full true-cross by
 #' assigned-class table. The \code{performance} value for
 #' \code{"hybridisation"} is the correct F1-pair rate.
@@ -160,9 +193,9 @@
 #' sapply(res, function(r) r$performance)
 #'
 #' @export
-#' @importFrom ggplot2 ggplot aes geom_col geom_histogram geom_bar geom_vline
-#'   geom_point geom_smooth geom_tile geom_text annotate labs scale_x_log10
-#'   scale_fill_manual scale_fill_gradient scale_fill_gradient2 coord_cartesian
+#' @importFrom ggplot2 ggplot aes geom_col geom_histogram geom_bar geom_vline geom_hline
+#'   geom_abline geom_point geom_smooth geom_tile geom_text annotate labs scale_x_log10
+#'   scale_fill_manual scale_fill_gradient scale_fill_gradient2 coord_cartesian coord_equal
 #'   theme element_text
 #' @importFrom patchwork wrap_plots
 
@@ -188,7 +221,7 @@ gl.check.panel <- function(x,
   # expand shortcuts and validate
   # ---------------------------------------------------------------
   all_params <- c("Fst","He","Ho","Fis","Nall","Ne",
-                  "Ho_ind","relatedness",
+                  "Ho_ind","Fis_ind","drift_resistance","relatedness",
                   "id","parentage","assignment")
   
   if (length(parameter) == 1 && parameter == "all")
@@ -202,7 +235,8 @@ gl.check.panel <- function(x,
   ref         <- match.arg(ref,    c("global", "by.pop"))
   metric      <- match.arg(metric, c("grm", "kinship"))
   correlation_params <- c("Fst", "He", "Ho", "Fis", "Nall", "Ne",
-                          "Ho_ind", "relatedness")
+                          "Ho_ind", "Fis_ind", "relatedness")
+  comparison_params  <- correlation_params
   
   valid_params <- c(all_params, "hybridisation")
   bad <- setdiff(parameter, valid_params)
@@ -210,14 +244,15 @@ gl.check.panel <- function(x,
     stop(paste("Unknown parameter(s):", paste(bad, collapse=", "),
                "\nValid:", paste(valid_params, collapse=", ")))
 
-  # xorig is needed only for correlation/comparison parameters; the
-  # power metrics (id, parentage, assignment, hybridisation) run on x alone.
-  if (is.null(xorig) && any(parameter %in% correlation_params)) {
-    need <- intersect(parameter, correlation_params)
+  # xorig is needed only for correlation/comparison parameters.
+  # drift_resistance and the power metrics run on x alone.
+  if (is.null(xorig) && any(parameter %in% comparison_params)) {
+    need <- intersect(parameter, comparison_params)
     stop(paste0("xorig is required for parameter(s): ",
                 paste(need, collapse=", "),
-                ".\nLeave xorig = NULL only when requesting id, parentage, ",
-                "assignment, or hybridisation."))
+                ".\nLeave xorig = NULL only when requesting ",
+                "drift_resistance, id, parentage, assignment, or ",
+                "hybridisation."))
   }
 
   if (error.rate  < 0 || error.rate  > 1) stop("error.rate must be in [0,1].")
@@ -452,7 +487,313 @@ gl.check.panel <- function(x,
                            "Individual heterozygosity",
                            "Ho_ind (original)", "Ho_ind (panel)")
     }
-    
+
+    # ---------------------------------------------------------
+    # Fis_ind — actual individual Fis from the panel versus the
+    # full original dataset
+    #
+    # Within each population and for each individual's called loci:
+    #   Ho_i  = number of heterozygous loci / number of called loci
+    #   He_i  = sum[2 p_l (1-p_l)] / number of called loci
+    #   Fis_i = 1 - Ho_i / He_i
+    #
+    # Performance is the selected corr.method squared correlation between
+    # panel and full-data individual Fis, matching the implementation used
+    # for Fst, He, Ho, Fis, Nall, Ne and relatedness.
+    # ---------------------------------------------------------
+    if (param == "Fis_ind") {
+      ind_orig <- indNames(xorig)
+      ind_pan  <- indNames(x)
+      idx_pan_ind <- match(ind_orig, ind_pan)
+
+      if (anyNA(idx_pan_ind)) {
+        missing_ind <- ind_orig[is.na(idx_pan_ind)]
+        stop(paste0(
+          "Fis_ind: panel object is missing ", length(missing_ind),
+          " individual(s) present in xorig: ",
+          paste(head(missing_ind, 10), collapse = ", "),
+          if (length(missing_ind) > 10) " ..." else ""
+        ))
+      }
+
+      mat_orig <- as.matrix(xorig)
+      mat_pan  <- as.matrix(x)[idx_pan_ind, , drop = FALSE]
+      loci_all <- locNames(xorig)
+      loci_pan <- locNames(x)
+      idx_pan_loci <- match(loci_pan, loci_all)
+
+      if (anyNA(idx_pan_loci)) {
+        stop("Fis_ind: one or more panel loci are not present in xorig.")
+      }
+
+      pops_chr <- as.character(pop(xorig))
+      upops    <- unique(pops_chr)
+      n_ind    <- nrow(mat_orig)
+
+      fis_orig <- rep(NA_real_, n_ind)
+      fis_panel <- rep(NA_real_, n_ind)
+      ho_orig <- rep(NA_real_, n_ind)
+      ho_panel <- rep(NA_real_, n_ind)
+      he_orig <- rep(NA_real_, n_ind)
+      he_panel <- rep(NA_real_, n_ind)
+      n_called_orig <- integer(n_ind)
+      n_called_panel <- integer(n_ind)
+
+      calc_ind_fis <- function(gmat, he_locus) {
+        called <- !is.na(gmat)
+        n_called <- rowSums(called)
+        n_het <- rowSums(gmat == 1L, na.rm = TRUE)
+
+        he_mat <- matrix(
+          rep(he_locus, each = nrow(gmat)),
+          nrow = nrow(gmat),
+          ncol = ncol(gmat)
+        )
+        exp_het_sum <- rowSums(he_mat * called, na.rm = TRUE)
+
+        Ho <- ifelse(n_called > 0L, n_het / n_called, NA_real_)
+        He <- ifelse(n_called > 0L, exp_het_sum / n_called, NA_real_)
+        Fis <- ifelse(is.finite(He) & He > 0,
+                      1 - Ho / He,
+                      NA_real_)
+
+        list(Fis = Fis, Ho = Ho, He = He, n_called = n_called)
+      }
+
+      for (pp in upops) {
+        idx <- which(pops_chr == pp)
+        mo  <- mat_orig[idx, , drop = FALSE]
+        mp  <- mat_pan[idx, , drop = FALSE]
+
+        p_full <- colMeans(mo, na.rm = TRUE) / 2
+        p_full[!is.finite(p_full)] <- NA_real_
+        he_full <- 2 * p_full * (1 - p_full)
+        he_pan  <- he_full[idx_pan_loci]
+
+        fo <- calc_ind_fis(mo, he_full)
+        fp <- calc_ind_fis(mp, he_pan)
+
+        fis_orig[idx] <- fo$Fis
+        fis_panel[idx] <- fp$Fis
+        ho_orig[idx] <- fo$Ho
+        ho_panel[idx] <- fp$Ho
+        he_orig[idx] <- fo$He
+        he_panel[idx] <- fp$He
+        n_called_orig[idx] <- fo$n_called
+        n_called_panel[idx] <- fp$n_called
+      }
+
+      res <- data.frame(
+        individual = ind_orig,
+        population = pops_chr,
+        fis_orig = fis_orig,
+        fis_panel = fis_panel,
+        difference = fis_panel - fis_orig,
+        ho_orig = ho_orig,
+        ho_panel = ho_panel,
+        he_orig = he_orig,
+        he_panel = he_panel,
+        n_called_orig = n_called_orig,
+        n_called_panel = n_called_panel,
+        stringsAsFactors = FALSE
+      )
+      res <- res[complete.cases(res[, c("fis_orig", "fis_panel")]), ]
+
+      perf <- r2_performance(res$fis_orig, res$fis_panel)
+
+      rmse <- if (nrow(res) > 0L)
+        sqrt(mean((res$fis_panel - res$fis_orig)^2)) else NA_real_
+      mae <- if (nrow(res) > 0L)
+        mean(abs(res$fis_panel - res$fis_orig)) else NA_real_
+      bias <- if (nrow(res) > 0L)
+        mean(res$fis_panel - res$fis_orig) else NA_real_
+      pearson_r2 <- r2_pearson(res$fis_orig, res$fis_panel)
+      spearman_r2 <- r2_spearman(res$fis_orig, res$fis_panel)
+
+      param_summary <- data.frame(
+        n_individuals = nrow(res),
+        n_loci_panel = nLoc(x),
+        n_loci_original = nLoc(xorig),
+        mean_fis_original = mean(res$fis_orig),
+        mean_fis_panel = mean(res$fis_panel),
+        corr_method = corr.method,
+        performance = perf,
+        rmse = rmse,
+        mae = mae,
+        bias_panel_minus_original = bias,
+        pearson_R2 = pearson_r2,
+        spearman_r2 = spearman_r2,
+        stringsAsFactors = FALSE
+      )
+
+      if (verbose >= 2) {
+        cat(sprintf(
+          paste0(
+            "Individuals: %d | mean Fis original: %.4f | ",
+            "mean Fis panel: %.4f\n",
+            "%s/performance: %.4f | RMSE: %.4f | MAE: %.4f | ",
+            "bias: %.4f\n"
+          ),
+          nrow(res), mean(res$fis_orig), mean(res$fis_panel),
+          corr_metric_label(), perf, rmse, mae, bias
+        ))
+      }
+
+      gg <- scatter_plot(
+        res,
+        "fis_orig",
+        "fis_panel",
+        "Individual Fis",
+        "Fis_ind (original)",
+        "Fis_ind (panel)"
+      )
+    }
+
+    # ---------------------------------------------------------
+    # drift_resistance — absolute within-population MAF score
+    #
+    # For locus l in population k:
+    #   score_lk = (2 * min(p_lk, 1 - p_lk))^2
+    #
+    # Loci are averaged within populations, then populations are
+    # weighted equally. The score is 1 when every p_lk = 0.5 and
+    # 0 when all loci are fixed within populations.
+    # ---------------------------------------------------------
+    if (param == "drift_resistance") {
+      gmat     <- as.matrix(x)
+      pops_chr <- as.character(pop(x))
+      upops    <- unique(pops_chr)
+
+      drift_rows <- lapply(upops, function(pp) {
+        idx <- which(pops_chr == pp)
+        gm  <- gmat[idx, , drop = FALSE]
+
+        p_locus <- colMeans(gm, na.rm = TRUE) / 2
+        p_locus[is.nan(p_locus)] <- NA_real_
+
+        maf_locus   <- pmin(p_locus, 1 - p_locus)
+        drift_score <- (2 * maf_locus)^2
+        call_rate   <- colMeans(!is.na(gm))
+
+        data.frame(
+          population       = pp,
+          locus            = locNames(x),
+          allele_frequency = p_locus,
+          maf              = maf_locus,
+          call_rate        = call_rate,
+          drift_score      = drift_score,
+          stringsAsFactors = FALSE
+        )
+      })
+
+      res <- do.call(rbind, drift_rows)
+      rownames(res) <- NULL
+
+      pop_summary <- do.call(
+        rbind,
+        lapply(upops, function(pp) {
+          rr <- res[res$population == pp, , drop = FALSE]
+          valid_score <- is.finite(rr$drift_score)
+          data.frame(
+            population       = pp,
+            n_loci           = nrow(rr),
+            n_loci_scored    = sum(valid_score),
+            mean_maf         = if (any(valid_score))
+              mean(rr$maf[valid_score]) else NA_real_,
+            mean_drift_score = if (any(valid_score))
+              mean(rr$drift_score[valid_score]) else NA_real_,
+            stringsAsFactors = FALSE
+          )
+        })
+      )
+
+      valid_pop <- is.finite(pop_summary$mean_drift_score)
+      perf <- if (any(valid_pop))
+        mean(pop_summary$mean_drift_score[valid_pop]) else NA_real_
+
+      ## practical maximum: score of the top-nLoc(x) MAF loci from xorig
+      dr_max <- NA_real_
+      if (!is.null(xorig)) {
+        gmat_orig  <- as.matrix(xorig)
+        pops_orig  <- as.character(pop(xorig))
+        upops_orig <- unique(pops_orig)
+        dr_all <- vapply(seq_len(ncol(gmat_orig)), function(l) {
+          mean(vapply(upops_orig, function(pp) {
+            p <- mean(gmat_orig[pops_orig == pp, l], na.rm = TRUE) / 2
+            if (!is.finite(p)) return(NA_real_)
+            (2 * min(p, 1 - p))^2
+          }, numeric(1)), na.rm = TRUE)
+        }, numeric(1))
+        top_idx <- order(dr_all, decreasing = TRUE)[seq_len(min(nLoc(x), length(dr_all)))]
+        dr_max  <- mean(dr_all[top_idx], na.rm = TRUE)
+      }
+
+      overall <- data.frame(
+        population       = "Overall",
+        n_loci           = nLoc(x),
+        n_loci_scored    = sum(is.finite(res$drift_score)),
+        mean_maf         = if (any(is.finite(res$maf)))
+          mean(res$maf[is.finite(res$maf)]) else NA_real_,
+        mean_drift_score = perf,
+        practical_max    = dr_max,
+        stringsAsFactors = FALSE
+      )
+
+      pop_summary$practical_max <- NA_real_
+      param_summary <- rbind(pop_summary, overall)
+
+      if (verbose >= 2) {
+        cat(sprintf(
+          paste0(
+            "Drift-resistance score: %.4f | %d loci | %d populations",
+            if (is.finite(dr_max)) " | practical max: %.4f" else "",
+            "\nScore = mean_pop(mean_locus[(2 * MAF)^2])\n"
+          ),
+          perf, nLoc(x), length(upops),
+          if (is.finite(dr_max)) dr_max
+        ))
+      }
+
+      gg <- ggplot(
+        pop_summary,
+        aes(x = population, y = mean_drift_score, fill = mean_drift_score)
+      ) +
+        geom_col(colour = "white", linewidth = 0.3) +
+        scale_fill_gradient2(
+          low = "salmon", mid = "goldenrod", high = "steelblue",
+          midpoint = 0.5, limits = c(0, 1), name = NULL
+        ) +
+        coord_cartesian(ylim = c(0, 1))
+
+      if (is.finite(dr_max))
+        gg <- gg +
+        geom_hline(yintercept = dr_max, linetype = "dotted",
+                   colour = "darkorange", linewidth = 0.6) +
+        annotate("text", x = Inf, y = dr_max,
+                 label = sprintf(" max=%.3f ", dr_max),
+                 hjust = 1, vjust = -0.4, size = 3, colour = "darkorange")
+
+      gg <- gg +
+        labs(
+          title = "Drift resistance",
+          subtitle = sprintf(
+            "Overall score = %.3f | mean of within-population (2 \u00d7 MAF)\u00b2%s",
+            perf,
+            if (is.finite(dr_max))
+              sprintf(" | practical max = %.3f (top-%d MAF loci)", dr_max, nLoc(x))
+            else ""
+          ),
+          x = "Population",
+          y = "Drift-resistance score"
+        ) +
+        theme(
+          legend.position = "none",
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          plot.title = element_text(hjust = 0.5),
+          plot.subtitle = element_text(hjust = 0.5)
+        )
+    }
+
     # ---------------------------------------------------------
     # relatedness — pairwise VanRaden GRM, optionally rescaled to
     # kinship (GRM / 2). Reference allele frequencies are either

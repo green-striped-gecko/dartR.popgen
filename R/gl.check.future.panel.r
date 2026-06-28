@@ -128,7 +128,7 @@ gl.check.future.panel <- function(x,
   # expand shortcuts
   # ---------------------------------------------------------------
   all_params <- c("Fst","He","Ho","Fis","Nall","Ne",
-                  "Ho_ind","relatedness",
+                  "Ho_ind","Fis_ind","drift_resistance","relatedness",
                   "id","parentage","assignment")
   if (length(parameter) == 1 && parameter == "all")
     parameter <- all_params
@@ -368,7 +368,7 @@ gl.check.future.panel <- function(x,
           cat(sprintf("\r  gen %3d / %d  [evaluating]   ", gen, n_gen))
           flush.console()
           xorig_sim <- af_to_genlight(af_curr)
-          x_sim     <- af_to_genlight(af_curr, loci_idx=panel_idx)
+          x_sim     <- xorig_sim[, panel_idx]
           perf      <- check_perf(x_sim, xorig_sim)
           
           for (p in parameter)
