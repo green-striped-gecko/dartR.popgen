@@ -320,11 +320,18 @@ gl.select.panel.combined <- function(x,
     
     ## if drift_resistance is tracked, add the two component lines
     if (has_dr && any(!is.na(curr_hist$drift_resistance))) {
+<<<<<<< HEAD
       dr_type <- if (inverse_dr) "Drift sensitivity (1-DR)" else "Drift resistance"
       plot_df <- rbind(plot_df,
         data.frame(iteration   = curr_hist$iteration,
                    performance = curr_hist$drift_resistance,
                    type        = dr_type),
+=======
+      plot_df <- rbind(plot_df,
+        data.frame(iteration   = curr_hist$iteration,
+                   performance = curr_hist$drift_resistance,
+                   type        = "Drift resistance"),
+>>>>>>> 6d2d167fb6f097250b1360fed5b015ada35b8f1d
         data.frame(iteration   = curr_hist$iteration,
                    performance = curr_hist$other_performance,
                    type        = "Other params (weighted)")
@@ -348,6 +355,7 @@ gl.select.panel.combined <- function(x,
       if (inverse_dr) "  |  inverse_dr=TRUE" else ""
     )
     
+<<<<<<< HEAD
     ## build scales for all possible types
     all_types <- unique(plot_df$type)
     type_colours <- c(
@@ -367,12 +375,31 @@ gl.select.panel.combined <- function(x,
     ## keep only types present in data
     type_colours <- type_colours[names(type_colours) %in% all_types]
     type_widths  <- type_widths[names(type_widths) %in% all_types]
+=======
+    line_colours <- c(
+      "Composite (current)"     = "grey60",
+      "Composite (best)"        = "steelblue",
+      "Drift resistance"        = "darkorange",
+      "Other params (weighted)" = "purple"
+    )
+    line_widths <- c(
+      "Composite (current)"     = 0.4,
+      "Composite (best)"        = 1.2,
+      "Drift resistance"        = 0.6,
+      "Other params (weighted)" = 0.6
+    )
+>>>>>>> 6d2d167fb6f097250b1360fed5b015ada35b8f1d
     
     gg <- ggplot(plot_df, aes(x = iteration, y = performance,
                               colour = type, linewidth = type)) +
       geom_line() +
+<<<<<<< HEAD
       scale_colour_manual(values = type_colours, name = NULL) +
       scale_linewidth_manual(values = type_widths, name = NULL) +
+=======
+      scale_colour_manual(values = line_colours, name = NULL) +
+      scale_linewidth_manual(values = line_widths, name = NULL) +
+>>>>>>> 6d2d167fb6f097250b1360fed5b015ada35b8f1d
       coord_cartesian(ylim = c(0, 1), xlim = c(0, n_iter))
     
     if (!is.null(stop.criterion))
@@ -388,8 +415,12 @@ gl.select.panel.combined <- function(x,
       geom_hline(yintercept = dr_max, linetype = "dotted",
                  colour = "darkorange", linewidth = 0.6) +
       annotate("text", x = n_iter, y = dr_max,
+<<<<<<< HEAD
                label = sprintf("%s max=%.2f ",
                                if (inverse_dr) "DS" else "DR", dr_max),
+=======
+               label = sprintf("DR max=%.2f ", dr_max),
+>>>>>>> 6d2d167fb6f097250b1360fed5b015ada35b8f1d
                hjust = 1, vjust = -0.4, size = 3, colour = "darkorange")
     
     gg + labs(title = ttl, subtitle = sub,
@@ -412,7 +443,10 @@ gl.select.panel.combined <- function(x,
                                          cooling     = cooling,
                                          n_swap_max  = n_swap_max,
                                          restart_tol = restart_tol,
+<<<<<<< HEAD
                                          inverse_dr  = inverse_dr,
+=======
+>>>>>>> 6d2d167fb6f097250b1360fed5b015ada35b8f1d
                                          dr_max      = dr_max)
     xx@other$sa_stop_reason      <- reason
     cat(sprintf("Returning panel: %d loci | best=%.4f | %s\n",
@@ -463,6 +497,7 @@ gl.select.panel.combined <- function(x,
         (2 * min(p, 1 - p))^2
       }, numeric(1)), na.rm = TRUE)
     }, numeric(1))
+<<<<<<< HEAD
     if (inverse_dr) {
       ## for 1-DR, practical max = 1 - DR of the LOWEST-MAF loci
       bottom_nl <- order(dr_scores, decreasing = FALSE)[seq_len(min(nl, length(dr_scores)))]
@@ -473,6 +508,11 @@ gl.select.panel.combined <- function(x,
       dr_max  <- mean(dr_scores[top_nl], na.rm = TRUE)
       cat(sprintf("Drift resistance practical max (top-%d MAF loci): %.4f\n", nl, dr_max))
     }
+=======
+    top_nl  <- order(dr_scores, decreasing = TRUE)[seq_len(min(nl, length(dr_scores)))]
+    dr_max  <- mean(dr_scores[top_nl], na.rm = TRUE)
+    cat(sprintf("Drift resistance practical max (top-%d MAF loci): %.4f\n", nl, dr_max))
+>>>>>>> 6d2d167fb6f097250b1360fed5b015ada35b8f1d
   }
   
   history <- data.frame(

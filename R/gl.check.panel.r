@@ -716,6 +716,7 @@ gl.check.panel <- function(x,
       )
 
       valid_pop <- is.finite(pop_summary$mean_drift_score)
+<<<<<<< HEAD
       raw_perf <- if (any(valid_pop))
         mean(pop_summary$mean_drift_score[valid_pop]) else NA_real_
 
@@ -726,6 +727,12 @@ gl.check.panel <- function(x,
 
       ## practical maximum: best achievable score from xorig
       ## DR: top-nl highest-MAF loci; inverse: top-nl lowest-MAF loci
+=======
+      perf <- if (any(valid_pop))
+        mean(pop_summary$mean_drift_score[valid_pop]) else NA_real_
+
+      ## practical maximum: score of the top-nLoc(x) MAF loci from xorig
+>>>>>>> 6d2d167fb6f097250b1360fed5b015ada35b8f1d
       dr_max <- NA_real_
       if (!is.null(xorig)) {
         gmat_orig  <- as.matrix(xorig)
@@ -738,6 +745,7 @@ gl.check.panel <- function(x,
             (2 * min(p, 1 - p))^2
           }, numeric(1)), na.rm = TRUE)
         }, numeric(1))
+<<<<<<< HEAD
         n_sel <- min(nLoc(x), length(dr_all))
         if (inverse_dr) {
           ## best for sensitivity = lowest DR loci
@@ -747,6 +755,10 @@ gl.check.panel <- function(x,
           top_idx <- order(dr_all, decreasing = TRUE)[seq_len(n_sel)]
           dr_max  <- mean(dr_all[top_idx], na.rm = TRUE)
         }
+=======
+        top_idx <- order(dr_all, decreasing = TRUE)[seq_len(min(nLoc(x), length(dr_all)))]
+        dr_max  <- mean(dr_all[top_idx], na.rm = TRUE)
+>>>>>>> 6d2d167fb6f097250b1360fed5b015ada35b8f1d
       }
 
       overall <- data.frame(
@@ -757,39 +769,62 @@ gl.check.panel <- function(x,
           mean(res$maf[is.finite(res$maf)]) else NA_real_,
         mean_drift_score = perf,
         practical_max    = dr_max,
+<<<<<<< HEAD
         inverse_dr       = inverse_dr,
+=======
+>>>>>>> 6d2d167fb6f097250b1360fed5b015ada35b8f1d
         stringsAsFactors = FALSE
       )
 
       pop_summary$practical_max <- NA_real_
+<<<<<<< HEAD
       pop_summary$inverse_dr    <- inverse_dr
       if (inverse_dr)
         pop_summary$mean_drift_score <- 1 - pop_summary$mean_drift_score
+=======
+>>>>>>> 6d2d167fb6f097250b1360fed5b015ada35b8f1d
       param_summary <- rbind(pop_summary, overall)
 
       if (verbose >= 2) {
         cat(sprintf(
           paste0(
+<<<<<<< HEAD
             "%s score: %.4f | %d loci | %d populations",
             if (is.finite(dr_max)) " | practical max: %.4f" else "",
             if (inverse_dr) "\nScore = 1 - mean_pop(mean_locus[(2 * MAF)^2])\n"
             else "\nScore = mean_pop(mean_locus[(2 * MAF)^2])\n"
           ),
           dr_label, perf, nLoc(x), length(upops),
+=======
+            "Drift-resistance score: %.4f | %d loci | %d populations",
+            if (is.finite(dr_max)) " | practical max: %.4f" else "",
+            "\nScore = mean_pop(mean_locus[(2 * MAF)^2])\n"
+          ),
+          perf, nLoc(x), length(upops),
+>>>>>>> 6d2d167fb6f097250b1360fed5b015ada35b8f1d
           if (is.finite(dr_max)) dr_max
         ))
       }
 
+<<<<<<< HEAD
       plot_data <- pop_summary
       gg <- ggplot(
         plot_data,
+=======
+      gg <- ggplot(
+        pop_summary,
+>>>>>>> 6d2d167fb6f097250b1360fed5b015ada35b8f1d
         aes(x = population, y = mean_drift_score, fill = mean_drift_score)
       ) +
         geom_col(colour = "white", linewidth = 0.3) +
         scale_fill_gradient2(
+<<<<<<< HEAD
           low = if (inverse_dr) "steelblue" else "salmon",
           mid = "goldenrod",
           high = if (inverse_dr) "salmon" else "steelblue",
+=======
+          low = "salmon", mid = "goldenrod", high = "steelblue",
+>>>>>>> 6d2d167fb6f097250b1360fed5b015ada35b8f1d
           midpoint = 0.5, limits = c(0, 1), name = NULL
         ) +
         coord_cartesian(ylim = c(0, 1))
@@ -799,12 +834,17 @@ gl.check.panel <- function(x,
         geom_hline(yintercept = dr_max, linetype = "dotted",
                    colour = "darkorange", linewidth = 0.6) +
         annotate("text", x = Inf, y = dr_max,
+<<<<<<< HEAD
                  label = sprintf(" %s max=%.3f ",
                                  if (inverse_dr) "sens." else "DR", dr_max),
+=======
+                 label = sprintf(" max=%.3f ", dr_max),
+>>>>>>> 6d2d167fb6f097250b1360fed5b015ada35b8f1d
                  hjust = 1, vjust = -0.4, size = 3, colour = "darkorange")
 
       gg <- gg +
         labs(
+<<<<<<< HEAD
           title = dr_label,
           subtitle = sprintf(
             "Overall score = %.3f | %s%s",
@@ -817,6 +857,18 @@ gl.check.panel <- function(x,
           ),
           x = "Population",
           y = if (inverse_dr) "Drift-sensitivity score (1-DR)" else "Drift-resistance score"
+=======
+          title = "Drift resistance",
+          subtitle = sprintf(
+            "Overall score = %.3f | mean of within-population (2 \u00d7 MAF)\u00b2%s",
+            perf,
+            if (is.finite(dr_max))
+              sprintf(" | practical max = %.3f (top-%d MAF loci)", dr_max, nLoc(x))
+            else ""
+          ),
+          x = "Population",
+          y = "Drift-resistance score"
+>>>>>>> 6d2d167fb6f097250b1360fed5b015ada35b8f1d
         ) +
         theme(
           legend.position = "none",
