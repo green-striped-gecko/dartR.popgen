@@ -11,6 +11,7 @@ gl.check.future.panel(
   corr.method = c("spearman", "pearson"),
   ref = c("global", "by.pop"),
   metric = c("grm", "kinship"),
+  inverse_dr = FALSE,
   neest.path = NULL,
   type = "drift",
   user.gl = NULL,
@@ -60,6 +61,10 @@ each check generation.}
 \item{metric}{Character. Relatedness reporting scale passed to
 \code{gl.check.panel}: \code{"grm"} (default) or \code{"kinship"}
 (GRM/2). Does not change the correlation-based performance value.}
+
+\item{inverse_dr}{Logical. If \code{TRUE}, drift resistance performance
+is reported as \code{1 - drift_resistance} (drift sensitivity), passed
+through to \code{gl.check.panel}. Default \code{FALSE}.}
 
 \item{neest.path}{Character string. Path to NEstimator executable,
 required only when \code{"Ne"} is included in \code{parameter}.}

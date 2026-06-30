@@ -12,6 +12,7 @@ gl.select.panel.combined(
   corr.method = c("spearman", "pearson"),
   ref = c("global", "by.pop"),
   metric = c("grm", "kinship"),
+  inverse_dr = FALSE,
   weights = NULL,
   init.method = "random",
   n_iter = 100,
@@ -64,6 +65,12 @@ objective when \code{"relatedness"} is optimised.}
 \code{gl.check.panel}: \code{"grm"} (default) or \code{"kinship"}
 (GRM/2). As a constant rescaling it does not change the optimisation
 objective; recorded for reproducibility.}
+
+\item{inverse_dr}{Logical. If \code{TRUE} and \code{"drift_resistance"}
+is among \code{parameter}, the performance is reported as
+\code{1 - drift_resistance} (drift sensitivity). The SA then
+optimises for loci with \emph{low} MAF, producing a panel that is
+maximally sensitive to allele-frequency change. Default \code{FALSE}.}
 
 \item{weights}{Numeric vector, one per element of \code{parameter}.
 \code{NULL} (default) = equal weights.}
@@ -122,8 +129,12 @@ Stored in \code{x@other}:
 \itemize{
   \item \code{sa_best_performance}
   \item \code{sa_history} — data frame: \code{iteration},
-    \code{current_performance}, \code{best_performance}, \code{n_swap},
-    \code{restarted}
+    \code{current_performance}, \code{best_performance},
+    \code{drift_resistance} (per-iteration drift-resistance score,
+    \code{NA} if not in the parameter set),
+    \code{other_performance} (weighted mean of all non-drift-resistance
+    parameters, renormalised to sum to 1),
+    \code{n_swap}, \code{restarted}
   \item \code{sa_parameters} — list: \code{parameter}, \code{weights},
     \code{neest.path}, \code{corr.method}, \code{ref}, \code{metric},
     \code{cooling}, \code{n_swap_max}, \code{restart_tol}

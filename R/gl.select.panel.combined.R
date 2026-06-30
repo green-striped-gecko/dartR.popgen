@@ -33,6 +33,11 @@
 #'   \code{gl.check.panel}: \code{"grm"} (default) or \code{"kinship"}
 #'   (GRM/2). As a constant rescaling it does not change the optimisation
 #'   objective; recorded for reproducibility.
+#' @param inverse_dr Logical. If \code{TRUE} and \code{"drift_resistance"}
+#'   is among \code{parameter}, the performance is reported as
+#'   \code{1 - drift_resistance} (drift sensitivity). The SA then
+#'   optimises for loci with \emph{low} MAF, producing a panel that is
+#'   maximally sensitive to allele-frequency change. Default \code{FALSE}.
 #' @param weights Numeric vector, one per element of \code{parameter}.
 #'   \code{NULL} (default) = equal weights.
 #' @param init.method Initialisation method from \code{\link{gl.select.panel}}.
@@ -95,8 +100,12 @@
 #' \itemize{
 #'   \item \code{sa_best_performance}
 #'   \item \code{sa_history} — data frame: \code{iteration},
-#'     \code{current_performance}, \code{best_performance}, \code{n_swap},
-#'     \code{restarted}
+#'     \code{current_performance}, \code{best_performance},
+#'     \code{drift_resistance} (per-iteration drift-resistance score,
+#'     \code{NA} if not in the parameter set),
+#'     \code{other_performance} (weighted mean of all non-drift-resistance
+#'     parameters, renormalised to sum to 1),
+#'     \code{n_swap}, \code{restarted}
 #'   \item \code{sa_parameters} — list: \code{parameter}, \code{weights},
 #'     \code{neest.path}, \code{corr.method}, \code{ref}, \code{metric},
 #'     \code{cooling}, \code{n_swap_max}, \code{restart_tol}
@@ -137,6 +146,7 @@ gl.select.panel.combined <- function(x,
                                      corr.method    = c("spearman", "pearson"),
                                      ref            = c("global", "by.pop"),
                                      metric         = c("grm", "kinship"),
+                                     inverse_dr     = FALSE,
                                      weights        = NULL,
                                      init.method    = "random",
                                      n_iter         = 100,
@@ -158,7 +168,7 @@ gl.select.panel.combined <- function(x,
   # input validation
   # ---------------------------------------------------------------
   all_params <- c("Fst","He","Ho","Fis","Nall","Ne",
-                  "Ho_ind","relatedness",
+                  "Ho_ind","Fis_ind","drift_resistance","relatedness",
                   "id","parentage","assignment")
   if (length(parameter) == 1 && parameter == "all")
     parameter <- all_params
@@ -168,7 +178,7 @@ gl.select.panel.combined <- function(x,
   parameter <- unique(parameter)
 
   valid_params <- c("Fst","He","Ho","Fis","Nall",
-                    "Ho_ind","relatedness",
+                    "Ho_ind","Fis_ind","drift_resistance","relatedness",
                     "id","parentage","assignment","hybridisation","Ne")
   corr.method <- match.arg(tolower(corr.method), c("spearman", "pearson"))
   ref         <- match.arg(ref,    c("global", "by.pop"))
@@ -226,7 +236,10 @@ gl.select.panel.combined <- function(x,
   
   # ---------------------------------------------------------------
   # evaluate_panel — all output suppressed via sink + finally
+  # returns a list: $composite, $drift_resistance, $other_weighted
   # ---------------------------------------------------------------
+  has_dr <- "drift_resistance" %in% parameter
+
   evaluate_panel <- function(loci) {
     panel  <- gl.keep.loc(x, loci, verbose = 0)
     tmp    <- tempfile()
@@ -241,6 +254,7 @@ gl.select.panel.combined <- function(x,
         corr.method = corr.method,
         ref        = ref,
         metric     = metric,
+        inverse_dr = inverse_dr,
         error.rate = error.rate,
         threshold  = threshold,
         n_sim_parents = n_sim_parents,
@@ -255,56 +269,110 @@ gl.select.panel.combined <- function(x,
       close(con)
       unlink(tmp)
     })
-    if (is.null(result)) return(0)
+    if (is.null(result))
+      return(list(composite = 0,
+                  drift_resistance = NA_real_,
+                  other_weighted   = NA_real_))
+
     perfs <- vapply(result, function(r) {
       p <- r$performance
       if (is.null(p) || length(p) == 0 || is.na(p)) 0 else as.numeric(p)
     }, numeric(1))
-    sum(w_norm[names(perfs)] * perfs[names(w_norm)])
+
+    composite <- sum(w_norm[names(perfs)] * perfs[names(w_norm)])
+
+    ## decompose: drift_resistance vs everything else
+    dr <- if (has_dr && "drift_resistance" %in% names(perfs))
+      perfs[["drift_resistance"]] else NA_real_
+
+    other_names <- setdiff(names(w_norm), "drift_resistance")
+    if (length(other_names) > 0 && any(other_names %in% names(perfs))) {
+      w_other <- w_norm[other_names]
+      w_other <- w_other / sum(w_other)
+      other_weighted <- sum(w_other * perfs[other_names])
+    } else {
+      other_weighted <- NA_real_
+    }
+
+    list(composite        = composite,
+         drift_resistance = dr,
+         other_weighted   = other_weighted)
   }
   
   # ---------------------------------------------------------------
   # convergence plot builder
   # ---------------------------------------------------------------
-  build_conv_plot <- function(history, iter_done, best_perf, reason = "") {
+  build_conv_plot <- function(history, iter_done, best_perf, reason = "",
+                              dr_max = NA_real_) {
     curr_hist <- history[seq_len(iter_done + 1), ]
     curr_hist <- curr_hist[!is.na(curr_hist$current_performance), ]
     if (nrow(curr_hist) == 0) return(invisible(NULL))
     
+    ## always show composite (best + current)
     plot_df <- rbind(
       data.frame(iteration   = curr_hist$iteration,
                  performance = curr_hist$current_performance,
-                 type        = "Current"),
+                 type        = "Composite (current)"),
       data.frame(iteration   = curr_hist$iteration,
                  performance = curr_hist$best_performance,
-                 type        = "Best")
+                 type        = "Composite (best)")
     )
     
+    ## if drift_resistance is tracked, add the two component lines
+    if (has_dr && any(!is.na(curr_hist$drift_resistance))) {
+      dr_type <- if (inverse_dr) "Drift sensitivity (1-DR)" else "Drift resistance"
+      plot_df <- rbind(plot_df,
+        data.frame(iteration   = curr_hist$iteration,
+                   performance = curr_hist$drift_resistance,
+                   type        = dr_type),
+        data.frame(iteration   = curr_hist$iteration,
+                   performance = curr_hist$other_performance,
+                   type        = "Other params (weighted)")
+      )
+    }
+    
     ttl <- if (nchar(reason) > 0)
-      sprintf("SA — %d loci  [%s | iter %d | best=%.4f]",
+      sprintf("SA \u2014 %d loci  [%s | iter %d | best=%.4f]",
               nl, reason, iter_done, best_perf)
     else
-      sprintf("SA — %d loci  [iter %d/%d | best=%.4f]",
+      sprintf("SA \u2014 %d loci  [iter %d/%d | best=%.4f]",
               nl, iter_done, n_iter, best_perf)
     
     sub <- sprintf(
-      "Params: %s  |  Weights: %s  |  corr=%s  |  cooling=%.4f  |  swap: %d->1%s",
+      "Params: %s  |  Weights: %s  |  corr=%s  |  cooling=%.4f  |  swap: %d->1%s%s",
       paste(parameter, collapse=", "),
       paste(names(w_norm), round(w_norm, 2), sep="=", collapse=", "),
       corr.method, cooling, n_swap_max,
       if (!is.null(restart_tol))
-        sprintf("  |  restart_tol=%.2f", restart_tol) else ""
+        sprintf("  |  restart_tol=%.2f", restart_tol) else "",
+      if (inverse_dr) "  |  inverse_dr=TRUE" else ""
     )
+    
+    ## build scales for all possible types
+    all_types <- unique(plot_df$type)
+    type_colours <- c(
+      "Composite (current)"        = "grey60",
+      "Composite (best)"           = "steelblue",
+      "Drift resistance"           = "darkorange",
+      "Drift sensitivity (1-DR)"   = "darkorange",
+      "Other params (weighted)"    = "purple"
+    )
+    type_widths <- c(
+      "Composite (current)"        = 0.4,
+      "Composite (best)"           = 1.2,
+      "Drift resistance"           = 0.6,
+      "Drift sensitivity (1-DR)"   = 0.6,
+      "Other params (weighted)"    = 0.6
+    )
+    ## keep only types present in data
+    type_colours <- type_colours[names(type_colours) %in% all_types]
+    type_widths  <- type_widths[names(type_widths) %in% all_types]
     
     gg <- ggplot(plot_df, aes(x = iteration, y = performance,
                               colour = type, linewidth = type)) +
       geom_line() +
-      scale_colour_manual(
-        values = c("Current" = "grey60", "Best" = "steelblue"),
-        name   = NULL) +
-      scale_linewidth_manual(
-        values = c("Current" = 0.5, "Best" = 1.2),
-        name   = NULL) +
+      scale_colour_manual(values = type_colours, name = NULL) +
+      scale_linewidth_manual(values = type_widths, name = NULL) +
       coord_cartesian(ylim = c(0, 1), xlim = c(0, n_iter))
     
     if (!is.null(stop.criterion))
@@ -315,8 +383,17 @@ gl.select.panel.combined <- function(x,
                label = sprintf(" stop=%.2f", stop.criterion),
                hjust = 0, vjust = -0.4, size = 3, colour = "firebrick")
     
+    if (is.finite(dr_max))
+      gg <- gg +
+      geom_hline(yintercept = dr_max, linetype = "dotted",
+                 colour = "darkorange", linewidth = 0.6) +
+      annotate("text", x = n_iter, y = dr_max,
+               label = sprintf("%s max=%.2f ",
+                               if (inverse_dr) "DS" else "DR", dr_max),
+               hjust = 1, vjust = -0.4, size = 3, colour = "darkorange")
+    
     gg + labs(title = ttl, subtitle = sub,
-              x = "Iteration", y = "Composite performance")
+              x = "Iteration", y = "Performance")
   }
   
   # ---------------------------------------------------------------
@@ -334,7 +411,9 @@ gl.select.panel.combined <- function(x,
                                          metric      = metric,
                                          cooling     = cooling,
                                          n_swap_max  = n_swap_max,
-                                         restart_tol = restart_tol)
+                                         restart_tol = restart_tol,
+                                         inverse_dr  = inverse_dr,
+                                         dr_max      = dr_max)
     xx@other$sa_stop_reason      <- reason
     cat(sprintf("Returning panel: %d loci | best=%.4f | %s\n",
                 nl, perf, reason))
@@ -361,7 +440,8 @@ gl.select.panel.combined <- function(x,
   init_panel  <- gl.select.panel(x, method = init.method, nl = nl,
                                  plot.out = FALSE, verbose = 0)
   curr_loci   <- locNames(init_panel)
-  curr_perf   <- evaluate_panel(curr_loci)
+  curr_eval   <- evaluate_panel(curr_loci)
+  curr_perf   <- curr_eval$composite
   best_loci   <- curr_loci
   best_perf   <- curr_perf
   all_loci    <- locNames(x)
@@ -370,10 +450,37 @@ gl.select.panel.combined <- function(x,
   T_sa        <- start_temp
   n_restarts  <- 0L
   
+  ## practical maximum for drift_resistance: top-nl MAF loci from xorig
+  dr_max <- NA_real_
+  if (has_dr) {
+    gmat_all  <- as.matrix(x)
+    pops_chr  <- as.character(pop(x))
+    upops     <- unique(pops_chr)
+    dr_scores <- vapply(seq_len(ncol(gmat_all)), function(l) {
+      mean(vapply(upops, function(pp) {
+        p <- mean(gmat_all[pops_chr == pp, l], na.rm = TRUE) / 2
+        if (!is.finite(p)) return(NA_real_)
+        (2 * min(p, 1 - p))^2
+      }, numeric(1)), na.rm = TRUE)
+    }, numeric(1))
+    if (inverse_dr) {
+      ## for 1-DR, practical max = 1 - DR of the LOWEST-MAF loci
+      bottom_nl <- order(dr_scores, decreasing = FALSE)[seq_len(min(nl, length(dr_scores)))]
+      dr_max    <- 1 - mean(dr_scores[bottom_nl], na.rm = TRUE)
+      cat(sprintf("Drift sensitivity practical max (bottom-%d MAF loci): %.4f\n", nl, dr_max))
+    } else {
+      top_nl  <- order(dr_scores, decreasing = TRUE)[seq_len(min(nl, length(dr_scores)))]
+      dr_max  <- mean(dr_scores[top_nl], na.rm = TRUE)
+      cat(sprintf("Drift resistance practical max (top-%d MAF loci): %.4f\n", nl, dr_max))
+    }
+  }
+  
   history <- data.frame(
     iteration           = 0:n_iter,
     current_performance = c(curr_perf, rep(NA_real_,    n_iter)),
     best_performance    = c(best_perf, rep(NA_real_,    n_iter)),
+    drift_resistance    = c(curr_eval$drift_resistance, rep(NA_real_, n_iter)),
+    other_performance   = c(curr_eval$other_weighted,   rep(NA_real_, n_iter)),
     n_swap              = c(n_swap_max, rep(NA_integer_, n_iter)),
     restarted           = c(FALSE,     rep(NA,          n_iter))
   )
@@ -415,13 +522,15 @@ gl.select.panel.combined <- function(x,
         new_loci <- c(setdiff(curr_loci, out_locs), in_locs)
         
         # evaluate
-        new_perf <- evaluate_panel(new_loci)
+        new_eval <- evaluate_panel(new_loci)
+        new_perf <- new_eval$composite
         delta    <- new_perf - curr_perf
         
         # accept / reject
         if (delta > 0 || runif(1) < exp(delta / T_sa)) {
           curr_loci <- new_loci
           curr_perf <- new_perf
+          curr_eval <- new_eval
         }
         
         # track best
@@ -434,6 +543,8 @@ gl.select.panel.combined <- function(x,
         
         history$current_performance[iter + 1] <- curr_perf
         history$best_performance[iter + 1]    <- best_perf
+        history$drift_resistance[iter + 1]    <- curr_eval$drift_resistance
+        history$other_performance[iter + 1]   <- curr_eval$other_weighted
         history$n_swap[iter + 1]              <- n_swap
         history$restarted[iter + 1]           <- restarted
         T_sa      <- T_sa * cooling
@@ -449,7 +560,7 @@ gl.select.panel.combined <- function(x,
         # live plot
         if (plot.out && iter %% plot.every == 0) {
           cat("\n")
-          gg_live <- build_conv_plot(history, iter, best_perf)
+          gg_live <- build_conv_plot(history, iter, best_perf, dr_max = dr_max)
           if (!is.null(gg_live)) print(gg_live)
         }
         
@@ -468,7 +579,8 @@ gl.select.panel.combined <- function(x,
                   best_perf, n_restarts))
       
       if (plot.out) {
-        gg_f <- build_conv_plot(history, iter_done, best_perf, stop_reason)
+        gg_f <- build_conv_plot(history, iter_done, best_perf, stop_reason,
+                               dr_max = dr_max)
         if (!is.null(gg_f)) print(gg_f)
       }
       

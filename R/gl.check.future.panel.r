@@ -31,6 +31,9 @@
 #' @param metric Character. Relatedness reporting scale passed to
 #'   \code{gl.check.panel}: \code{"grm"} (default) or \code{"kinship"}
 #'   (GRM/2). Does not change the correlation-based performance value.
+#' @param inverse_dr Logical. If \code{TRUE}, drift resistance performance
+#'   is reported as \code{1 - drift_resistance} (drift sensitivity), passed
+#'   through to \code{gl.check.panel}. Default \code{FALSE}.
 #' @param neest.path Character string. Path to NEstimator executable,
 #'   required only when \code{"Ne"} is included in \code{parameter}.
 #' @param type Character. \code{"drift"} (default) simulates genetic drift
@@ -107,6 +110,7 @@ gl.check.future.panel <- function(x,
                                   corr.method  = c("spearman", "pearson"),
                                   ref          = c("global", "by.pop"),
                                   metric       = c("grm", "kinship"),
+                                  inverse_dr   = FALSE,
                                   neest.path   = NULL,
                                   type         = "drift",
                                   user.gl      = NULL,
@@ -128,7 +132,7 @@ gl.check.future.panel <- function(x,
   # expand shortcuts
   # ---------------------------------------------------------------
   all_params <- c("Fst","He","Ho","Fis","Nall","Ne",
-                  "Ho_ind","relatedness",
+                  "Ho_ind","Fis_ind","drift_resistance","relatedness",
                   "id","parentage","assignment")
   if (length(parameter) == 1 && parameter == "all")
     parameter <- all_params
@@ -228,8 +232,9 @@ gl.check.future.panel <- function(x,
   panel_idx <- which(loc_orig %in% panel_loci)
   
   cat(sprintf(
-    "gl.check.future.panel [%s]: %d panel loci | %d full loci | %d pops | %d gen | %d rep | corr=%s | check: %s\n",
+    "gl.check.future.panel [%s]: %d panel loci | %d full loci | %d pops | %d gen | %d rep | corr=%s%s | check: %s\n",
     type, length(panel_loci), L_orig, K, n_gen, replicates, corr.method,
+    if (inverse_dr) " | inverse_dr" else "",
     if (length(check_gens) <= 10) paste(check_gens, collapse=", ")
     else sprintf("%d generations", length(check_gens))
   ))
@@ -315,6 +320,7 @@ gl.check.future.panel <- function(x,
         corr.method  = corr.method,
         ref          = ref,
         metric       = metric,
+        inverse_dr   = inverse_dr,
         error.rate   = error.rate,
         threshold    = threshold,
         n_sim_parents = n_sim_parents,
@@ -368,7 +374,7 @@ gl.check.future.panel <- function(x,
           cat(sprintf("\r  gen %3d / %d  [evaluating]   ", gen, n_gen))
           flush.console()
           xorig_sim <- af_to_genlight(af_curr)
-          x_sim     <- af_to_genlight(af_curr, loci_idx=panel_idx)
+          x_sim     <- xorig_sim[, panel_idx]
           perf      <- check_perf(x_sim, xorig_sim)
           
           for (p in parameter)
@@ -454,14 +460,23 @@ gl.check.future.panel <- function(x,
   
   if (plot.out) {
     
-    sub_title <- if (type=="drift")
-      sprintf("%d panel loci  |  %d populations  |  %d replicates  |  corr=%s  |  ribbons: IQR (dark), range (light)",
-              length(panel_loci), K, replicates, corr.method)
-    else
-      sprintf("%d panel loci  |  %d populations  |  corr=%s  |  user-supplied simulation",
-              length(panel_loci), K, corr.method)
+    dr_note <- if (inverse_dr) "  |  inverse_dr=TRUE" else ""
     
-    gg <- ggplot(summary_df, aes(x=generation, colour=parameter,
+    sub_title <- if (type=="drift")
+      sprintf("%d panel loci  |  %d populations  |  %d replicates  |  corr=%s%s  |  ribbons: IQR (dark), range (light)",
+              length(panel_loci), K, replicates, corr.method, dr_note)
+    else
+      sprintf("%d panel loci  |  %d populations  |  corr=%s%s  |  user-supplied simulation",
+              length(panel_loci), K, corr.method, dr_note)
+    
+    ## relabel drift_resistance in legend when inverted
+    plot_summary <- summary_df
+    if (inverse_dr && "drift_resistance" %in% levels(plot_summary$parameter)) {
+      levels(plot_summary$parameter)[levels(plot_summary$parameter) == "drift_resistance"] <-
+        "drift_sensitivity (1-DR)"
+    }
+    
+    gg <- ggplot(plot_summary, aes(x=generation, colour=parameter,
                                  fill=parameter)) +
       geom_ribbon(aes(ymin=min, ymax=max), alpha=0.10, colour=NA) +
       geom_ribbon(aes(ymin=q25, ymax=q75), alpha=0.25, colour=NA) +
@@ -498,6 +513,7 @@ gl.check.future.panel <- function(x,
     corr.method  = corr.method,
     ref          = ref,
     metric       = metric,
+    inverse_dr   = inverse_dr,
     neest.path   = neest.path,
     final_panels = final_panels,
     plot         = gg
