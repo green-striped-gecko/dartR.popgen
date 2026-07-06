@@ -799,7 +799,8 @@ gl.check.panel <- function(x,
         geom_hline(yintercept = dr_max, linetype = "dotted",
                    colour = "darkorange", linewidth = 0.6) +
         annotate("text", x = Inf, y = dr_max,
-                 label = sprintf(" max=%.3f ", dr_max),
+                 label = sprintf(" %s max=%.3f ",
+                                 if (inverse_dr) "sens." else "DR", dr_max),
                  hjust = 1, vjust = -0.4, size = 3, colour = "darkorange")
 
       gg <- gg +
@@ -808,14 +809,14 @@ gl.check.panel <- function(x,
           subtitle = sprintf(
             "Overall score = %.3f | %s%s",
             perf,
-            if (inverse_dr) "1 \u2212 mean of within-population (2 \u00d7 MAF)\u00b2"
-            else "mean of within-population (2 \u00d7 MAF)\u00b2",
+            if (inverse_dr) "1 - mean of within-population (2 x MAF)^2"
+            else "mean of within-population (2 x MAF)^2",
             if (is.finite(dr_max))
               sprintf(" | practical max = %.3f (top-%d loci)", dr_max, nLoc(x))
             else ""
           ),
           x = "Population",
-          y = "Drift-resistance score"
+          y = if (inverse_dr) "Drift-sensitivity score (1-DR)" else "Drift-resistance score"
         ) +
         theme(
           legend.position = "none",
@@ -1394,6 +1395,11 @@ gl.check.panel <- function(x,
       performance = sapply(output, `[[`, "performance"),
       stringsAsFactors = FALSE
     )
+    
+    ## relabel drift_resistance when inverted
+    if (inverse_dr && "drift_resistance" %in% levels(perf_df$parameter))
+      levels(perf_df$parameter)[levels(perf_df$parameter) == "drift_resistance"] <-
+        "drift_sensitivity"
     
     summary_gg <- ggplot(perf_df, aes(x=parameter, y=performance,
                                       fill=performance)) +
