@@ -12,6 +12,7 @@ gl.check.panel(
   ref = c("global", "by.pop"),
   metric = c("grm", "kinship"),
   inverse_dr = FALSE,
+  sample = 1,
   neest.path = NULL,
   error.rate = 0.01,
   threshold = 0.001,
@@ -118,6 +119,15 @@ indicates a panel whose loci are near fixation and therefore
 maximally responsive to allele-frequency change — desirable for
 genetic-erosion monitoring but not for long-lived stable panels.
 Default \code{FALSE}.}
+
+\item{sample}{Numeric in (0,1]. Proportion of individuals to randomly
+retain from each population of the \emph{panel} before evaluation.
+\code{1} (default) uses all individuals; \code{0.5} keeps a random
+half of each population. The reference dataset \code{xorig} always
+uses all individuals, so this tests how panel performance degrades
+when fewer individuals are genotyped with the panel while the truth
+is known from the full dataset. The proportion is maintained across
+all populations.}
 
 \item{neest.path}{Character string. Path to NEstimator executable, required
 only for \code{"Ne"}.}

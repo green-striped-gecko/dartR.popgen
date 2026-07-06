@@ -9,6 +9,7 @@ gl.select.panel(
   method = "random",
   nl = 10,
   exact = TRUE,
+  include.loci = NULL,
   plot.out = TRUE,
   plot.file = NULL,
   plot.dir = NULL,
@@ -35,6 +36,12 @@ gl.select.panel(
 
 \item{exact}{Logical. If `TRUE`, ensures that the number of selected loci is exactly `nl`. 
 If `FALSE`, allows for a random selection that may not match `nl` exactly.}
+
+\item{include.loci}{Character vector of locus names to force into the
+panel regardless of the selection method (e.g. loci from a legacy
+panel that must be retained for backward compatibility). These are
+always kept; the method then fills the remaining `nl - length(include.loci)`
+slots. Must not exceed `nl`. Default `NULL`.}
 
 \item{plot.out}{Logical. If `TRUE`, generates plots summarizing selected loci.}
 

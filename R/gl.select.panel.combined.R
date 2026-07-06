@@ -38,6 +38,15 @@
 #'   \code{1 - drift_resistance} (drift sensitivity). The SA then
 #'   optimises for loci with \emph{low} MAF, producing a panel that is
 #'   maximally sensitive to allele-frequency change. Default \code{FALSE}.
+#' @param sample Numeric in (0,1]. Proportion of individuals per population
+#'   to retain from the panel when evaluating performance during
+#'   optimisation (passed to \code{gl.check.panel}). \code{1} (default)
+#'   uses all individuals; the reference dataset is always full size.
+#' @param include.loci Character vector of locus names to force into the
+#'   panel and keep fixed throughout optimisation (e.g. loci from a legacy
+#'   panel). These are never swapped out by the SA; only the remaining
+#'   \code{nl - length(include.loci)} slots are optimised. Must not exceed
+#'   \code{nl}. Default \code{NULL}.
 #' @param weights Numeric vector, one per element of \code{parameter}.
 #'   \code{NULL} (default) = equal weights.
 #' @param init.method Initialisation method from \code{\link{gl.select.panel}}.
@@ -147,6 +156,8 @@ gl.select.panel.combined <- function(x,
                                      ref            = c("global", "by.pop"),
                                      metric         = c("grm", "kinship"),
                                      inverse_dr     = FALSE,
+                                     sample         = 1,
+                                     include.loci   = NULL,
                                      weights        = NULL,
                                      init.method    = "random",
                                      n_iter         = 100,
@@ -163,6 +174,18 @@ gl.select.panel.combined <- function(x,
                                      plot.file      = NULL,
                                      plot.dir       = NULL,
                                      verbose        = NULL) {
+  
+  # ---------------------------------------------------------------
+  # console safety guard: record the sink depth on entry and restore
+  # it on ANY exit (normal, error, or user interrupt via Escape). This
+  # guarantees the console is never left redirected to a closed sink,
+  # which previously could happen if Escape fired while output was
+  # temporarily sinked inside evaluate_panel().
+  # ---------------------------------------------------------------
+  .sink_depth_on_entry <- sink.number()
+  on.exit({
+    while (sink.number() > .sink_depth_on_entry) sink(type = "output")
+  }, add = TRUE)
   
   # ---------------------------------------------------------------
   # input validation
@@ -190,6 +213,20 @@ gl.select.panel.combined <- function(x,
   if (length(bad) > 0)
     stop(paste("Unknown parameter(s):", paste(bad, collapse=", "),
                "\nValid options:", paste(valid_params, collapse=", ")))
+
+  if (!is.numeric(sample) || sample <= 0 || sample > 1)
+    stop("sample must be in (0,1].")
+
+  if (!is.null(include.loci)) {
+    miss <- setdiff(include.loci, locNames(x))
+    if (length(miss) > 0)
+      stop(paste0(length(miss), " include.loci not found in x."))
+    if (length(include.loci) > nl)
+      stop(sprintf("include.loci (%d) exceeds nl (%d).",
+                   length(include.loci), nl))
+    if (length(include.loci) == nl)
+      warning("include.loci == nl: the panel is fully fixed; SA cannot optimise.")
+  }
   if (length(parameter) == 0)  stop("At least one parameter must be specified.")
   if ("Ne" %in% parameter && is.null(neest.path))
     stop("neest.path is required when parameter includes 'Ne'.")
@@ -245,9 +282,20 @@ gl.select.panel.combined <- function(x,
     tmp    <- tempfile()
     con    <- file(tmp, open = "w")
     result <- NULL
+
+    ## on.exit runs on ANY exit: normal return, error, OR user interrupt
+    ## (Escape). This guarantees the sink is always released and the
+    ## console is restored, even if the user aborts mid-evaluation.
     sink(con, type = "output")
-    tryCatch({
-      result <- gl.check.panel(
+    on.exit({
+      ## defensively pop the sink only if still active
+      if (sink.number() > 0) sink(type = "output")
+      if (isOpen(con)) close(con)
+      unlink(tmp)
+    }, add = TRUE)
+
+    result <- tryCatch(
+      gl.check.panel(
         x          = panel,
         xorig      = x,
         parameter  = parameter,
@@ -255,6 +303,7 @@ gl.select.panel.combined <- function(x,
         ref        = ref,
         metric     = metric,
         inverse_dr = inverse_dr,
+        sample     = sample,
         error.rate = error.rate,
         threshold  = threshold,
         n_sim_parents = n_sim_parents,
@@ -262,13 +311,10 @@ gl.select.panel.combined <- function(x,
         plot.out   = FALSE,
         neest.path = neest.path,
         verbose    = 0
-      )
-    }, error = function(e) { },
-    finally = {
-      sink(type = "output")
-      close(con)
-      unlink(tmp)
-    })
+      ),
+      error = function(e) NULL
+    )
+
     if (is.null(result))
       return(list(composite = 0,
                   drift_resistance = NA_real_,
@@ -413,6 +459,8 @@ gl.select.panel.combined <- function(x,
                                          n_swap_max  = n_swap_max,
                                          restart_tol = restart_tol,
                                          inverse_dr  = inverse_dr,
+                                         sample      = sample,
+                                         include.loci = include.loci,
                                          dr_max      = dr_max)
     xx@other$sa_stop_reason      <- reason
     cat(sprintf("Returning panel: %d loci | best=%.4f | %s\n",
@@ -438,6 +486,7 @@ gl.select.panel.combined <- function(x,
               init.method, corr.method))
   
   init_panel  <- gl.select.panel(x, method = init.method, nl = nl,
+                                 include.loci = include.loci,
                                  plot.out = FALSE, verbose = 0)
   curr_loci   <- locNames(init_panel)
   curr_eval   <- evaluate_panel(curr_loci)
@@ -445,6 +494,8 @@ gl.select.panel.combined <- function(x,
   best_loci   <- curr_loci
   best_perf   <- curr_perf
   all_loci    <- locNames(x)
+  # loci that must never be swapped out of the panel
+  protected_loci <- if (is.null(include.loci)) character(0) else include.loci
   stop_reason <- "completed"
   iter_done   <- 0
   T_sa        <- start_temp
@@ -515,9 +566,22 @@ gl.select.panel.combined <- function(x,
         # adaptive swap size: scales linearly with temperature
         n_swap   <- max(1L, round(n_swap_max * T_sa / start_temp))
         
-        # propose swap
-        out_locs <- sample(curr_loci, n_swap, replace = FALSE)
-        in_locs  <- sample(setdiff(all_loci, curr_loci), n_swap,
+        # propose swap — never swap out protected (include.loci)
+        swappable <- setdiff(curr_loci, protected_loci)
+        n_swap_eff <- min(n_swap, length(swappable))
+        if (n_swap_eff < 1L) {
+          # nothing swappable (all loci protected) — SA cannot move
+          history$current_performance[iter + 1] <- curr_perf
+          history$best_performance[iter + 1]    <- best_perf
+          history$drift_resistance[iter + 1]    <- curr_eval$drift_resistance
+          history$other_performance[iter + 1]   <- curr_eval$other_weighted
+          history$n_swap[iter + 1]              <- 0L
+          history$restarted[iter + 1]           <- restarted
+          T_sa <- T_sa * cooling
+          next
+        }
+        out_locs <- sample(swappable, n_swap_eff, replace = FALSE)
+        in_locs  <- sample(setdiff(all_loci, curr_loci), n_swap_eff,
                            replace = FALSE)
         new_loci <- c(setdiff(curr_loci, out_locs), in_locs)
         

@@ -13,6 +13,8 @@ gl.select.panel.combined(
   ref = c("global", "by.pop"),
   metric = c("grm", "kinship"),
   inverse_dr = FALSE,
+  sample = 1,
+  include.loci = NULL,
   weights = NULL,
   init.method = "random",
   n_iter = 100,
@@ -71,6 +73,17 @@ is among \code{parameter}, the performance is reported as
 \code{1 - drift_resistance} (drift sensitivity). The SA then
 optimises for loci with \emph{low} MAF, producing a panel that is
 maximally sensitive to allele-frequency change. Default \code{FALSE}.}
+
+\item{sample}{Numeric in (0,1]. Proportion of individuals per population
+to retain from the panel when evaluating performance during
+optimisation (passed to \code{gl.check.panel}). \code{1} (default)
+uses all individuals; the reference dataset is always full size.}
+
+\item{include.loci}{Character vector of locus names to force into the
+panel and keep fixed throughout optimisation (e.g. loci from a legacy
+panel). These are never swapped out by the SA; only the remaining
+\code{nl - length(include.loci)} slots are optimised. Must not exceed
+\code{nl}. Default \code{NULL}.}
 
 \item{weights}{Numeric vector, one per element of \code{parameter}.
 \code{NULL} (default) = equal weights.}

@@ -34,6 +34,21 @@
 #' @param inverse_dr Logical. If \code{TRUE}, drift resistance performance
 #'   is reported as \code{1 - drift_resistance} (drift sensitivity), passed
 #'   through to \code{gl.check.panel}. Default \code{FALSE}.
+#' @param sample Numeric in (0,1]. Proportion of individuals to randomly
+#'   retain from each population of the panel at every check generation
+#'   (the reference is always evaluated at full size). \code{1} (default)
+#'   uses all individuals. Simulates genotyping fewer individuals with the
+#'   panel. The proportion is maintained across populations.
+#' @param Ne Effective population size for the drift simulation
+#'   (\code{type = "drift"} only). \code{NULL} (default) uses the census
+#'   sizes from \code{xorig} (Ne = number of individuals per population).
+#'   A single value sets a constant Ne for the largest population, with
+#'   other populations scaled proportionally to their census fraction. A
+#'   vector specifies an Ne trajectory (linearly interpolated to
+#'   \code{n_gen} generations), enabling simulation of growing or
+#'   declining populations; all populations grow or decline proportionally.
+#'   The drift rate uses 2*Ne as the binomial size, decoupled from the
+#'   number of individuals materialised at check generations.
 #' @param neest.path Character string. Path to NEstimator executable,
 #'   required only when \code{"Ne"} is included in \code{parameter}.
 #' @param type Character. \code{"drift"} (default) simulates genetic drift
@@ -111,6 +126,8 @@ gl.check.future.panel <- function(x,
                                   ref          = c("global", "by.pop"),
                                   metric       = c("grm", "kinship"),
                                   inverse_dr   = FALSE,
+                                  sample       = 1,
+                                  Ne           = NULL,
                                   neest.path   = NULL,
                                   type         = "drift",
                                   user.gl      = NULL,
@@ -180,6 +197,19 @@ gl.check.future.panel <- function(x,
   
   if (!is.null(target) && (target <= 0 || target > 1))
     stop("target must be in (0, 1].")
+
+  if (!is.numeric(sample) || sample <= 0 || sample > 1)
+    stop("sample must be in (0,1].")
+
+  # Ne: NULL = use census sizes; scalar = constant Ne per pop;
+  # vector = Ne trajectory over generations (per pop, scaled proportionally
+  # when multiple populations differ in census size). Only for type="drift".
+  if (!is.null(Ne)) {
+    if (type != "drift")
+      stop("Ne can only be set when type = 'drift'.")
+    if (!is.numeric(Ne) || any(Ne < 1))
+      stop("Ne must be numeric and >= 1.")
+  }
   
   panel_loci   <- locNames(x)
   missing_loci <- setdiff(panel_loci, locNames(xorig))
@@ -191,6 +221,17 @@ gl.check.future.panel <- function(x,
                 nPop(x), "."))
   
   verbose <- if (is.null(verbose)) 2L else as.integer(verbose)
+
+  # helper: subsample a proportion of individuals per population (panel side)
+  .subsample_panel <- function(gl, prop) {
+    if (prop >= 1) return(gl)
+    keep <- unlist(lapply(split(indNames(gl), pop(gl)), function(nm) {
+      k <- max(1L, round(length(nm) * prop))
+      sample(nm, k)
+    }), use.names = FALSE)
+    gl2 <- gl[indNames(gl) %in% keep, ]
+    gl2[order(pop(gl2)), ]
+  }
   
   # ---------------------------------------------------------------
   # resolve check generations
@@ -249,6 +290,51 @@ gl.check.future.panel <- function(x,
       pop_names
     )
     
+    # -------------------------------------------------------------
+    # Ne trajectory: Ne_traj[k, gen] = effective size of pop k at gen.
+    # Controls the drift binomial size (2*Ne), decoupled from the
+    # census size n_per_pop (which controls how many individuals are
+    # materialised at check generations).
+    #
+    #   Ne = NULL       -> Ne_traj = census n_per_pop (constant)
+    #   Ne = scalar     -> that Ne for the LARGEST pop; others scaled
+    #                      proportionally to their census fraction, held
+    #                      constant across generations
+    #   Ne = vector     -> trajectory for the LARGEST pop across gens
+    #                      (linearly interpolated to n_gen); others scaled
+    #                      proportionally. Enables growth/decline.
+    # In every case the realised Ne per pop is exactly as specified
+    # (after proportional scaling), not an approximation.
+    # -------------------------------------------------------------
+    census_frac <- n_per_pop / max(n_per_pop)   # proportional weights
+    
+    if (is.null(Ne)) {
+      Ne_traj <- matrix(rep(n_per_pop, n_gen), nrow=K, ncol=n_gen,
+                        dimnames=list(pop_names, NULL))
+    } else if (length(Ne) == 1) {
+      # constant Ne for largest pop, others scaled
+      ne_per_pop <- Ne * census_frac
+      Ne_traj <- matrix(rep(ne_per_pop, n_gen), nrow=K, ncol=n_gen,
+                        dimnames=list(pop_names, NULL))
+    } else {
+      # trajectory: interpolate the supplied Ne vector to n_gen points
+      ne_interp <- approx(x=seq_along(Ne), y=Ne,
+                          xout=seq(1, length(Ne), length.out=n_gen))$y
+      Ne_traj <- outer(census_frac, ne_interp)   # K x n_gen
+      dimnames(Ne_traj) <- list(pop_names, NULL)
+    }
+    # round to whole gene copies but keep >= 1
+    Ne_traj <- pmax(1, round(Ne_traj))
+    # ensure it is always a K x n_gen matrix (guard against dim-drop)
+    Ne_traj <- matrix(as.numeric(Ne_traj), nrow = K, ncol = n_gen,
+                      dimnames = list(pop_names, NULL))
+    
+    if (!is.null(Ne) && verbose >= 1) {
+      cat(sprintf("Ne scenario: pop Ne at gen 1 = [%s], at gen %d = [%s]\n",
+                  paste(Ne_traj[,1], collapse=", "), n_gen,
+                  paste(Ne_traj[,n_gen], collapse=", ")))
+    }
+    
     af_init <- matrix(NA_real_, nrow=K, ncol=L_orig,
                       dimnames=list(pop_names, loc_orig))
     for (k in seq_len(K)) {
@@ -258,13 +344,15 @@ gl.check.future.panel <- function(x,
       af_init[k,]  <- af_k
     }
     
-    sim_drift <- function(af_mat) {
+    # sim_drift now takes the generation's Ne vector (one per pop)
+    sim_drift <- function(af_mat, ne_gen) {
       for (k in seq_len(K)) {
         valid <- !is.na(af_mat[k,])
         if (any(valid)) {
-          new_counts       <- rbinom(sum(valid), size=2L*n_per_pop[k],
+          twoN             <- 2L * as.integer(ne_gen[k])
+          new_counts       <- rbinom(sum(valid), size=twoN,
                                      prob=af_mat[k,valid])
-          af_mat[k,valid]  <- new_counts/(2L*n_per_pop[k])
+          af_mat[k,valid]  <- new_counts/twoN
         }
       }
       af_mat
@@ -347,7 +435,7 @@ gl.check.future.panel <- function(x,
   # generation 0 — baseline
   # ---------------------------------------------------------------
   cat("Generation 0: baseline...\n")
-  base_perf <- check_perf(x, xorig)
+  base_perf <- check_perf(.subsample_panel(x, sample), xorig)
   
   records      <- list()
   final_panels <- vector("list", replicates)
@@ -368,13 +456,15 @@ gl.check.future.panel <- function(x,
       af_curr <- af_init
       
       for (gen in seq_len(n_gen)) {
-        af_curr <- sim_drift(af_curr)
+        ne_this_gen <- if (is.matrix(Ne_traj)) Ne_traj[, gen] else Ne_traj
+        af_curr <- sim_drift(af_curr, ne_this_gen)
         
         if (gen %in% check_gens) {
           cat(sprintf("\r  gen %3d / %d  [evaluating]   ", gen, n_gen))
           flush.console()
           xorig_sim <- af_to_genlight(af_curr)
           x_sim     <- xorig_sim[, panel_idx]
+          x_sim     <- .subsample_panel(x_sim, sample)
           perf      <- check_perf(x_sim, xorig_sim)
           
           for (p in parameter)
@@ -403,6 +493,7 @@ gl.check.future.panel <- function(x,
         flush.console()
         xorig_sim <- user.gl[[gen]][order(pop(user.gl[[gen]])),]
         x_sim     <- gl.keep.loc(xorig_sim, loc.list=panel_loci, verbose=0)
+        x_sim     <- .subsample_panel(x_sim, sample)
         perf      <- check_perf(x_sim, xorig_sim)
         
         for (p in parameter)
@@ -514,6 +605,8 @@ gl.check.future.panel <- function(x,
     ref          = ref,
     metric       = metric,
     inverse_dr   = inverse_dr,
+    sample       = sample,
+    Ne           = Ne,
     neest.path   = neest.path,
     final_panels = final_panels,
     plot         = gg

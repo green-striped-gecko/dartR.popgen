@@ -12,6 +12,8 @@ gl.check.future.panel(
   ref = c("global", "by.pop"),
   metric = c("grm", "kinship"),
   inverse_dr = FALSE,
+  sample = 1,
+  Ne = NULL,
   neest.path = NULL,
   type = "drift",
   user.gl = NULL,
@@ -65,6 +67,23 @@ each check generation.}
 \item{inverse_dr}{Logical. If \code{TRUE}, drift resistance performance
 is reported as \code{1 - drift_resistance} (drift sensitivity), passed
 through to \code{gl.check.panel}. Default \code{FALSE}.}
+
+\item{sample}{Numeric in (0,1]. Proportion of individuals to randomly
+retain from each population of the panel at every check generation
+(the reference is always evaluated at full size). \code{1} (default)
+uses all individuals. Simulates genotyping fewer individuals with the
+panel. The proportion is maintained across populations.}
+
+\item{Ne}{Effective population size for the drift simulation
+(\code{type = "drift"} only). \code{NULL} (default) uses the census
+sizes from \code{xorig} (Ne = number of individuals per population).
+A single value sets a constant Ne for the largest population, with
+other populations scaled proportionally to their census fraction. A
+vector specifies an Ne trajectory (linearly interpolated to
+\code{n_gen} generations), enabling simulation of growing or
+declining populations; all populations grow or decline proportionally.
+The drift rate uses 2*Ne as the binomial size, decoupled from the
+number of individuals materialised at check generations.}
 
 \item{neest.path}{Character string. Path to NEstimator executable,
 required only when \code{"Ne"} is included in \code{parameter}.}

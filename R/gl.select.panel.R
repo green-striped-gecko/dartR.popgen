@@ -20,6 +20,11 @@
 #' @param nl An integer specifying the number of loci to select.
 #' @param exact Logical. If `TRUE`, ensures that the number of selected loci is exactly `nl`. 
 #' If `FALSE`, allows for a random selection that may not match `nl` exactly.
+#' @param include.loci Character vector of locus names to force into the
+#'   panel regardless of the selection method (e.g. loci from a legacy
+#'   panel that must be retained for backward compatibility). These are
+#'   always kept; the method then fills the remaining `nl - length(include.loci)`
+#'   slots. Must not exceed `nl`. Default `NULL`.
 #' @param plot.out Logical. If `TRUE`, generates plots summarizing selected loci.
 #' @param plot.file A character string specifying the file name for saving plots. If `NULL`, plots are not saved.
 #' @param plot.dir A character string specifying the directory to save plots. Defaults to the working directory.
@@ -59,6 +64,7 @@ gl.select.panel<-
            method="random", 
            nl=10,
            exact=TRUE,
+           include.loci=NULL,
            plot.out = TRUE,
            plot.file = NULL,
            plot.dir = NULL,
@@ -82,6 +88,18 @@ gl.select.panel<-
     
     # CHECK DATATYPE
     datatype <- utils.check.datatype(x, verbose = verbose)
+
+    # VALIDATE include.loci
+    if (!is.null(include.loci)) {
+      miss <- setdiff(include.loci, locNames(x))
+      if (length(miss) > 0)
+        stop(paste0(length(miss), " include.loci not found in x: ",
+                    paste(utils::head(miss, 5), collapse=", "),
+                    if (length(miss) > 5) ", ..." else ""))
+      if (length(include.loci) > nl)
+        stop(sprintf("include.loci (%d) exceeds nl (%d).",
+                     length(include.loci), nl))
+    }
     
     #1. dapc
     #2. private allele high frequency
@@ -253,10 +271,30 @@ gl.select.panel<-
       selloc<- locNames(x)[index]
     }
     
+    # force-include user-specified loci (legacy panel extension):
+    # guarantee they are in the panel, then fill remaining slots with
+    # the method's selection, trimming the method loci (not the forced
+    # ones) if the union exceeds nl.
+    if (!is.null(include.loci)) {
+      method_loci <- setdiff(selloc, include.loci)
+      n_fill      <- nl - length(include.loci)
+      if (length(method_loci) > n_fill)
+        method_loci <- method_loci[seq_len(n_fill)]
+      selloc <- c(include.loci, method_loci)
+    }
+
     if (exact) {  #add/remove random loci in case exact is wanted
       if (length(selloc) > nl)
       {
-        selloc <- sample(selloc, nl, replace = FALSE)
+        # never drop forced loci; trim only the method-selected extras
+        if (!is.null(include.loci)) {
+          droppable <- setdiff(selloc, include.loci)
+          keep_meth <- sample(droppable, nl - length(include.loci),
+                              replace = FALSE)
+          selloc    <- c(include.loci, keep_meth)
+        } else {
+          selloc <- sample(selloc, nl, replace = FALSE)
+        }
       }
       if (length(selloc)< nl)
       {

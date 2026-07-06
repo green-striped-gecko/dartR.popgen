@@ -94,6 +94,14 @@
 #'   maximally responsive to allele-frequency change — desirable for
 #'   genetic-erosion monitoring but not for long-lived stable panels.
 #'   Default \code{FALSE}.
+#' @param sample Numeric in (0,1]. Proportion of individuals to randomly
+#'   retain from each population of the \emph{panel} before evaluation.
+#'   \code{1} (default) uses all individuals; \code{0.5} keeps a random
+#'   half of each population. The reference dataset \code{xorig} always
+#'   uses all individuals, so this tests how panel performance degrades
+#'   when fewer individuals are genotyped with the panel while the truth
+#'   is known from the full dataset. The proportion is maintained across
+#'   all populations.
 #' @param neest.path Character string. Path to NEstimator executable, required
 #'   only for \code{"Ne"}.
 #' @param error.rate Numeric. Per-allele genotyping error rate. Default
@@ -213,6 +221,7 @@ gl.check.panel <- function(x,
                            ref         = c("global", "by.pop"),
                            metric      = c("grm", "kinship"),
                            inverse_dr  = FALSE,
+                           sample      = 1,
                            neest.path  = NULL,
                            error.rate  = 0.01,
                            threshold   = 0.001,
@@ -279,11 +288,33 @@ gl.check.panel <- function(x,
   # resolve verbosity: 0=silent, 1=headers+scores, 2=full (default)
   verbose <- if (is.null(verbose)) 2L else as.integer(verbose)
   
+  if (!is.numeric(sample) || sample <= 0 || sample > 1)
+    stop("sample must be in (0,1].")
+
   # ---------------------------------------------------------------
   # order populations
   # ---------------------------------------------------------------
   x     <- x[order(pop(x)),]
   if (!is.null(xorig)) xorig <- xorig[order(pop(xorig)),]
+
+  # ---------------------------------------------------------------
+  # subsample individuals in the PANEL only, to a proportion of each
+  # population. xorig (the reference dataset) keeps all individuals.
+  # Tests how panel performance degrades when fewer individuals are
+  # genotyped with the panel while the truth is known from the full set.
+  # ---------------------------------------------------------------
+  if (sample < 1) {
+    keep_names <- unlist(lapply(split(indNames(x), pop(x)), function(nm) {
+      k <- max(1L, round(length(nm) * sample))
+      sample(nm, k)
+    }), use.names = FALSE)
+
+    x <- x[indNames(x) %in% keep_names, ]
+    x <- x[order(pop(x)), ]
+    if (verbose >= 1)
+      cat(sprintf("Subsampled panel to %.0f%% of individuals: %d retained (%d pops)\n",
+                  sample * 100, nInd(x), nPop(x)))
+  }
   
   # ---------------------------------------------------------------
   # shared helpers
