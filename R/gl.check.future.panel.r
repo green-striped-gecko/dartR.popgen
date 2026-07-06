@@ -330,9 +330,16 @@ gl.check.future.panel <- function(x,
                       dimnames = list(pop_names, NULL))
     
     if (!is.null(Ne) && verbose >= 1) {
-      cat(sprintf("Ne scenario: pop Ne at gen 1 = [%s], at gen %d = [%s]\n",
-                  paste(Ne_traj[,1], collapse=", "), n_gen,
-                  paste(Ne_traj[,n_gen], collapse=", ")))
+      ## show the Ne trajectory for the largest population as a table.
+      ## Other populations follow the same trajectory scaled by their
+      ## census fraction (see census_frac above), so only the reference
+      ## (largest) population is printed here.
+      ref_pop <- which.max(n_per_pop)
+      ne_row  <- Ne_traj[ref_pop, ]
+      tab <- rbind(Generation = seq_len(n_gen), Ne = ne_row)
+      cat(sprintf("Ne scenario (largest population '%s'; others scale proportionally):\n",
+                  pop_names[ref_pop]))
+      print(tab)
     }
     
     af_init <- matrix(NA_real_, nrow=K, ncol=L_orig,
@@ -582,6 +589,30 @@ gl.check.future.panel <- function(x,
            x="Generation", y="Performance (0\u20131)") +
       theme(plot.title    = element_text(hjust=0.5),
             plot.subtitle = element_text(hjust=0.5))
+
+    ## overlay the effective population size (largest pop) on a second
+    ## y-axis, but only for drift runs where a non-default Ne was used.
+    if (type == "drift" && !is.null(Ne)) {
+      ref_pop  <- which.max(n_per_pop)
+      ne_line  <- data.frame(generation = seq_len(n_gen),
+                             Ne = Ne_traj[ref_pop, ])
+      ne_max   <- max(ne_line$Ne)
+      ## scale Ne onto the [0,1] performance axis for plotting
+      ne_line$Ne_scaled <- ne_line$Ne / ne_max
+      gg <- gg +
+        geom_line(data = ne_line,
+                  aes(x = generation, y = Ne_scaled),
+                  inherit.aes = FALSE,
+                  colour = "grey40", linetype = "dotdash", linewidth = 0.7) +
+        scale_y_continuous(
+          name = "Performance (0\u20131)",
+          limits = c(0, 1),
+          sec.axis = sec_axis(~ . * ne_max, name = "Effective population size (Ne)")
+        ) +
+        annotate("text", x = 1, y = ne_line$Ne_scaled[1],
+                 label = "Ne", hjust = -0.2, vjust = -0.5,
+                 size = 3.2, colour = "grey40")
+    }
     
     if (!is.null(target))
       gg <- gg +
