@@ -114,7 +114,11 @@
 #'   population cross for \code{"hybridisation"}. Total F1 simulations
 #'   are \code{n_sim_hyb * choose(nPop(x), 2)}. Default \code{100}.
 #' @param n_cores Integer or \code{NULL}. Cores for parallel parentage
-#'   simulation. \code{NULL} = auto. On Windows always sequential.
+#'   simulation. Default \code{1} (sequential), which prevents accidental
+#'   nested parallelism when this function is called from inside parallel
+#'   workers (e.g. \code{gl.select.panel.combined}, parallel chains, or
+#'   study scripts). Set to \code{NULL} to use all-but-one core, or an
+#'   explicit integer. On Windows always sequential.
 #' @param target Numeric (0--1) or \code{NULL}. Reference line in the summary
 #'   bar chart. Default \code{0.9}.
 #' @param plot.out Logical. Print combined plot. Default \code{TRUE}.
@@ -227,7 +231,7 @@ gl.check.panel <- function(x,
                            threshold   = 0.001,
                            n_sim_parents = 100,
                            n_sim_hyb   = 100,
-                           n_cores     = NULL,
+                           n_cores     = 1,
                            target      = 0.9,
                            plot.out    = TRUE,
                            plot.file   = NULL,
@@ -260,7 +264,7 @@ gl.check.panel <- function(x,
   if (length(bad) > 0)
     stop(paste("Unknown parameter(s):", paste(bad, collapse=", "),
                "\nValid:", paste(valid_params, collapse=", ")))
-
+  
   # xorig is needed only for correlation/comparison parameters.
   # drift_resistance and the power metrics run on x alone.
   if (is.null(xorig) && any(parameter %in% comparison_params)) {
@@ -271,7 +275,7 @@ gl.check.panel <- function(x,
                 "drift_resistance, id, parentage, assignment, or ",
                 "hybridisation."))
   }
-
+  
   if (error.rate  < 0 || error.rate  > 1) stop("error.rate must be in [0,1].")
   if (threshold   <= 0 || threshold  >= 1) stop("threshold must be in (0,1).")
   if (!is.numeric(n_sim_parents) || n_sim_parents < 1) stop("n_sim_parents must be a positive integer.")
@@ -282,6 +286,11 @@ gl.check.panel <- function(x,
     stop(paste0("'hybridisation' requires at least 2 populations. Found: ",
                 nPop(x), "."))
   
+  # n_cores default is 1 (sequential) to avoid accidental nested
+  # parallelism when gl.check.panel is called from within parallel
+  # workers (e.g. gl.select.panel.combined, parallel chains, study
+  # scripts). Pass n_cores = NULL to use all-but-one core, or an
+  # explicit integer for a specific count.
   n_cores <- if (is.null(n_cores)) max(1L, parallel::detectCores()-1L) else
     max(1L, as.integer(n_cores))
   
@@ -290,13 +299,13 @@ gl.check.panel <- function(x,
   
   if (!is.numeric(sample) || sample <= 0 || sample > 1)
     stop("sample must be in (0,1].")
-
+  
   # ---------------------------------------------------------------
   # order populations
   # ---------------------------------------------------------------
   x     <- x[order(pop(x)),]
   if (!is.null(xorig)) xorig <- xorig[order(pop(xorig)),]
-
+  
   # ---------------------------------------------------------------
   # subsample individuals in the PANEL only, to a proportion of each
   # population. xorig (the reference dataset) keeps all individuals.
@@ -308,7 +317,7 @@ gl.check.panel <- function(x,
       k <- max(1L, round(length(nm) * sample))
       sample(nm, k)
     }), use.names = FALSE)
-
+    
     x <- x[indNames(x) %in% keep_names, ]
     x <- x[order(pop(x)), ]
     if (verbose >= 1)
@@ -526,7 +535,7 @@ gl.check.panel <- function(x,
                            "Individual heterozygosity",
                            "Ho_ind (original)", "Ho_ind (panel)")
     }
-
+    
     # ---------------------------------------------------------
     # Fis_ind — actual individual Fis from the panel versus the
     # full original dataset
@@ -544,7 +553,7 @@ gl.check.panel <- function(x,
       ind_orig <- indNames(xorig)
       ind_pan  <- indNames(x)
       idx_pan_ind <- match(ind_orig, ind_pan)
-
+      
       if (anyNA(idx_pan_ind)) {
         missing_ind <- ind_orig[is.na(idx_pan_ind)]
         stop(paste0(
@@ -554,21 +563,21 @@ gl.check.panel <- function(x,
           if (length(missing_ind) > 10) " ..." else ""
         ))
       }
-
+      
       mat_orig <- as.matrix(xorig)
       mat_pan  <- as.matrix(x)[idx_pan_ind, , drop = FALSE]
       loci_all <- locNames(xorig)
       loci_pan <- locNames(x)
       idx_pan_loci <- match(loci_pan, loci_all)
-
+      
       if (anyNA(idx_pan_loci)) {
         stop("Fis_ind: one or more panel loci are not present in xorig.")
       }
-
+      
       pops_chr <- as.character(pop(xorig))
       upops    <- unique(pops_chr)
       n_ind    <- nrow(mat_orig)
-
+      
       fis_orig <- rep(NA_real_, n_ind)
       fis_panel <- rep(NA_real_, n_ind)
       ho_orig <- rep(NA_real_, n_ind)
@@ -577,41 +586,41 @@ gl.check.panel <- function(x,
       he_panel <- rep(NA_real_, n_ind)
       n_called_orig <- integer(n_ind)
       n_called_panel <- integer(n_ind)
-
+      
       calc_ind_fis <- function(gmat, he_locus) {
         called <- !is.na(gmat)
         n_called <- rowSums(called)
         n_het <- rowSums(gmat == 1L, na.rm = TRUE)
-
+        
         he_mat <- matrix(
           rep(he_locus, each = nrow(gmat)),
           nrow = nrow(gmat),
           ncol = ncol(gmat)
         )
         exp_het_sum <- rowSums(he_mat * called, na.rm = TRUE)
-
+        
         Ho <- ifelse(n_called > 0L, n_het / n_called, NA_real_)
         He <- ifelse(n_called > 0L, exp_het_sum / n_called, NA_real_)
         Fis <- ifelse(is.finite(He) & He > 0,
                       1 - Ho / He,
                       NA_real_)
-
+        
         list(Fis = Fis, Ho = Ho, He = He, n_called = n_called)
       }
-
+      
       for (pp in upops) {
         idx <- which(pops_chr == pp)
         mo  <- mat_orig[idx, , drop = FALSE]
         mp  <- mat_pan[idx, , drop = FALSE]
-
+        
         p_full <- colMeans(mo, na.rm = TRUE) / 2
         p_full[!is.finite(p_full)] <- NA_real_
         he_full <- 2 * p_full * (1 - p_full)
         he_pan  <- he_full[idx_pan_loci]
-
+        
         fo <- calc_ind_fis(mo, he_full)
         fp <- calc_ind_fis(mp, he_pan)
-
+        
         fis_orig[idx] <- fo$Fis
         fis_panel[idx] <- fp$Fis
         ho_orig[idx] <- fo$Ho
@@ -621,7 +630,7 @@ gl.check.panel <- function(x,
         n_called_orig[idx] <- fo$n_called
         n_called_panel[idx] <- fp$n_called
       }
-
+      
       res <- data.frame(
         individual = ind_orig,
         population = pops_chr,
@@ -637,9 +646,9 @@ gl.check.panel <- function(x,
         stringsAsFactors = FALSE
       )
       res <- res[complete.cases(res[, c("fis_orig", "fis_panel")]), ]
-
+      
       perf <- r2_performance(res$fis_orig, res$fis_panel)
-
+      
       rmse <- if (nrow(res) > 0L)
         sqrt(mean((res$fis_panel - res$fis_orig)^2)) else NA_real_
       mae <- if (nrow(res) > 0L)
@@ -648,7 +657,7 @@ gl.check.panel <- function(x,
         mean(res$fis_panel - res$fis_orig) else NA_real_
       pearson_r2 <- r2_pearson(res$fis_orig, res$fis_panel)
       spearman_r2 <- r2_spearman(res$fis_orig, res$fis_panel)
-
+      
       param_summary <- data.frame(
         n_individuals = nrow(res),
         n_loci_panel = nLoc(x),
@@ -664,7 +673,7 @@ gl.check.panel <- function(x,
         spearman_r2 = spearman_r2,
         stringsAsFactors = FALSE
       )
-
+      
       if (verbose >= 2) {
         cat(sprintf(
           paste0(
@@ -677,7 +686,7 @@ gl.check.panel <- function(x,
           corr_metric_label(), perf, rmse, mae, bias
         ))
       }
-
+      
       gg <- scatter_plot(
         res,
         "fis_orig",
@@ -687,7 +696,7 @@ gl.check.panel <- function(x,
         "Fis_ind (panel)"
       )
     }
-
+    
     # ---------------------------------------------------------
     # drift_resistance — absolute within-population MAF score
     #
@@ -702,18 +711,18 @@ gl.check.panel <- function(x,
       gmat     <- as.matrix(x)
       pops_chr <- as.character(pop(x))
       upops    <- unique(pops_chr)
-
+      
       drift_rows <- lapply(upops, function(pp) {
         idx <- which(pops_chr == pp)
         gm  <- gmat[idx, , drop = FALSE]
-
+        
         p_locus <- colMeans(gm, na.rm = TRUE) / 2
         p_locus[is.nan(p_locus)] <- NA_real_
-
+        
         maf_locus   <- pmin(p_locus, 1 - p_locus)
         drift_score <- (2 * maf_locus)^2
         call_rate   <- colMeans(!is.na(gm))
-
+        
         data.frame(
           population       = pp,
           locus            = locNames(x),
@@ -724,10 +733,10 @@ gl.check.panel <- function(x,
           stringsAsFactors = FALSE
         )
       })
-
+      
       res <- do.call(rbind, drift_rows)
       rownames(res) <- NULL
-
+      
       pop_summary <- do.call(
         rbind,
         lapply(upops, function(pp) {
@@ -745,16 +754,16 @@ gl.check.panel <- function(x,
           )
         })
       )
-
+      
       valid_pop <- is.finite(pop_summary$mean_drift_score)
       raw_perf <- if (any(valid_pop))
         mean(pop_summary$mean_drift_score[valid_pop]) else NA_real_
-
+      
       ## apply inversion if requested
       perf <- if (inverse_dr) 1 - raw_perf else raw_perf
       dr_label <- if (inverse_dr) "Drift sensitivity (1 \u2212 DR)"
-                  else "Drift resistance"
-
+      else "Drift resistance"
+      
       ## practical maximum: best achievable score from xorig
       ## DR: top-nl highest-MAF loci; inverse: top-nl lowest-MAF loci
       dr_max <- NA_real_
@@ -779,7 +788,7 @@ gl.check.panel <- function(x,
           dr_max  <- mean(dr_all[top_idx], na.rm = TRUE)
         }
       }
-
+      
       overall <- data.frame(
         population       = "Overall",
         n_loci           = nLoc(x),
@@ -791,13 +800,13 @@ gl.check.panel <- function(x,
         inverse_dr       = inverse_dr,
         stringsAsFactors = FALSE
       )
-
+      
       pop_summary$practical_max <- NA_real_
       pop_summary$inverse_dr    <- inverse_dr
       if (inverse_dr)
         pop_summary$mean_drift_score <- 1 - pop_summary$mean_drift_score
       param_summary <- rbind(pop_summary, overall)
-
+      
       if (verbose >= 2) {
         cat(sprintf(
           paste0(
@@ -810,7 +819,7 @@ gl.check.panel <- function(x,
           if (is.finite(dr_max)) dr_max
         ))
       }
-
+      
       plot_data <- pop_summary
       gg <- ggplot(
         plot_data,
@@ -824,7 +833,7 @@ gl.check.panel <- function(x,
           midpoint = 0.5, limits = c(0, 1), name = NULL
         ) +
         coord_cartesian(ylim = c(0, 1))
-
+      
       if (is.finite(dr_max))
         gg <- gg +
         geom_hline(yintercept = dr_max, linetype = "dotted",
@@ -833,7 +842,7 @@ gl.check.panel <- function(x,
                  label = sprintf(" %s max=%.3f ",
                                  if (inverse_dr) "sens." else "DR", dr_max),
                  hjust = 1, vjust = -0.4, size = 3, colour = "darkorange")
-
+      
       gg <- gg +
         labs(
           title = dr_label,
@@ -856,7 +865,7 @@ gl.check.panel <- function(x,
           plot.subtitle = element_text(hjust = 0.5)
         )
     }
-
+    
     # ---------------------------------------------------------
     # relatedness — pairwise VanRaden GRM, optionally rescaled to
     # kinship (GRM / 2). Reference allele frequencies are either
@@ -870,24 +879,24 @@ gl.check.panel <- function(x,
       rel_label  <- if (metric == "kinship") "Kinship" else "GRM"
       ref_label  <- if (ref == "by.pop") "within-population freq"
       else "full-dataset freq"
-
+      
       # align panel individuals to xorig order so the upper-triangle
       # pairs from the two matrices correspond row-for-row
       mat_orig <- as.matrix(xorig)
       mat_pan  <- as.matrix(x)[indNames(xorig), , drop = FALSE]
       loc_pan  <- colnames(mat_pan)
-
+      
       if (ref == "global") {
         if (verbose >= 2)
           cat("Computing global reference allele frequencies...\n")
         p_ref <- colMeans(mat_orig, na.rm = TRUE) / 2
         p_ref[is.nan(p_ref)] <- 0.5
-
+        
         grm_orig    <- grm_vanraden(mat_orig, p_ref)            * scale_fac
         grm_panel   <- grm_vanraden(mat_pan,  p_ref[loc_pan])   * scale_fac
         pairs_orig  <- grm_orig[ upper.tri(grm_orig)]
         pairs_panel <- grm_panel[upper.tri(grm_panel)]
-
+        
       } else {  # by.pop
         if (verbose >= 2)
           cat("Computing within-population reference allele frequencies...\n")
@@ -895,7 +904,7 @@ gl.check.panel <- function(x,
         upops    <- unique(pops_chr)
         pairs_orig <- pairs_panel <- numeric(0)
         skipped   <- character(0)
-
+        
         for (pp in upops) {
           idx <- which(pops_chr == pp)
           if (length(idx) < 2) { skipped <- c(skipped, pp); next }
@@ -915,19 +924,19 @@ gl.check.panel <- function(x,
         if (length(pairs_orig) == 0)
           warning("relatedness (by.pop): no within-population pairs available.")
       }
-
+      
       res  <- data.frame(rel_orig = pairs_orig, rel_panel = pairs_panel)
       res  <- res[complete.cases(res), ]
       perf <- r2_performance(res$rel_orig, res$rel_panel)
-
+      
       if (verbose >= 2)
         cat(sprintf("Pairs: %d  |  %s (%s)  |  %s = %.4f\n",
                     nrow(res), rel_label, ref, corr_metric_label(), perf))
-
+      
       plot_res <- if (nrow(res) > 10000L) res[sample(nrow(res), 10000L), ] else res
       sp <- r2_spearman(res$rel_orig, res$rel_panel)
       pe <- r2_pearson( res$rel_orig, res$rel_panel)
-
+      
       gg <- ggplot(plot_res, aes(x = rel_orig, y = rel_panel)) +
         geom_point(alpha = 0.3, size = 0.8) +
         geom_smooth(method = "lm", formula = y ~ x, se = TRUE, colour = "steelblue") +
@@ -936,8 +945,8 @@ gl.check.panel <- function(x,
                  hjust = -0.1, vjust = 1.3, size = 3.5) +
         labs(title    = sprintf("Relatedness (%s)", rel_label),
              subtitle = sprintf("%d pairs  |  %s, %s%s",
-                                 nrow(res), ref, ref_label,
-                                 if (nrow(res) > 10000L) "  |  10,000 pairs plotted" else ""),
+                                nrow(res), ref, ref_label,
+                                if (nrow(res) > 10000L) "  |  10,000 pairs plotted" else ""),
              x = sprintf("%s (original)", rel_label),
              y = sprintf("%s (panel)",    rel_label)) +
         centre_theme()
@@ -1381,7 +1390,7 @@ gl.check.panel <- function(x,
                             name="Proportion") +
         labs(title    = "Hybridisation",
              subtitle = sprintf(paste0("F1 detected: %.1f%%  |  correct F1 pair: %.1f%%  |  ",
-                                      "%d pairs, %d F1 per pair"),
+                                       "%d pairs, %d F1 per pair"),
                                 100*f1_detected_r, 100*correct_pair_r,
                                 n_pairs, n_sim_hyb),
              x="Assigned class", y="True F1 cross") +

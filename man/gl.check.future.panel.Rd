@@ -24,7 +24,7 @@ gl.check.future.panel(
   threshold = 0.001,
   n_sim_parents = 50,
   n_sim_hyb = 100,
-  n_cores = NULL,
+  n_cores = 1,
   target = 0.9,
   plot.out = TRUE,
   plot.file = NULL,
@@ -124,7 +124,9 @@ Default \code{50}.}
 population cross for \code{"hybridisation"}. Default \code{100}.}
 
 \item{n_cores}{Integer or \code{NULL}. Cores for parallel parentage
-simulation. Default \code{NULL} = auto.}
+simulation, passed to \code{gl.check.panel}. Default \code{1}
+(sequential) to avoid nested parallelism when this function runs
+inside parallel workers. Set \code{NULL} for all-but-one core.}
 
 \item{target}{Numeric (0--1) or \code{NULL}. Reference line in the plot.
 Default \code{0.9}.}

@@ -18,7 +18,7 @@ gl.check.panel(
   threshold = 0.001,
   n_sim_parents = 100,
   n_sim_hyb = 100,
-  n_cores = NULL,
+  n_cores = 1,
   target = 0.9,
   plot.out = TRUE,
   plot.file = NULL,
@@ -146,7 +146,11 @@ population cross for \code{"hybridisation"}. Total F1 simulations
 are \code{n_sim_hyb * choose(nPop(x), 2)}. Default \code{100}.}
 
 \item{n_cores}{Integer or \code{NULL}. Cores for parallel parentage
-simulation. \code{NULL} = auto. On Windows always sequential.}
+simulation. Default \code{1} (sequential), which prevents accidental
+nested parallelism when this function is called from inside parallel
+workers (e.g. \code{gl.select.panel.combined}, parallel chains, or
+study scripts). Set to \code{NULL} to use all-but-one core, or an
+explicit integer. On Windows always sequential.}
 
 \item{target}{Numeric (0--1) or \code{NULL}. Reference line in the summary
 bar chart. Default \code{0.9}.}
