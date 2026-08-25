@@ -61,8 +61,8 @@
 #' [default two colors].
 #' @param pprob Threshold level for assignment to likelihood bins
 #' [default 0.95, used only if plot=TRUE].
-#' @param method Specifies the method (random) to select 200 loci for
-#'  NewHybrids [default random]. Previous AvgPic does not work anymore!
+#' @param method Currently has no effect: loci are always selected at
+#' random. Retained for back-compatibility [default random].
 #' @param nhyb.directory Directory that holds the NewHybrids executable file
 #' e.g. C:/NewHybsPC [default NULL].
 #' @param BurnIn Number of sweeps to use in the burn in [default 10000].
@@ -80,7 +80,7 @@
 #' progress log; 3, progress and results summary; 5, full report
 #' [default 2 or as specified using gl.set.verbosity].
 #' @return The reduced genlight object, if parentals are provided; output of
-#'  NewHybrids is saved to the working directory.
+#'  NewHybrids is saved to outpath [default tempdir()].
 #' @export
 #' @importFrom MASS write.matrix
 #' @references Anderson, E.C. and Thompson, E.A.(2002). A model-based method for identifying
@@ -124,7 +124,6 @@ gl.nhybrids <- function(gl,
   funname <- match.call()[[1]]
   utils.flag.start(
     func = funname,
-    build = "Jody",
     verbose = verbose
   )
 
@@ -151,6 +150,24 @@ gl.nhybrids <- function(gl,
     pprob <- 0.99
   }
 
+  # Normalize the priors once, before the OS split. The NewHybrids binary
+  # accepts the exact spellings "Jeffreys" and "uniform"; anything else makes
+  # it exit without producing output, so reject other values here.
+  if (PiPrior %in% c("Jeffreys", "jeffreys")) {
+    PiPrior <- "Jeffreys"
+  } else if (PiPrior %in% c("Uniform", "uniform")) {
+    PiPrior <- "Uniform"
+  } else {
+    stop(error("Fatal Error: PiPrior parameter must be Jeffreys or Uniform\n"))
+  }
+  if (ThetaPrior %in% c("Jeffreys", "jeffreys")) {
+    ThetaPrior <- "Jeffreys"
+  } else if (ThetaPrior %in% c("Uniform", "uniform")) {
+    ThetaPrior <- "Uniform"
+  } else {
+    stop(error("Fatal Error: ThetaPrior parameter must be Jeffreys or Uniform\n"))
+  }
+
   # Housekeeping on the outfile specifications
   outfile <- "nhyb.txt"
   outfile <- file.path(outpath, outfile)
@@ -159,6 +176,9 @@ gl.nhybrids <- function(gl,
     nhyb.directory.win <- gsub("/", "\\\\", nhyb.directory)
     wd.hold <- getwd()
     wd.hold.win <- gsub("/", "\\\\", wd.hold)
+    # restore the caller's working directory however this function exits;
+    # both OS blocks setwd() into nhyb.directory to run the executable
+    on.exit(setwd(wd.hold), add = TRUE)
   }
 
   # DO THE JOB
@@ -297,8 +317,10 @@ gl.nhybrids <- function(gl,
             verbose = 0
           )
         gl2nhyb <- cbind(gl.fixed.used, tmp)
+        # positional subset: cbind orders loci as [fixed, supplement], so the
+        # metrics rows must be picked in that order, not the original one
         gl2nhyb@other$loc.metrics <-
-          gl@other$loc.metrics[locNames(gl) %in% locNames(gl2nhyb), ]
+          gl@other$loc.metrics[match(locNames(gl2nhyb), locNames(gl)), ]
       # } else {
       #   if (verbose >= 3) {
       #     cat(
@@ -373,10 +395,10 @@ gl.nhybrids <- function(gl,
         "loci with most information content (AvgPIC)\n"
       )
     }
+    # gl.subsample.loc already subsets loc.metrics in the sampled order;
+    # re-subsetting here in the original order desynced metrics from loci
     gl2nhyb <-
       gl.subsample.loc(gl, loc.limit, replace = FALSE, verbose = 0)
-    gl2nhyb@other$loc.metrics <-
-      gl@other$loc.metrics[locNames(gl) %in% locNames(gl2nhyb), ]
     flag <- "onepar"
   }
 
@@ -398,9 +420,9 @@ gl.nhybrids <- function(gl,
         )
       )
     }
+    # gl.subsample.loc already subsets loc.metrics in the sampled order;
+    # re-subsetting here in the original order desynced metrics from loci
     gl2nhyb <- gl.subsample.loc(gl, loc.limit, replace = FALSE, verbose = 0)
-    gl2nhyb@other$loc.metrics <-
-      gl@other$loc.metrics[locNames(gl) %in% locNames(gl2nhyb), ]
     flag <- "nopar"
   }
 
@@ -487,17 +509,19 @@ gl.nhybrids <- function(gl,
     }
 
     # Check the installation of New Hybrids
-    tmp1 <- file.exists(paste0(nhyb.directory.win, "/NewHybrids_PC_1_1_WOG.exe"))
-    if (!tmp1) {
-      stop(error("Fatal Error: New Hybrids executable not found in", nhyb.directory.win, "; required\n"))
-    }
-    tmp2 <- file.exists(paste0(nhyb.directory.win, "/TwoGensGtypFreq.txt"))
-    if (!tmp2) {
-      stop(error("Fatal Error: New Hybrids Genotype Frequency file not found in", nhyb.directory.win, "; required\n"))
-    }
-    if (verbose >= 2) {
-      if (tmp1 & tmp2) {
-        cat(report("  New Hybrids executable files found\n"))
+    if (!is.null(nhyb.directory)) {
+      tmp1 <- file.exists(paste0(nhyb.directory.win, "/NewHybrids_PC_1_1_WOG.exe"))
+      if (!tmp1) {
+        stop(error("Fatal Error: New Hybrids executable not found in", nhyb.directory.win, "; required\n"))
+      }
+      tmp2 <- file.exists(paste0(nhyb.directory.win, "/TwoGensGtypFreq.txt"))
+      if (!tmp2) {
+        stop(error("Fatal Error: New Hybrids Genotype Frequency file not found in", nhyb.directory.win, "; required\n"))
+      }
+      if (verbose >= 2) {
+        if (tmp1 & tmp2) {
+          cat(report("  New Hybrids executable files found\n"))
+        }
       }
     }
 
@@ -573,15 +597,28 @@ gl.nhybrids <- function(gl,
       cat(") | NewHybrids_PC_1_1_WOG.exe")
       sink()
 
-      # Run New Hybrids
+      # Run New Hybrids. Remove any aa-PofZ.txt left by an earlier
+      # interrupted run so a failed run cannot silently return stale results,
+      # and stop with a clear message when the executable does not complete.
+      if (file.exists("aa-PofZ.txt")) {
+        tmp <- file.remove("aa-PofZ.txt")
+      }
+      status <- system("nhyb.cmd")
 
-      system("nhyb.cmd")
+      # newhybs exits with a non-zero status even on a successful run, so
+      # completion is judged by the presence of its output file
+      if (!file.exists("aa-PofZ.txt")) {
+        stop(error(
+          "Fatal Error: NewHybrids did not complete (exit status", status,
+          ") and produced no aa-PofZ.txt. Check the console output above for the cause.\n"
+        ))
+      }
 
-      # Add in individual labels
+      # Add in individual labels. aa-PofZ.txt columns are: index, IndivName,
+      # then the six category probabilities - drop the first two.
       tbl <-
         read.table("aa-PofZ.txt", stringsAsFactors = FALSE)
-      names(tbl) <- tbl[1, ]
-      tbl <- tbl[-1, -1]
+      tbl <- tbl[-1, -(1:2)]
       tbl <- cbind(indNames(gl), pop(gl), tbl)
       names(tbl) <-
         c("id", "pop", "P0", "P1", "F1", "F2", "F1xP0", "F1xP1")
@@ -598,7 +635,7 @@ gl.nhybrids <- function(gl,
       tmp <- file.copy(from = "aa-ProcessedPriors.txt", to = outpath, overwrite = TRUE)
       tmp <- file.remove("aa-ProcessedPriors.txt")
 
-      tmp <- file.copy(from = "aa-Pi.hist", to = nhyb.directory.win, overwrite = TRUE)
+      tmp <- file.copy(from = "aa-Pi.hist", to = outpath, overwrite = TRUE)
       tmp <- file.remove("aa-Pi.hist")
 
       tmp <- file.copy(from = "aa-PofZ.csv", to = outpath, overwrite = TRUE)
@@ -612,7 +649,6 @@ gl.nhybrids <- function(gl,
       tmp <- file.remove("nhyb.cmd")
 
       setwd(wd.hold)
-      on.exit(setwd(wd.hold))
     }
   } ##### END WINDOWS BLOCK
 
@@ -653,7 +689,10 @@ gl.nhybrids <- function(gl,
       }
     }
 
-    if (grepl("\\s", outfile.mac) | grepl("\\s", nhyb.directory)) {
+    # nhyb.directory may be NULL (write the input file and stop) - guard the
+    # space check or grepl() on NULL crashes the documented NULL path
+    if (grepl("\\s", outfile.mac) ||
+      (!is.null(nhyb.directory) && grepl("\\s", nhyb.directory))) {
       stop(
         error(
           "Fatal Error: The path to the executable for NewHybrids or the outfile name has spaces. Please move it to a path without spaces or choose a file name without spaces.\n"
@@ -667,18 +706,20 @@ gl.nhybrids <- function(gl,
     }
 
     # Check the installation of New Hybrids
-    tmp1 <- file.exists(paste0(nhyb.directory.mac, "/newhybs"))
-    if (!tmp1) {
-      stop(error("Fatal Error: New Hybrids executable not found in", nhyb.directory.mac, "; required\n"))
-    }
-    # tmp2 <- file.exists(paste0(nhyb.directory.mac,"/TwoGensGtypFreq.txt"))
-    # if(!tmp2){
-    #   stop(error("Fatal Error: New Hybrids Genotype Frequency file not found in",nhyb.directory.win,"; required\n"))
-    # }
-    if (verbose >= 2) {
-      # if(tmp1 & tmp2){
-      if (tmp1) {
-        cat(report("  New Hybrids executable files found\n"))
+    if (!is.null(nhyb.directory)) {
+      tmp1 <- file.exists(paste0(nhyb.directory.mac, "/newhybs"))
+      if (!tmp1) {
+        stop(error("Fatal Error: New Hybrids executable not found in", nhyb.directory.mac, "; required\n"))
+      }
+      # tmp2 <- file.exists(paste0(nhyb.directory.mac,"/TwoGensGtypFreq.txt"))
+      # if(!tmp2){
+      #   stop(error("Fatal Error: New Hybrids Genotype Frequency file not found in",nhyb.directory.win,"; required\n"))
+      # }
+      if (verbose >= 2) {
+        # if(tmp1 & tmp2){
+        if (tmp1) {
+          cat(report("  New Hybrids executable files found\n"))
+        }
       }
     }
 
@@ -720,23 +761,53 @@ gl.nhybrids <- function(gl,
       rand1 <- sample(1:10, 1)
       rand2 <- sample(11:20, 1)
 
-      system(paste(
+      # The newhybs binary reads the data-file path into a fixed ~100-byte
+      # buffer and aborts (SIGILL, no message) on paths of 100+ characters
+      data.file <- paste0(nhyb.directory.mac, "/", basename(outfile))
+      if (nchar(data.file) >= 100) {
+        stop(error(
+          "Fatal Error: the path to the NewHybrids input file (", data.file,
+          ") is", nchar(data.file),
+          "characters long; the NewHybrids executable crashes on paths of 100 or more characters. Use a shorter nhyb.directory.\n"
+        ))
+      }
+
+      # The binary accepts the exact spellings "Jeffreys" and "uniform"
+      pi.prior.arg <- ifelse(PiPrior == "Uniform", "uniform", "Jeffreys")
+      theta.prior.arg <- ifelse(ThetaPrior == "Uniform", "uniform", "Jeffreys")
+
+      # Remove any aa-PofZ.txt left by an earlier interrupted run so a failed
+      # run cannot silently return stale results
+      if (file.exists("aa-PofZ.txt")) {
+        tmp <- file.remove("aa-PofZ.txt")
+      }
+
+      status <- system(paste(
         paste0(nhyb.directory.mac, "/newhybs"),
         "--no-gui",
-        "--data-file", paste0(nhyb.directory.mac, "/", basename(outfile)),
+        "--data-file", data.file,
         "--seeds", rand1, rand2,
-        "--pi-prior", PiPrior,
-        "--theta-prior", ThetaPrior,
+        "--pi-prior", pi.prior.arg,
+        "--theta-prior", theta.prior.arg,
         "--burn-in", BurnIn,
         "--num-sweeps", sweeps
         # "--gtyp-cat-file",GtypFile,
       ))
 
-      # Add in individual labels
+      # newhybs exits with a non-zero status even on a successful run, so
+      # completion is judged by the presence of its output file
+      if (!file.exists("aa-PofZ.txt")) {
+        stop(error(
+          "Fatal Error: NewHybrids did not complete (exit status", status,
+          ") and produced no aa-PofZ.txt. Check the console output above for the cause.\n"
+        ))
+      }
+
+      # Add in individual labels. aa-PofZ.txt columns are: index, IndivName,
+      # then the six category probabilities - drop the first two.
       tbl <-
         read.table("aa-PofZ.txt", stringsAsFactors = FALSE)
-      names(tbl) <- tbl[1, ]
-      tbl <- tbl[-1, -1]
+      tbl <- tbl[-1, -(1:2)]
       tbl <- cbind(indNames(gl), pop(gl), tbl)
       names(tbl) <-
         c("id", "pop", "P0", "P1", "F1", "F2", "F1xP0", "F1xP1")
@@ -753,7 +824,7 @@ gl.nhybrids <- function(gl,
       # tmp <- file.copy(from="aa-ProcessedPriors.txt", to=outpath, overwrite = TRUE)
       # tmp <- file.remove("aa-ProcessedPriors.txt")
 
-      tmp <- file.copy(from = "aa-Pi.hist", to = nhyb.directory.mac, overwrite = TRUE)
+      tmp <- file.copy(from = "aa-Pi.hist", to = outpath, overwrite = TRUE)
       tmp <- file.remove("aa-Pi.hist")
 
       tmp <- file.copy(from = "aa-PofZ.csv", to = outpath, overwrite = TRUE)
@@ -778,7 +849,8 @@ gl.nhybrids <- function(gl,
 
   ##### Analyse the F1 genotypes
 
-  if (flag == "bothpar" & plot == TRUE) {
+  # aa-PofZ.csv only exists when NewHybrids was actually run
+  if (flag == "bothpar" & plot == TRUE & !is.null(nhyb.directory)) {
     # Read in the results of the New Hybrids analysis
     F1.test <- read.csv(file = paste0(outpath,"/aa-PofZ.csv"))
     # Pull out results for F1 hybrids only, defined by posterior probability >= pprob
@@ -857,7 +929,11 @@ gl.nhybrids <- function(gl,
 
   # if (verbose < 2) {sink()}
   if (verbose >= 3) {
-    cat(report("  Results are stored in file aa-PofZ.csv\n"))
+    if (!is.null(nhyb.directory)) {
+      cat(report("  Results are stored in file aa-PofZ.csv\n"))
+    } else {
+      cat(report("  NewHybrids input file written; no directory for the executable was supplied, so NewHybrids was not run\n"))
+    }
     cat(
       report(
         "  Returning data used by New Hybrids in generating the results, as a genlight object\n"
