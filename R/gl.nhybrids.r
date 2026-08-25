@@ -85,7 +85,7 @@
 #' @importFrom MASS write.matrix
 #' @references Anderson, E.C. and Thompson, E.A.(2002). A model-based method for identifying
 #' species hybrids using multilocus genetic data. Genetics. 160:1217-1229.
-#' @author Custodian: Arthur Georges -- Post to
+#' @author Author(s): Arthur Georges. Custodian: Arthur Georges -- Post to
 #'  \url{https://groups.google.com/d/forum/dartr}
 #' @examples
 #' \dontrun{
