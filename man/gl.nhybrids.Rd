@@ -40,8 +40,8 @@ gl.nhybrids(
 \item{threshold}{Sets the level at which a gene frequency difference is
 considered to be fixed [default 0].}
 
-\item{method}{Specifies the method (random) to select 200 loci for
-NewHybrids [default random]. Previous AvgPic does not work anymore!}
+\item{method}{Currently has no effect: loci are always selected at
+random. Retained for back-compatibility [default random].}
 
 \item{plot}{If TRUE, a plot of the frequency of homozygous reference,
 heterozygotes and homozygous alternate (SNP) is produced for the F1
@@ -82,7 +82,7 @@ progress log; 3, progress and results summary; 5, full report
 }
 \value{
 The reduced genlight object, if parentals are provided; output of
- NewHybrids is saved to the working directory.
+ NewHybrids is saved to outpath [default tempdir()].
 }
 \description{
 This function compares two sets of parental populations to identify loci that
@@ -142,6 +142,6 @@ Anderson, E.C. and Thompson, E.A.(2002). A model-based method for identifying
 species hybrids using multilocus genetic data. Genetics. 160:1217-1229.
 }
 \author{
-Custodian: Arthur Georges -- Post to
+Author(s): Arthur Georges. Custodian: Arthur Georges -- Post to
  \url{https://groups.google.com/d/forum/dartr}
 }
