@@ -57,7 +57,9 @@ individuals
 [default 0.95, used only if plot=TRUE].}
 
 \item{nhyb.directory}{Directory that holds the NewHybrids executable file
-e.g. C:/NewHybsPC [default NULL].}
+e.g. C:/NewHybsPC. Keep this path short: the NewHybrids executable crashes
+when the path to its input file (nhyb.directory/nhyb.txt) is 100 or more
+characters long [default NULL].}
 
 \item{BurnIn}{Number of sweeps to use in the burn in [default 10000].}
 
@@ -81,8 +83,10 @@ progress log; 3, progress and results summary; 5, full report
 [default 2 or as specified using gl.set.verbosity].}
 }
 \value{
-The reduced genlight object, if parentals are provided; output of
- NewHybrids is saved to outpath [default tempdir()].
+The reduced genlight object (the loci passed to NewHybrids), not
+ the assignments. The posterior probabilities are written to aa-PofZ.csv in
+ outpath, with columns id, pop, P0, P1, F1, F2, F1xP0 and F1xP1, together
+ with the other NewHybrids output files.
 }
 \description{
 This function compares two sets of parental populations to identify loci that
