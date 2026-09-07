@@ -88,7 +88,15 @@ write_fake_newhybs <- function(dir, indiv_name_column) {
 
 expect_pofz_aligned <- function(indiv_name_column) {
   gl <- dartR.data::testset.gl
-  bin_dir <- withr::local_tempdir(.local_envir = parent.frame())
+  # The fake binary sits in a short subdirectory of tempdir() because
+  # gl.nhybrids refuses input-file paths of 100 or more characters and the
+  # nested temporary directory of R CMD check on macOS is already about 85
+  # characters long.
+  bin_dir <- file.path(tempdir(), "nh")
+  dir.create(bin_dir, showWarnings = FALSE)
+  withr::defer(unlink(bin_dir, recursive = TRUE), envir = parent.frame())
+  skip_if(nchar(file.path(bin_dir, "nhyb.txt")) >= 100,
+          "temporary directory path too long for the NewHybrids path limit")
   out <- withr::local_tempdir(.local_envir = parent.frame())
   write_fake_newhybs(bin_dir, indiv_name_column)
   set.seed(42)
