@@ -64,7 +64,9 @@
 #' @param method Currently has no effect: loci are always selected at
 #' random. Retained for back-compatibility [default random].
 #' @param nhyb.directory Directory that holds the NewHybrids executable file
-#' e.g. C:/NewHybsPC [default NULL].
+#' e.g. C:/NewHybsPC. Keep this path short: the NewHybrids executable crashes
+#' when the path to its input file (nhyb.directory/nhyb.txt) is 100 or more
+#' characters long [default NULL].
 #' @param BurnIn Number of sweeps to use in the burn in [default 10000].
 #' @param sweeps Number  of  sweeps  to  use  in  computing  the  actual Monte
 #' Carlo averages [default 10000].
@@ -79,8 +81,10 @@
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 #' progress log; 3, progress and results summary; 5, full report
 #' [default 2 or as specified using gl.set.verbosity].
-#' @return The reduced genlight object, if parentals are provided; output of
-#'  NewHybrids is saved to outpath [default tempdir()].
+#' @return The reduced genlight object (the loci passed to NewHybrids), not
+#'  the assignments. The posterior probabilities are written to aa-PofZ.csv in
+#'  outpath, with columns id, pop, P0, P1, F1, F2, F1xP0 and F1xP1, together
+#'  with the other NewHybrids output files.
 #' @export
 #' @importFrom MASS write.matrix
 #' @references Anderson, E.C. and Thompson, E.A.(2002). A model-based method for identifying
@@ -614,11 +618,13 @@ gl.nhybrids <- function(gl,
         ))
       }
 
-      # Add in individual labels. aa-PofZ.txt columns are: index, IndivName,
-      # then the six category probabilities - drop the first two.
+      # Add in individual labels. aa-PofZ.txt columns are: index, an IndivName
+      # column that only some NewHybrids builds write (newhybs writes "NoName";
+      # NewHybrids_PC_1_1_WOG.exe omits it), then the six category
+      # probabilities - keep the last six columns.
       tbl <-
         read.table("aa-PofZ.txt", stringsAsFactors = FALSE)
-      tbl <- tbl[-1, -(1:2)]
+      tbl <- tbl[-1, (ncol(tbl) - 5):ncol(tbl)]
       tbl <- cbind(indNames(gl), pop(gl), tbl)
       names(tbl) <-
         c("id", "pop", "P0", "P1", "F1", "F2", "F1xP0", "F1xP1")
@@ -803,11 +809,13 @@ gl.nhybrids <- function(gl,
         ))
       }
 
-      # Add in individual labels. aa-PofZ.txt columns are: index, IndivName,
-      # then the six category probabilities - drop the first two.
+      # Add in individual labels. aa-PofZ.txt columns are: index, an IndivName
+      # column that only some NewHybrids builds write (newhybs writes "NoName";
+      # NewHybrids_PC_1_1_WOG.exe omits it), then the six category
+      # probabilities - keep the last six columns.
       tbl <-
         read.table("aa-PofZ.txt", stringsAsFactors = FALSE)
-      tbl <- tbl[-1, -(1:2)]
+      tbl <- tbl[-1, (ncol(tbl) - 5):ncol(tbl)]
       tbl <- cbind(indNames(gl), pop(gl), tbl)
       names(tbl) <-
         c("id", "pop", "P0", "P1", "F1", "F2", "F1xP0", "F1xP1")
