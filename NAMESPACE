@@ -2,6 +2,7 @@
 
 export(gl.LDNe)
 export(gl.TajimasD)
+export(gl.amova)
 export(gl.blast)
 export(gl.check.panel)
 export(gl.collapse)

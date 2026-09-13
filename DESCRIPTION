@@ -32,8 +32,9 @@ Encoding: UTF-8
 Depends: R (>= 4.1.0), dartR.base, dartR.data
 Imports: methods, adegenet (>= 2.0.0), utils, MASS, dplyr, patchwork, crayon, ggplot2, data.table, 
          stringr, furrr, future, ggdendro, LEA, pillar, plyr, terra, purrr, ggpmisc, R.utils,
-         ape
+         ape, StAMPP
 Suggests: 
+  pegas,
   SIBER,
   expm,
   fields,
