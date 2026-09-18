@@ -38,10 +38,10 @@ gl.ld.haplotype(
 \item{x}{Name of the genlight object containing the SNP data [required].}
 
 \item{pop_name}{Name of the population to analyse. If NULL all the
-populations are analised [default NULL].}
+populations are analysed [default NULL].}
 
-\item{chrom_name}{Nme of the chromosome to analyse. If NULL all the
-chromosomes are analised [default NULL].}
+\item{chrom_name}{Name of the chromosome to analyse. If NULL all the
+chromosomes are analysed [default NULL].}
 
 \item{ld_max_pairwise}{Maximum distance in number of base pairs at which LD
 should be calculated [default 10000000].}
@@ -54,34 +54,37 @@ loci. If a value > 1 is provided it will be interpreted as MAC (i.e. the
 "D.prime", "R.squared", and "R". See \code{\link[snpStats]{ld}}
  (package snpStats) for details [default "R.squared"].}
 
-\item{ind.limit}{Minimum number of individuals that a population should
-contain to take it in account to report loci in LD [default 10].}
+\item{ind.limit}{Minimum number of individuals that a population must have
+to be analysed. Populations with fewer individuals are skipped
+[default 10].}
 
 \item{haplo_id}{Whether to identify haplotypes [default FALSE].}
 
-\item{min_snps}{Minimum number of SNPs that should have a haplotype to call
-it [default 10].}
+\item{min_snps}{Minimum number of SNPs that a haplotype must contain to be
+called [default 10].}
 
 \item{ld_threshold_haplo}{Minimum LD between adjacent SNPs to call a
 haplotype [default 0.5].}
 
 \item{plot_het}{Whether to plot heterozygosity [default TRUE].}
 
-\item{snp_pos}{Whether to plot SNP positions [default TRUE].}
+\item{snp_pos}{Whether to plot SNP positions. The SNP position track is
+drawn only when no haplotypes are identified [default TRUE].}
 
-\item{target.snp1}{Vector of position(s) of target SNP(s) in base pairs 
+\item{target.snp1}{Vector of position(s) of target SNP(s) in base pairs;
+the closest SNP to each position is highlighted in the SNP position track
 [default NULL].}
 
-\item{target.snp2}{Vector of position(s) of target SNP(s) in base pairs 
+\item{target.snp2}{Vector of position(s) of target SNP(s) in base pairs
 [default NULL].}
 
-\item{target.snp3}{Vector of position(s) of target SNP(s) in base pairs 
+\item{target.snp3}{Vector of position(s) of target SNP(s) in base pairs
 [default NULL].}
 
-\item{col.all}{Color of line indicating position for all SNPs 
+\item{col.all}{Color of line indicating position for all SNPs
 [default "black"].}
 
-\item{col.target1}{Color of line indicating position for target.snp1 
+\item{col.target1}{Color of line indicating position for target.snp1
 [default "green"].}
 
 \item{col.target2}{Color of line indicating position for target.snp2
@@ -94,24 +97,29 @@ haplotype [default 0.5].}
 coordinates in base pairs to which restrict the
 analysis e.g. c(1,1000000) [default NULL].}
 
-\item{color_haplo}{Color palette for haplotype plot. Options are: "magma", 
-"inferno", "plasma", "viridis", "cividis", "rocket", "mako" and "turbo" 
+\item{color_haplo}{Color palette for haplotype plot. Options are: "magma",
+"inferno", "plasma", "viridis", "cividis", "rocket", "mako" and "turbo"
  [default "viridis"].}
 
 \item{color_het}{Color for heterozygosity [default "deeppink"].}
 
 \item{plot.out}{Specify if heatmap plot is to be produced [default TRUE].}
 
-\item{plot.save}{Whether to save the plot in pdf format [default FALSE].}
+\item{plot.save}{Whether to save each plot in pdf format, as
+<population>_<chromosome>.pdf in plot.dir [default FALSE].}
 
-\item{plot.dir}{Directory in which to save files [default = working directory]}
+\item{plot.dir}{Directory in which to save files [default tempdir(), or the
+directory set with gl.set.wd()].}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
-progress log; 3, progress and results summary; 5, full report
+brief progress messages; 3, progress and results summary; 5, full report
 [default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-A table with the haplotypes that were identified.
+A data frame with one row per haplotype identified: population,
+chromosome, haplotype number, start and end (base pairs), the corresponding
+x coordinates in the LD plot, midpoints and a label in Mbp. Returned
+invisibly; empty when \code{haplo_id = FALSE} or no haplotype is found.
 }
 \description{
 This function plots a Linkage disequilibrium (LD) heatmap, where the colour
@@ -122,14 +130,17 @@ shading indicates the strength of LD. Chromosome positions (Mbp) are shown on
 
  The heatmap also shows heterozygosity for each SNP.
 
- The function identifies haplotypes based on contiguous SNPs that are in
- linkage disequilibrium using as threshold \code{ld_threshold_haplo} and
-containing more than \code{min_snps} SNPs.
+ When \code{haplo_id = TRUE}, the function identifies haplotypes as runs of
+ adjacent SNPs whose pairwise LD is at least \code{ld_threshold_haplo} and
+ that contain at least \code{min_snps} SNPs. With the default
+ \code{haplo_id = FALSE} no haplotypes are identified and the returned table
+ is empty.
 }
 \details{
 The information for SNP's position should be stored in the genlight accessor
   "@position" and the SNP's chromosome name in the accessor "@chromosome"
   (see examples). The function will then calculate LD within each chromosome.
+  Chromosomes with fewer than four SNPs after filtering are skipped.
 
 The output of the function includes a table with the haplotypes
  that were identified and their location.
@@ -158,7 +169,7 @@ Other ld functions:
 \code{\link{gl.ld.distance}()}
 }
 \author{
-Custodian: Luis Mijangos -- Post to
+Author(s): Luis Mijangos. Custodian: Luis Mijangos -- Post to
  \url{https://groups.google.com/d/forum/dartr}
 }
 \concept{ld functions}
