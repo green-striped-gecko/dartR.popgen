@@ -22,6 +22,18 @@
   `loc.metrics` in the returned object now track the selected loci
   positionally.
 
+* `gl.blast`: a run whose external step failed (unknown `task`, missing
+  query fasta or reference genome, makeblastdb or blastn error) no longer
+  returns the previous run's hits as its result. Inputs are validated up
+  front, temporary files from earlier runs are removed, and a non-zero exit
+  of makeblastdb or blastn stops with the tool's message. A reference genome
+  path containing spaces now works (the genome is passed to makeblastdb on
+  stdin), and a BLAST install under a path with spaces, such as Program
+  Files on Windows, is no longer refused; an R temporary directory with
+  spaces is refused with an explanation, because BLAST cannot open a
+  database there. **A fasta-file query with no surviving hit now returns an
+  empty data frame with the BLAST columns instead of the input path.**
+
 ## Improvements
 
 * `gl.find.genes.for.loci`: two new output columns, `gene_strand` and
@@ -33,3 +45,8 @@
   gene, gene_id); loci without a position and sequence names absent from
   the GFF are reported at `verbose >= 1`; a locus on a sequence without
   genes is returned with NA gene columns; the roxygen example runs.
+* `gl.blast`: console output honours `verbose` (makeblastdb output only at
+  `verbose >= 3`, the "k of N sequences aligned" count at `verbose >= 1`,
+  history entry and "Completed" on every exit); the note pointing to
+  `gl.list.reports()`/`gl.print.reports()`, which do not exist, is replaced
+  by the paths of the three saved tables; documentation corrected.
