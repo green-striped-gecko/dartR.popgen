@@ -2,6 +2,30 @@
 
 ## Bug fixes
 
+* `gl.run.structure`: the STRUCTURE runs are now always returned. Previously
+  the Evanno step ran unconditionally and stopped with "must have at least
+  two values of k" whenever `k.range` had fewer than three values, so the
+  finished runs were lost even with `plot.out = FALSE`. **Calls with one or
+  two K values now succeed.**
+* `gl.run.structure`: individuals are passed to STRUCTURE by index and the
+  names in `indNames(x)` are restored in `q.mat` and `prior.anc`. Previously
+  names longer than 11 characters were truncated by STRUCTURE and collapsed
+  to one id without an error, and names with spaces produced an NA popflag
+  and a STRUCTURE failure. **`q.mat` rows are now in the order of
+  `indNames(x)` instead of alphabetical by id, and runs are named
+  `k<K>.r<replicate>` instead of carrying a timestamp label.** An unnamed
+  `popflag` is matched to individuals in `indNames(x)` order.
+* `gl.run.structure`: STRUCTURE runs in a temporary folder that is removed
+  whether or not the run succeeds. Previously a time-stamped folder was
+  created in the working directory, left behind on failure, and any folder
+  of the same name was deleted first. **With `delete.files = FALSE` the
+  files are now kept in a time-stamped folder under `plot.dir`.** The
+  command line is quoted, so an executable path with a space works;
+  `plot.dir = NULL` by default so `gl.set.wd()` is honoured; STRUCTURE's own
+  output is shown only at `verbose >= 3`, with one progress line per run at
+  `verbose >= 2`; the Evanno layout shows mean LnP(K) and LnP'(K) instead of
+  the first panel twice; `tidyr` is guarded and the superseded
+  `gather`/`spread` calls replaced.
 * `gl.ld.haplotype`: haplotypes are now identified from the pairwise LD of
   adjacent SNPs in the LD matrix. Previously they were read off a rotated
   copy of the matrix with a misaligned start index, so one adjacent pair in

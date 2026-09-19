@@ -12,8 +12,11 @@
 #'   to \code{NULL}, a single STRUCTURE run is conducted with \code{maxpops}
 #'   groups. If specified, do not also specify \code{maxpops}.
 #' @param num.k.rep number of replicates for each value in \code{k.range}.
-#' @param label label to use for input and output files
+#' @param label label to use for input and output files (currently unused;
+#'   runs are labelled \code{k<K>.r<replicate>}).
 #' @param delete.files logical. Delete all files when STRUCTURE is finished?
+#'   If FALSE, the files are kept in a time-stamped folder under
+#'   \code{keep.dir}.
 #' @param exec name of executable for STRUCTURE. Defaults to "structure".
 #' @param burnin Number of burnin reps [default 10000].
 #' @param numreps Number of MCMC replicates [default 1000].
@@ -25,35 +28,45 @@
 #'  "locprior" or "usepopinfo" [default NULL].
 #' @param locpriorinit Parameterizes locprior parameter r - how informative the
 #'  populations are. Only used when pop.prior = "locprior" [default 1].
-#' @param maxlocprior Specifies range of locprior parameter r. Only used when 
+#' @param maxlocprior Specifies range of locprior parameter r. Only used when
 #' pop.prior = "locprior" [default 20].
-#' @param gensback Integer defining the number of generations back to test for 
+#' @param gensback Integer defining the number of generations back to test for
 #' immigrant ancestry. Only used when pop.prior = "usepopinfo" [default 2].
-#' @param migrprior Numeric between 0 and 1 listing migration prior. Only used 
+#' @param migrprior Numeric between 0 and 1 listing migration prior. Only used
 #' when pop.prior = "usepopinfo" [default 0.05].
-#' @param pfrompopflagonly Logical. update allele frequencies from individuals 
+#' @param pfrompopflagonly Logical. update allele frequencies from individuals
 #' specified by popflag. Only used when pop.prior = "usepopinfo" [default TRUE].
-#' @param popflag A vector of integers (0, 1) or logicals identifiying whether 
-#' or not to use strata information. Only used when pop.prior = "usepopinfo"
-#'  [default NULL].
-#' @param inferalpha Logical. Infer the value of the model parameter # from the 
-#' data; otherwise is fixed at the value alpha which is chosen by the user. 
-#' This option is ignored under the NOADMIX model. Small alpha implies that 
-#' most individuals are essentially from one population or another, while 
+#' @param popflag A vector of integers (0, 1) or logicals identifiying whether
+#' or not to use strata information, one per individual in the order of
+#' \code{ind.names} (or of the sorted ids when \code{ind.names} is NULL).
+#' Only used when pop.prior = "usepopinfo" [default NULL].
+#' @param inferalpha Logical. Infer the value of the model parameter # from the
+#' data; otherwise is fixed at the value alpha which is chosen by the user.
+#' This option is ignored under the NOADMIX model. Small alpha implies that
+#' most individuals are essentially from one population or another, while
 #' alpha > 1 implies that most individuals are admixed [default FALSE].
-#' @param alpha Dirichlet parameter for degree of admixture. This is the 
+#' @param alpha Dirichlet parameter for degree of admixture. This is the
 #' initial value if inferalpha = TRUE [default 1].
-#' @param unifprioralpha Logical. Assume a uniform prior for alpha which runs 
+#' @param unifprioralpha Logical. Assume a uniform prior for alpha which runs
 #' between 0 and alphamax. This model seems to work fine; the alternative model
-#'  (when unfprioralpha = 0) is to take alpha as having a Gamma prior, with 
-#'  mean alphapriora × alphapriorb, and variance alphapriora × alphapriorb^2 
+#'  (when unfprioralpha = 0) is to take alpha as having a Gamma prior, with
+#'  mean alphapriora x alphapriorb, and variance alphapriora x alphapriorb^2
 #'  [default TRUE].
-#' @param alphamax Maximum for uniform prior on alpha when 
+#' @param alphamax Maximum for uniform prior on alpha when
 #' unifprioralpha = TRUE [default 20].
-#' @param alphapriora Parameters of Gamma prior on alpha when 
+#' @param alphapriora Parameters of Gamma prior on alpha when
 #' unifprioralpha = FALSE [default 0.05].
-#' @param alphapriorb Parameters of Gamma prior on alpha when 
+#' @param alphapriorb Parameters of Gamma prior on alpha when
 #' unifprioralpha = FALSE [default 0.001].
+#' @param ind.names Individual names in the order they should appear in the
+#' results. When given, individuals are passed to STRUCTURE by their index
+#' (STRUCTURE truncates labels at 11 characters and rejects spaces) and the
+#' names are restored in \code{q.mat} and \code{prior.anc}; \code{q.mat} is
+#' returned in this order [default NULL, ids passed as they are].
+#' @param keep.dir Directory under which the STRUCTURE files are kept when
+#' \code{delete.files = FALSE} [default tempdir()].
+#' @param verbose Verbosity: 0, silent; 2, one line per run; 3 and above,
+#' STRUCTURE's own output is shown [default 0].
 #'
 #' @return \describe{ \item{\code{structureRun}}{a list where each element is a
 #' list with results from \code{structureRead} and a vector of the filenames
@@ -90,10 +103,10 @@ utils.structure.run <- function(g,
                                 unifprioralpha,
                                 alphamax,
                                 alphapriora,
-                                alphapriorb
-                                # ,
-                                # ...
-                                ) {
+                                alphapriorb,
+                                ind.names = NULL,
+                                keep.dir = NULL,
+                                verbose = 0) {
   ################################################################
 
   .structureParseQmat <- function(q.mat.txt,
@@ -162,23 +175,9 @@ utils.structure.run <- function(g,
     x %>%
       dplyr::arrange(.data$id, .data$locus) %>%
       dplyr::mutate(a = rep(1:g$ploidy, dplyr::n() / g$ploidy)) %>%
-      tidyr::spread(.data$locus, .data$allele) %>%
+      tidyr::pivot_wider(names_from = "locus", values_from = "allele") %>%
       dplyr::rename(allele = "a") %>%
-      dplyr::select(.data$id, .data$stratum, .data$allele, dplyr::everything())
-  }
-
-  ####################################################
-  .getFileLabel <- function(g,
-                            label = NULL) {
-    desc <- g$description
-    label <- if (!is.null(label)) {
-      label
-    } else if (!is.null(desc)) {
-      desc
-    } else {
-      "strataG.gtypes"
-    }
-    gsub("[[:punct:]]", ".", label)
+      dplyr::select("id", "stratum", "allele", dplyr::everything())
   }
 
   ####################################################
@@ -211,11 +210,15 @@ utils.structure.run <- function(g,
       }
     }
 
+    # STRUCTURE reads labels up to the first space, so ids are sanitised
+    # before popflag is matched to them
+    ids <- gsub(" ", "_", unique(g$data$id))
+
     if (is.null(popflag)) {
-      popflag <- rep(1, length(unique(g$data$id)))
+      popflag <- rep(1, length(ids))
     }
 
-    if (length(popflag) != length(unique(g$data$id))) {
+    if (length(popflag) != length(ids)) {
       stop(error("  'popflag' should be the same length as the number of individuals in 'g'."))
     }
     if (!all(popflag %in% c(0, 1))) {
@@ -223,7 +226,9 @@ utils.structure.run <- function(g,
     }
 
     if (is.null(names(popflag))) {
-      names(popflag) <- unique(g$data$id)
+      names(popflag) <- ids
+    } else {
+      names(popflag) <- gsub(" ", "_", names(popflag))
     }
 
     in.file <- ifelse(is.null(label), "data", paste(label, "data", sep = "_"))
@@ -231,16 +236,17 @@ utils.structure.run <- function(g,
     main.file <- ifelse(is.null(label), "mainparams", paste(label, "mainparams", sep = "_"))
     extra.file <- ifelse(is.null(label), "extraparams", paste(label, "extraparams", sep = "_"))
     mat <- .stackedAlleles(g, alleles2integer = TRUE, na.val = -9) %>%
-      dplyr::select(-.data$allele) %>%
+      dplyr::select(-"allele") %>%
       dplyr::mutate(
         id = gsub(" ", "_", .data$id),
         stratum = as.numeric(factor(.data$stratum)),
         popflag = popflag[.data$id]
       ) %>%
-      dplyr::select(.data$id, .data$stratum, .data$popflag, dplyr::everything()) %>%
+      dplyr::select("id", "stratum", "popflag", dplyr::everything()) %>%
       as.matrix()
 
-    write(paste(sort(unique(g$data[["locus"]])), collapse = " "), file = in.file)
+    # the marker-name header must follow the column order of the matrix
+    write(paste(colnames(mat)[-(1:3)], collapse = " "), file = in.file)
 
     for (i in 1:nrow(mat)) {
       write(paste(mat[i, ], collapse = " "),
@@ -255,7 +261,7 @@ utils.structure.run <- function(g,
       paste("NUMREPS", as.integer(numreps)),
       paste("INFILE", in.file),
       paste("OUTFILE", out.file),
-      paste("NUMINDS", length(unique(g$data$id))),
+      paste("NUMINDS", length(ids)),
       paste("NUMLOCI", length(unique(g$data$locus))),
       "MISSING -9", "LABEL 1", "POPDATA 1",
       "POPFLAG 1", "LOCDATA 0", "PHENOTYPE 0",
@@ -439,101 +445,168 @@ utils.structure.run <- function(g,
   }
 
   ###########################################################
-
-  label <- g$description
-  label <- paste(label, "structureRun", sep = ".")
-  label <- gsub("[[:space:]]", ".", label)
-  label <- gsub(":", ".", label)
-
-  unlink(label, recursive = TRUE, force = TRUE)
-
-  dir.create(label)
-
-  if (!utils::file_test("-d", label)) {
-    stop(error(paste("'", label, "' is not a valid folder.",
-      sep = ""
-    )))
+  # restore the individual names and order when ids were passed as an index
+  .restoreIds <- function(result, ind.names) {
+    if (is.null(ind.names) || is.null(result$q.mat)) {
+      return(result)
+    }
+    idx <- as.integer(result$q.mat$id)
+    result$q.mat$id <- ind.names[idx]
+    result$q.mat <- result$q.mat[order(idx), , drop = FALSE]
+    rownames(result$q.mat) <- NULL
+    if (!is.null(result$prior.anc)) {
+      anc.idx <- as.integer(names(result$prior.anc))
+      names(result$prior.anc) <- ind.names[anc.idx]
+      result$prior.anc <- result$prior.anc[order(anc.idx)]
+    }
+    result
   }
 
-  label <- file.path(label, label)
+  ###########################################################
+
+  exec <- normalizePath(path.expand(exec), mustWork = FALSE)
+  if (!file.exists(exec)) {
+    stop(error("  Cannot find the STRUCTURE executable:", exec, "\n"))
+  }
+  if (file.access(exec, mode = 1) != 0) {
+    stop(error("  The STRUCTURE executable is not executable:", exec, "\n"))
+  }
+
+  # individuals are passed to STRUCTURE by index when their names are known:
+  # STRUCTURE truncates labels at 11 characters and splits them at spaces
+  if (!is.null(ind.names)) {
+    if (!setequal(ind.names, unique(g$data$id))) {
+      stop(error("  'ind.names' do not match the individual ids in 'g'.\n"))
+    }
+    id.index <- stats::setNames(seq_along(ind.names), ind.names)
+    if (!is.null(popflag)) {
+      if (is.null(names(popflag))) {
+        if (length(popflag) != length(ind.names)) {
+          stop(error("  'popflag' should be the same length as the number of individuals.\n"))
+        }
+        names(popflag) <- ind.names
+      }
+      names(popflag) <- as.character(id.index[names(popflag)])
+    }
+    g$data <- as.data.frame(g$data)
+    g$data$id <- as.character(id.index[g$data$id])
+  }
+
+  # all files live in a per-call directory that is removed on exit; STRUCTURE
+  # also writes seed.txt to the current directory, so the run happens there
+  run.dir <- tempfile(pattern = "structureRun_")
+  dir.create(run.dir)
+  old.wd <- setwd(run.dir)
+  on.exit(setwd(old.wd), add = TRUE)
+  on.exit(unlink(run.dir, recursive = TRUE, force = TRUE), add = TRUE)
 
   if (is.null(k.range)) {
     k.range <- 1:(dplyr::n_distinct(g$data$stratum))
   }
 
   rep.df <- expand.grid(rep = 1:num.k.rep, k = k.range)
-  rownames(rep.df) <- paste(label, ".k", rep.df$k, ".r",
-    rep.df$rep,
-    sep = ""
-  )
+  rep.df$label <- paste0("k", rep.df$k, ".r", rep.df$rep)
+  n.runs <- nrow(rep.df)
 
-  out.files <- lapply(rownames(rep.df), function(x) {
-    sw.out <- structureWrite(g, 
-                             label = x, 
-                             maxpops = rep.df[x, "k"],
-                             burnin = burnin,
-                             numreps = numreps,
-                             noadmix = noadmix,
-                             freqscorr = freqscorr,
-                             randomize = randomize,
-                             seed = seed,
-                             pop.prior = pop.prior,
-                             locpriorinit = locpriorinit,
-                             maxlocprior = maxlocprior,
-                             gensback = gensback,
-                             migrprior = migrprior,
-                             pfrompopflagonly = pfrompopflagonly,
-                             popflag = popflag,
-                             inferalpha = inferalpha,
-                             alpha = alpha,
-                             unifprioralpha = unifprioralpha,
-                             alphamax = alphamax,
-                             alphapriora = alphapriora,
-                             alphapriorb = alphapriorb
-                             )
-
-    files <- sw.out$files
-    cmd <- paste0(
-      exec, " -m ", files["mainparams"],
-      " -e ", files["extraparams"], " -i ",
-      files["data"], " -o ", files["out"]
-    )
-    err.code <- system(cmd)
-    if (err.code == 127) {
-      stop("You do not have STRUCTURE installed.")
-    } else if (!err.code == 0) {
-      stop(paste(
-        "Error running STRUCTURE. Error code",
-        err.code, "returned."
+  run.result <- lapply(seq_len(n.runs), function(i) {
+    run.label <- rep.df$label[i]
+    if (verbose >= 2) {
+      cat(report(
+        "  Running STRUCTURE: K =", rep.df$k[i], ", replicate", rep.df$rep[i],
+        paste0("(run ", i, " of ", n.runs, ")\n")
       ))
     }
-    files["out"] <- paste(files["out"], "_f",
-      sep = ""
+    sw.out <- structureWrite(g,
+      label = run.label,
+      maxpops = rep.df$k[i],
+      burnin = burnin,
+      numreps = numreps,
+      noadmix = noadmix,
+      freqscorr = freqscorr,
+      randomize = randomize,
+      seed = seed,
+      pop.prior = pop.prior,
+      locpriorinit = locpriorinit,
+      maxlocprior = maxlocprior,
+      gensback = gensback,
+      migrprior = migrprior,
+      pfrompopflagonly = pfrompopflagonly,
+      popflag = popflag,
+      inferalpha = inferalpha,
+      alpha = alpha,
+      unifprioralpha = unifprioralpha,
+      alphamax = alphamax,
+      alphapriora = alphapriora,
+      alphapriorb = alphapriorb
     )
-    result <- structureRead(files["out"], sw.out$pops)
-    if (file.exists("seed.txt")) {
-      file.remove("seed.txt")
+
+    files <- sw.out$files
+    log.file <- paste(run.label, "log", sep = "_")
+    args <- c(
+      "-m", shQuote(files[["mainparams"]]),
+      "-e", shQuote(files[["extraparams"]]),
+      "-i", shQuote(files[["data"]]),
+      "-o", shQuote(files[["out"]])
+    )
+    err.code <- system2(exec,
+      args = args,
+      stdout = if (verbose >= 3) "" else log.file,
+      stderr = if (verbose >= 3) "" else log.file
+    )
+    if (err.code == 127) {
+      stop(error(
+        "  STRUCTURE could not be started (exit status 127). Command:\n ",
+        paste(shQuote(exec), paste(args, collapse = " ")), "\n"
+      ))
+    } else if (err.code != 0) {
+      tail.log <- if (file.exists(log.file)) {
+        utils::tail(readLines(log.file, warn = FALSE), 10)
+      } else {
+        character()
+      }
+      stop(error(
+        "  STRUCTURE exited with status", err.code, "for run", run.label,
+        ".\n  Last lines of its output:\n ",
+        paste(tail.log, collapse = "\n  "), "\n"
+      ))
     }
-    files <- if (delete.files) {
-      NULL
-    } else {
-      files
-    }
-    result <- c(result, list(files = files, label = basename(x)))
-    fname <- paste(x, ".ws.rdata", sep = "")
-    save(result, file = fname)
-    fname
+    files["out"] <- paste(files["out"], "_f", sep = "")
+    result <- structureRead(files[["out"]], sw.out$pops)
+    result <- .restoreIds(result, ind.names)
+    c(result, list(files = files, label = run.label))
   })
 
-  run.result <- lapply(out.files, function(f) {
-    result <- NULL
-    load(f)
-    result
-  })
-  names(run.result) <- sapply(run.result, function(x) x$label)
-  class(run.result) <- c("structure.result", class(run.result))
+  names(run.result) <- rep.df$label
+
   if (delete.files) {
-    unlink(dirname(label), recursive = TRUE, force = TRUE)
+    run.result <- lapply(run.result, function(r) {
+      r$files <- NULL
+      r
+    })
+  } else {
+    if (is.null(keep.dir)) {
+      keep.dir <- tempdir()
+    }
+    keep.path <- file.path(
+      keep.dir,
+      paste0("structureRun_", format(Sys.time(), "%Y%m%d_%H%M%S"))
+    )
+    dir.create(keep.path, recursive = TRUE, showWarnings = FALSE)
+    file.copy(list.files(run.dir, full.names = TRUE), keep.path,
+      overwrite = TRUE
+    )
+    run.result <- lapply(run.result, function(r) {
+      r$files <- stats::setNames(
+        file.path(keep.path, basename(r$files)),
+        names(r$files)
+      )
+      r
+    })
+    if (verbose >= 2) {
+      cat(report("  STRUCTURE files kept in", keep.path, "\n"))
+    }
   }
+
+  class(run.result) <- c("structure.result", class(run.result))
   run.result
 }
