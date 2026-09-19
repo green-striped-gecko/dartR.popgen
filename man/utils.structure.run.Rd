@@ -29,7 +29,10 @@ utils.structure.run(
   unifprioralpha,
   alphamax,
   alphapriora,
-  alphapriorb
+  alphapriorb,
+  ind.names = NULL,
+  keep.dir = NULL,
+  verbose = 0
 )
 }
 \arguments{
@@ -41,9 +44,12 @@ groups. If specified, do not also specify \code{maxpops}.}
 
 \item{num.k.rep}{number of replicates for each value in \code{k.range}.}
 
-\item{label}{label to use for input and output files}
+\item{label}{label to use for input and output files (currently unused;
+runs are labelled \code{k<K>.r<replicate>}).}
 
-\item{delete.files}{logical. Delete all files when STRUCTURE is finished?}
+\item{delete.files}{logical. Delete all files when STRUCTURE is finished?
+If FALSE, the files are kept in a time-stamped folder under
+\code{keep.dir}.}
 
 \item{exec}{name of executable for STRUCTURE. Defaults to "structure".}
 
@@ -65,45 +71,58 @@ groups. If specified, do not also specify \code{maxpops}.}
 \item{locpriorinit}{Parameterizes locprior parameter r - how informative the
 populations are. Only used when pop.prior = "locprior" [default 1].}
 
-\item{maxlocprior}{Specifies range of locprior parameter r. Only used when 
+\item{maxlocprior}{Specifies range of locprior parameter r. Only used when
 pop.prior = "locprior" [default 20].}
 
-\item{gensback}{Integer defining the number of generations back to test for 
+\item{gensback}{Integer defining the number of generations back to test for
 immigrant ancestry. Only used when pop.prior = "usepopinfo" [default 2].}
 
-\item{migrprior}{Numeric between 0 and 1 listing migration prior. Only used 
+\item{migrprior}{Numeric between 0 and 1 listing migration prior. Only used
 when pop.prior = "usepopinfo" [default 0.05].}
 
-\item{pfrompopflagonly}{Logical. update allele frequencies from individuals 
+\item{pfrompopflagonly}{Logical. update allele frequencies from individuals
 specified by popflag. Only used when pop.prior = "usepopinfo" [default TRUE].}
 
-\item{popflag}{A vector of integers (0, 1) or logicals identifiying whether 
-or not to use strata information. Only used when pop.prior = "usepopinfo"
- [default NULL].}
+\item{popflag}{A vector of integers (0, 1) or logicals identifiying whether
+or not to use strata information, one per individual in the order of
+\code{ind.names} (or of the sorted ids when \code{ind.names} is NULL).
+Only used when pop.prior = "usepopinfo" [default NULL].}
 
-\item{inferalpha}{Logical. Infer the value of the model parameter # from the 
-data; otherwise is fixed at the value alpha which is chosen by the user. 
-This option is ignored under the NOADMIX model. Small alpha implies that 
-most individuals are essentially from one population or another, while 
+\item{inferalpha}{Logical. Infer the value of the model parameter # from the
+data; otherwise is fixed at the value alpha which is chosen by the user.
+This option is ignored under the NOADMIX model. Small alpha implies that
+most individuals are essentially from one population or another, while
 alpha > 1 implies that most individuals are admixed [default FALSE].}
 
-\item{alpha}{Dirichlet parameter for degree of admixture. This is the 
+\item{alpha}{Dirichlet parameter for degree of admixture. This is the
 initial value if inferalpha = TRUE [default 1].}
 
-\item{unifprioralpha}{Logical. Assume a uniform prior for alpha which runs 
+\item{unifprioralpha}{Logical. Assume a uniform prior for alpha which runs
 between 0 and alphamax. This model seems to work fine; the alternative model
- (when unfprioralpha = 0) is to take alpha as having a Gamma prior, with 
- mean alphapriora × alphapriorb, and variance alphapriora × alphapriorb^2 
+ (when unfprioralpha = 0) is to take alpha as having a Gamma prior, with
+ mean alphapriora x alphapriorb, and variance alphapriora x alphapriorb^2
  [default TRUE].}
 
-\item{alphamax}{Maximum for uniform prior on alpha when 
+\item{alphamax}{Maximum for uniform prior on alpha when
 unifprioralpha = TRUE [default 20].}
 
-\item{alphapriora}{Parameters of Gamma prior on alpha when 
+\item{alphapriora}{Parameters of Gamma prior on alpha when
 unifprioralpha = FALSE [default 0.05].}
 
-\item{alphapriorb}{Parameters of Gamma prior on alpha when 
+\item{alphapriorb}{Parameters of Gamma prior on alpha when
 unifprioralpha = FALSE [default 0.001].}
+
+\item{ind.names}{Individual names in the order they should appear in the
+results. When given, individuals are passed to STRUCTURE by their index
+(STRUCTURE truncates labels at 11 characters and rejects spaces) and the
+names are restored in \code{q.mat} and \code{prior.anc}; \code{q.mat} is
+returned in this order [default NULL, ids passed as they are].}
+
+\item{keep.dir}{Directory under which the STRUCTURE files are kept when
+\code{delete.files = FALSE} [default tempdir()].}
+
+\item{verbose}{Verbosity: 0, silent; 2, one line per run; 3 and above,
+STRUCTURE's own output is shown [default 0].}
 }
 \value{
 \describe{ \item{\code{structureRun}}{a list where each element is a
