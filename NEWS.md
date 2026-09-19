@@ -26,6 +26,28 @@
   `verbose >= 2`; the Evanno layout shows mean LnP(K) and LnP'(K) instead of
   the first panel twice; `tidyr` is guarded and the superseded
   `gather`/`spread` calls replaced.
+* `gl.ld.haplotype`: haplotypes are now identified from the pairwise LD of
+  adjacent SNPs in the LD matrix. Previously they were read off a rotated
+  copy of the matrix with a misaligned start index, so one adjacent pair in
+  LD could be reported as a block spanning the whole chromosome, and start
+  and end positions were rounded to three significant digits. **The
+  haplotype table changes for every call with `haplo_id = TRUE`.**
+* `gl.ld.haplotype`: `plot.save` is honoured. Previously a PDF was written
+  to `plot.dir` on every call when no haplotypes were drawn, and never when
+  they were. **Default calls no longer write files.**
+* `gl.ld.haplotype`: `ind.limit` is a true minimum; a population with
+  exactly `ind.limit` individuals is analysed instead of skipped.
+* `gl.ld.haplotype`: chromosomes with fewer than four SNPs after filtering
+  are skipped with a warning instead of aborting the run; unknown
+  `chrom_name` / `pop_name` values, missing `@chromosome` / `@position`
+  slots and SilicoDArT input now stop with a clear message; the
+  heterozygosity and SNP-position tracks, title and axis of each plot use
+  only that chromosome's SNPs; heatmap cells with LD of 0 or negative LD are
+  drawn instead of left as holes; PLINK intermediates are written and read
+  from the same temporary path (the function failed after `gl.set.wd()`);
+  missing packages stop with an error instead of returning `-1`; output is
+  silent at `verbose = 0`.
+
 * `gl.find.genes.for.loci`: loci that do not overlap a gene were returned as
   a single row with an empty locus name, no gene and no distance, because
   the nearest-gene join did not carry the locus identifiers. Each such locus
@@ -46,6 +68,18 @@
   `loc.metrics` in the returned object now track the selected loci
   positionally.
 
+* `gl.blast`: a run whose external step failed (unknown `task`, missing
+  query fasta or reference genome, makeblastdb or blastn error) no longer
+  returns the previous run's hits as its result. Inputs are validated up
+  front, temporary files from earlier runs are removed, and a non-zero exit
+  of makeblastdb or blastn stops with the tool's message. A reference genome
+  path containing spaces now works (the genome is passed to makeblastdb on
+  stdin), and a BLAST install under a path with spaces, such as Program
+  Files on Windows, is no longer refused; an R temporary directory with
+  spaces is refused with an explanation, because BLAST cannot open a
+  database there. **A fasta-file query with no surviving hit now returns an
+  empty data frame with the BLAST columns instead of the input path.**
+
 ## Improvements
 
 * `gl.find.genes.for.loci`: two new output columns, `gene_strand` and
@@ -57,3 +91,8 @@
   gene, gene_id); loci without a position and sequence names absent from
   the GFF are reported at `verbose >= 1`; a locus on a sequence without
   genes is returned with NA gene columns; the roxygen example runs.
+* `gl.blast`: console output honours `verbose` (makeblastdb output only at
+  `verbose >= 3`, the "k of N sequences aligned" count at `verbose >= 1`,
+  history entry and "Completed" on every exit); the note pointing to
+  `gl.list.reports()`/`gl.print.reports()`, which do not exist, is replaced
+  by the paths of the three saved tables; documentation corrected.
