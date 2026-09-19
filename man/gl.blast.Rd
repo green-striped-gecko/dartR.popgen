@@ -25,17 +25,17 @@ query sequences [required].}
 \item{ref_genome}{Path to a reference genome in fasta of fna format or in 
 a compressed format ie "gz" extension [required].}
 
-\item{task}{Four different tasks are supported: 1) “megablast”, for very
-similar sequences (e.g, sequencing errors), 2) “dc-megablast”, typically
-used for inter-species comparisons, 3) “blastn”, the traditional program
-used for inter-species comparisons, 4) “blastn-short”, optimized for
+\item{task}{Four different tasks are supported: 1) "megablast", for very
+similar sequences (e.g, sequencing errors), 2) "dc-megablast", typically
+used for inter-species comparisons, 3) "blastn", the traditional program
+used for inter-species comparisons, 4) "blastn-short", optimized for
 sequences less than 30 nucleotides [default 'megablast'].}
 
 \item{Percentage_identity}{Not a very sensitive or reliable measure of
 sequence similarity, however it is a reasonable proxy for evolutionary
 distance. The evolutionary distance associated with a 10 percent change in
 Percentage_identity is much greater at longer distances. Thus, a change from
-80 – 70 percent identity might reflect divergence 200 million years earlier
+80 to 70 percent identity might reflect divergence 200 million years earlier
 in time, but the change from 30 percent to 20 percent might correspond to a
 billion year divergence time change [default 70].}
 
@@ -49,14 +49,17 @@ is almost always significant [default 50].}
 \item{number_of_threads}{Number of threads (CPUs) to use in blastn search
 [default 2].}
 
-\item{verbose}{verbose= 0, silent or fatal errors; 1, begin and end; 2,
-progress log ; 3, progress and results summary; 5, full report
-[default 2 or as specified using gl.set.verbosity]}
+\item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
+brief progress messages; 3, progress and results summary; 5, full report
+[default 2, unless specified using gl.set.verbosity].}
 }
 \value{
 If the input is a genlight object: returns a genlight object with one
- hit per sequence merged to the slot $other$loc.metrics. If the input is a
- fasta file: returns a dataframe with one hit per sequence.
+ hit per sequence merged to the slot $other$loc.metrics; sequences without a
+ hit have NA in the BLAST columns. If the input is a fasta file: returns a
+ dataframe with one hit per sequence. When no hit passes the filters, the
+ genlight object is returned without BLAST columns, or an empty dataframe
+ with the BLAST columns is returned for a fasta file.
 }
 \description{
 Basic Local Alignment Search Tool (BLAST; Altschul et al., 1990 &
@@ -77,26 +80,29 @@ Basic Local Alignment Search Tool (BLAST; Altschul et al., 1990 &
  You can download the BLAST installs from:
  \url{https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/}
 
- It is important to install BLAST in a path that does not contain spaces for
- this function to work.
+ The executables blastn and makeblastdb must be findable on the system
+ PATH. BLAST cannot open a database whose path contains spaces, so the R
+ temporary directory (tempdir()) must not contain spaces; if it does, set
+ the environment variable TMPDIR (TMP on Windows) to a path without spaces
+ and restart R.
 
  \strong{Running BLAST}
 
- Four different tasks are supported: \itemize{ \item “megablast”, for very
- similar sequences (e.g, sequencing errors) \item “dc-megablast”, typically
- used for inter-species comparisons \item “blastn”, the traditional program
- used for inter-species comparisons \item “blastn-short”, optimized for
+ Four different tasks are supported: \itemize{ \item "megablast", for very
+ similar sequences (e.g, sequencing errors) \item "dc-megablast", typically
+ used for inter-species comparisons \item "blastn", the traditional program
+ used for inter-species comparisons \item "blastn-short", optimized for
  sequences less than 30 nucleotides }
 
  If  you  are  running  a  BLAST alignment of  similar  sequences,  for
  example  Turtle  Genome  Vs Turtle Sequences, the recommended parameters
- are: task = “megablast”, Percentage_identity = 70, Percentage_overlap =  0.8
+ are: task = "megablast", Percentage_identity = 70, Percentage_overlap =  0.8
  and bitscore = 50.
 
  If you are running a BLAST alignment of highly dissimilar sequences because
  you are probably looking for sex linked  hits in  a distantly  related
  species,  and  you  are aligning for example sequences of Chicken Genome Vs
- Bassiana, the recommended parameters are: task = “dc-megablast”,
+ Bassiana, the recommended parameters are: task = "dc-megablast",
  Percentage_identity = 50, Percentage_overlap =  0.01 and bitscore = 30.
 
  Be aware that running BLAST might take a long time (i.e. days) depending of
@@ -118,10 +124,10 @@ Basic Local Alignment Search Tool (BLAST; Altschul et al., 1990 &
  gaps \item qlen - Query sequence length \item slen - Subject sequence length
  \item PercentageOverlap - length / min(qlen,slen) }
 
- Databases containing unfiltered aligned sequences, filtered aligned
- sequences and one hit per sequence are saved to the working directory
- (plot.dir tempdir if not set).
-
+ Three tables (all aligned sequences, the aligned sequences that pass the
+ filters, and one hit per sequence) are saved as RDS files in tempdir();
+ their paths are printed when verbose >= 2. Each RDS holds a list of the
+ call and the table.
 
  \strong{BLAST filtering}
 
@@ -133,8 +139,8 @@ Basic Local Alignment Search Tool (BLAST; Altschul et al., 1990 &
 \examples{
 \dontrun{
 res <- gl.blast(x = testset.gl, ref_genome = "sequence.fasta")
-# display of reports saved in the temporal directory
-# open the reports saved in the temporal directory
+# keep only loci with a confident hit
+res <- gl.filter.locmetric(res, metric = "evalue", upper = 1e-5, lower = 0)
 }
 
 }
@@ -148,14 +154,14 @@ res <- gl.blast(x = testset.gl, ref_genome = "sequence.fasta")
  generation of protein database search programs. Nucleic acids research,
  25(17), 3389-3402.
 \item Pearson, W. R. (2013). An introduction to sequence similarity
- (“homology”) searching. Current protocols in bioinformatics, 42(1), 3-1.
+ ("homology") searching. Current protocols in bioinformatics, 42(1), 3-1.
  }
 }
 \seealso{
-\code{\link[dartR.base]{gl.print.history}}
+\code{\link[dartR.base]{gl.filter.locmetric}}
 }
 \author{
-Berenice Talamantes Becerra & Luis Mijangos (Post to
- \url{https://groups.google.com/d/forum/dartr})
+Author(s): Berenice Talamantes Becerra & Luis Mijangos. Custodian:
+ Luis Mijangos -- Post to \url{https://groups.google.com/d/forum/dartr}
 }
 \concept{reference genomes}
