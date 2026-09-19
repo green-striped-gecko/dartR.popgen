@@ -2,6 +2,28 @@
 
 ## Bug fixes
 
+* `gl.ld.haplotype`: haplotypes are now identified from the pairwise LD of
+  adjacent SNPs in the LD matrix. Previously they were read off a rotated
+  copy of the matrix with a misaligned start index, so one adjacent pair in
+  LD could be reported as a block spanning the whole chromosome, and start
+  and end positions were rounded to three significant digits. **The
+  haplotype table changes for every call with `haplo_id = TRUE`.**
+* `gl.ld.haplotype`: `plot.save` is honoured. Previously a PDF was written
+  to `plot.dir` on every call when no haplotypes were drawn, and never when
+  they were. **Default calls no longer write files.**
+* `gl.ld.haplotype`: `ind.limit` is a true minimum; a population with
+  exactly `ind.limit` individuals is analysed instead of skipped.
+* `gl.ld.haplotype`: chromosomes with fewer than four SNPs after filtering
+  are skipped with a warning instead of aborting the run; unknown
+  `chrom_name` / `pop_name` values, missing `@chromosome` / `@position`
+  slots and SilicoDArT input now stop with a clear message; the
+  heterozygosity and SNP-position tracks, title and axis of each plot use
+  only that chromosome's SNPs; heatmap cells with LD of 0 or negative LD are
+  drawn instead of left as holes; PLINK intermediates are written and read
+  from the same temporary path (the function failed after `gl.set.wd()`);
+  missing packages stop with an error instead of returning `-1`; output is
+  silent at `verbose = 0`.
+
 * `gl.find.genes.for.loci`: loci that do not overlap a gene were returned as
   a single row with an empty locus name, no gene and no distance, because
   the nearest-gene join did not carry the locus identifiers. Each such locus
