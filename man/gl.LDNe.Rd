@@ -49,7 +49,8 @@ c(0,0.05) [default 0].}
 
 \item{singleton.rm}{Whether to remove singleton alleles [default TRUE].}
 
-\item{mating}{Formula for Random mating='random' or monogamy= 'monogamy'
+\item{mating}{Mating system assumed by the estimator: 'random' or
+'monogamy'. The abbreviation 'mono' is also accepted
 [default 'random'].}
 
 \item{pairing}{'all' [default] if all possible loci should be paired, or 'separate'
@@ -60,8 +61,10 @@ This is ignored if \code{pairing} is set to 'separate'.
 Options are 'nChromosomes', for eq 1a, or 'genomeLength' for eq 1b. 
 NULL if none should be applied [default NULL].}
 
-\item{Waples.correction.value}{The number of chromosomes or the genome length 
-in cM. See Waples et al 2016 for details.}
+\item{Waples.correction.value}{A single positive number: the number of
+chromosomes for 'nChromosomes', or the genome length in cM for
+'genomeLength'. Required when \code{Waples.correction} is set. See
+Waples et al 2016 for details [default NULL].}
 
 \item{naive}{Whether the naive (uncorrected for samples size - see 
 eq 7 and eq 8 in Waples 2006) should also be reported. This is mostly 
@@ -71,20 +74,30 @@ to diagnose the source of Inf estimate.}
 
 \item{plot_theme}{User specified theme [default theme_dartR()].}
 
-\item{plot_colors_pop}{population colors with as many colors as there are populations in the dataset
-[default discrete_palette].}
+\item{plot_colors_pop}{Either a vector with at least one colour per
+population, or a palette function taking the number of populations
+[default gl.select.colors(x)].}
 
-\item{plot.file}{Name for the RDS binary file to save (base name only, exclude extension) [default NULL]
-temporary directory (tempdir) [default FALSE].}
+\item{plot.file}{Name for the RDS binary files to save (base name only,
+exclude extension). The plot is saved under this name and the table under
+the same name with the suffix '_tab'. Nothing is saved when NULL
+[default NULL].}
 
-\item{plot.dir}{Directory in which to save files [default = working directory]}
+\item{plot.dir}{Directory in which to save the RDS files
+[default tempdir(), mandated by CRAN; see gl.check.wd].}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
-progress log; 3, progress and results summary; 5, full report
+brief progress messages; 3, progress and results summary; 5, full report
 [default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-Dataframe with the results as table
+Invisibly, a named list with one data frame per population. Each
+data frame holds one row per statistic (lowest allele frequency used,
+harmonic mean sample size, independent comparisons, overall r^2, expected
+r^2, estimated Ne and its parametric and jackknife confidence limits) and
+one column per allele frequency threshold. Five rows are added when
+\code{Waples.correction} is set and one when \code{naive} is TRUE. The
+full NeEstimator output is written to \code{file.path(outpath, outfile)}.
 }
 \description{
 This function is basically a convenience function that runs the LD Ne
@@ -101,18 +114,19 @@ This function is basically a convenience function that runs the LD Ne
 pops <- possums.gl[1:60, 1:100]
 nes <- gl.LDNe(pops,
   outfile = "popsLD.txt", outpath = tempdir(),
-  neest.path = "./path_to Ne-21",
+  neest.path = "./path_to_Ne2-1",
   critical = c(0, 0.05), singleton.rm = TRUE, mating = "random"
 )
 nes
 
 # Using only pairs of loci on different chromosomes
-# make up some chromosome location
+# make up some chromosome locations
 pops@chromosome <- as.factor(sample(1:10, size = nLoc(pops), replace = TRUE))
 nessep <- gl.LDNe(pops,
-              outfile = "popsLD.txt", outpath = "./TestNe", pairing="separate",
-              neest.path = "./path_to Ne-21",
-              critical = c(0, 0.05), singleton.rm = TRUE, mating = "random"
+  outfile = "popsLD.txt", outpath = tempdir(), pairing = "separate",
+  neest.path = "./path_to_Ne2-1",
+  critical = c(0, 0.05), singleton.rm = TRUE, mating = "random"
+)
 nessep
 }
 }
@@ -128,6 +142,6 @@ nessep
  }
 }
 \author{
-Custodian: Bernd Gruber (Post to
-\url{https://groups.google.com/d/forum/dartr})
+Author(s): Bernd Gruber. Custodian: Bernd Gruber -- Post to
+\url{https://groups.google.com/d/forum/dartr}
 }
