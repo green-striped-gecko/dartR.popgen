@@ -17,6 +17,45 @@
   combined figure is built with patchwork and returned as
   `plots$combined` (`gridExtra` is no longer used); `aes_string()`
   replaced. Help pages rewritten, including the delta K method.
+* `gl.map.structure`: each population's bars are drawn at its own centre.
+  Previously the centres were matched to the q-matrix in the wrong
+  direction, so when the population levels of `x` were not in alphabetical
+  order, bars were drawn at another population's centre under that
+  population's label. **Maps change for any `x` whose population levels are
+  not alphabetical.**
+* `gl.map.structure`: `movepops` is added to the `lon` and `lat` columns by
+  name (previously by position, which moved latitude on genlights storing
+  `lat` first), and its rows can be matched by population name.
+  **`movepops` shifts change for genlights whose `latlon` stores `lat`
+  first.**
+* `gl.map.structure`: populations of `x` that are not in `qmat` are ignored
+  (previously an error after many leaflet warnings); a `qmat` population
+  without coordinates, a `latlon` without `lon`/`lat` columns and malformed
+  `qmat` or `K` give informative errors. One population and K = 1 work.
+  `K` accepts a mode label such as `"2.2"`. New arguments `plot.colors`
+  (default: the `gl.plot.structure` palette instead of `rainbow()`, **so
+  default map colours change**), `plot.out` and `verbose`; `leaflet` is
+  guarded; the help example is corrected.
+* `gl.plot.structure`: when Clumpak finds more than one mode at a K, each
+  mode is now the average of its replicates, as documented. Previously every
+  mode showed only its first replicate. **Returned q-matrices and bar
+  heights change whenever a K has more than one mode.**
+* `gl.plot.structure`: requesting K = 1 after another K (e.g. `K = c(2, 1)`)
+  no longer duplicates the earlier K panels, which were relabelled as extra
+  modes (`2.1`, `2.2`). **The returned list and the plot lose the duplicate
+  panels.**
+* `gl.plot.structure`: with `den = TRUE` the returned tables keep the
+  population names (only the plot hides them), so they can be passed to
+  `gl.map.structure()`. The dendrogram now clusters `dis.mat` itself;
+  previously it clustered Euclidean distances between the rows of the
+  distance matrix. **Individual order in `den = TRUE` plots changes.**
+* `gl.plot.structure`: arguments are checked before any work: `den = TRUE`
+  needs `x` or `dis.mat` (and `dis.mat` alone now works), `met_clumpp`,
+  missing K values and too few colours give informative errors;
+  `color_clusters` accepts a palette function as documented; `proxy` and
+  `reshape2` are guarded; `aes_()` is replaced by `aes()`, removing the
+  ggplot2 deprecation warning; help page corrected (`border_ind` default,
+  `plot.dir`, return value, `k_name`).
 
 * `gl.run.structure`: the STRUCTURE runs are now always returned. Previously
   the Evanno step ran unconditionally and stopped with "must have at least

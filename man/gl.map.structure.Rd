@@ -13,20 +13,26 @@ gl.map.structure(
   scaley = 1,
   movepops = NULL,
   pop.labels = TRUE,
-  pop.labels.cex = 12
+  pop.labels.cex = 12,
+  plot.colors = NULL,
+  plot.out = TRUE,
+  verbose = NULL
 )
 }
 \arguments{
-\item{qmat}{Q-matrix from a structure run followed by a clumpp run object
-[from \code{\link{gl.run.structure}} and \code{\link{gl.plot.structure}}]
- [required].}
+\item{qmat}{List of q-matrices returned by \code{\link{gl.plot.structure}}
+[required].}
 
 \item{x}{Name of the genlight object containing the coordinates in the
-\code{\@other$latlon} slot to calculate the population centers [required].}
+\code{\@other$latlon} slot (columns named lon and lat) to calculate the
+population centres [required].}
 
-\item{K}{The number for K to be plotted [required].}
+\item{K}{The q-matrix to be mapped: either the number of clusters (e.g. 3),
+which maps the first q-matrix with that many clusters, or a panel label
+from the K column of the q-matrices (e.g. "2.2" to map the second mode of
+K = 2) [required].}
 
-\item{provider}{Provider    passed to leaflet. Check \link[leaflet]{providers}
+\item{provider}{Provider passed to leaflet. Check \link[leaflet]{providers}
 for a list of possible backgrounds [default "Esri.NatGeoWorldMap"].}
 
 \item{scalex}{Scaling factor to determine the size of the bars in x direction
@@ -35,34 +41,45 @@ for a list of possible backgrounds [default "Esri.NatGeoWorldMap"].}
 \item{scaley}{Scaling factor to determine the size of the bars in y direction
 [default 1].}
 
-\item{movepops}{A two-dimensional data frame that allows to move the center of
-the barplots manually in case they overlap. Often if populations are
-horizontally close to each other. This needs to be a data.frame of the
-dimensions [rows=number of populations, columns = 2 (lon/lat)]. For each
-population you have to specify the x and y (lon and lat) units you want to
-move the center of the plot, (see example for details) [default NULL].}
+\item{movepops}{A data frame with two columns, lon and lat, that moves the
+centre of the barplots manually in case they overlap (often when
+populations are horizontally close to each other). Each row gives the
+longitude and latitude units to move one population. Rows are matched to
+populations by row name when the row names are population names;
+otherwise there must be one row per population of x, in the order of
+levels(pop(x)). Columns not named lon and lat are read as lon, lat (see
+example) [default NULL].}
 
-\item{pop.labels}{Switch for population labels below the parplots
+\item{pop.labels}{Switch for population labels below the barplots
 [default TRUE].}
 
 \item{pop.labels.cex}{Size of population labels [default 12].}
+
+\item{plot.colors}{A colour palette function (for example \code{rainbow}),
+which is called with the number of clusters, or a vector with at least as
+many colours as clusters [default NULL, which uses gl.select.colors(), the
+default of gl.plot.structure].}
+
+\item{plot.out}{Specify if the map is to be printed [default TRUE].}
+
+\item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
+brief progress messages; 3, progress and results summary; 5, full report
+[default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-An interactive map that shows the structure plots broken down by
-population.
-
-returns the map and a list of the qmat split into sorted matrices per
- population. This can be used to create your own map.
+A list with the map (element map) and the q-matrix split into
+ sorted tables per population (element qmats). This can be used to create
+ your own map.
 }
 \description{
-This function takes the output of plotstructure (the q matrix) and maps the
-q-matrix across using the population centers from the genlight object that
-was used to run the structure analysis via \code{\link{gl.run.structure}})
-and plots the typical structure bar plots on a spatial map, providing a
-barplot for each subpopulation. Therefore it requires coordinates from a
- genlight object. This kind of plots should support the interpretation of the
-  spatial structure of a population, but in principle is not different from
-  \code{\link{gl.plot.structure}}
+This function takes the output of \code{\link{gl.plot.structure}} (the q
+matrix) and maps the q-matrix using the population centres from the
+genlight object that was used to run the structure analysis via
+\code{\link{gl.run.structure}}. It plots the typical structure bar plots on
+a spatial map, providing a barplot for each subpopulation. Therefore it
+requires coordinates from a genlight object. This kind of plot should
+support the interpretation of the spatial structure of a population, but
+in principle is not different from \code{\link{gl.plot.structure}}.
 }
 \details{
 Creates a mapped version of structure plots. For possible background maps
@@ -70,6 +87,9 @@ check as specified via the provider:
 \url{http://leaflet-extras.github.io/leaflet-providers/preview/index.html}.
 You may need to adjust scalex and scaley values [default 1], as the size
 depends on the scale of the map and the position of the populations.
+
+Only the populations present in qmat are mapped; other populations of x
+are ignored. Each population in qmat needs coordinates in x.
 }
 \examples{
 # examples need structure to be installed on the system (see above)
@@ -78,13 +98,14 @@ bc <- bandicoot.gl[,1:100]
 sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3, exec = './structure.exe')
 ev <- gl.evanno(sr)
 ev
-qmat <- gl.plot.structure(sr, k=2:4)#' #head(qmat)
-gl.map.structure(qmat, bc,K=3)
-gl.map.structure(qmat, bc,K=4)
-# move population 4 (out of 5) 0.5 degrees to the right and populations 1
-# 0.3 degree to the north of the map.
-mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
-gl.map.structure(qmat, bc,K=4, movepops=mp)
+qmat <- gl.plot.structure(sr, K = 2:4)
+head(qmat)
+gl.map.structure(qmat, bc, K = 3)
+gl.map.structure(qmat, bc, K = 4)
+# move population 4 (out of 5) 0.5 degrees to the right and population 1
+# 0.3 degrees to the south of the map.
+mp <- data.frame(lon = c(0, 0, 0, 0.5, 0), lat = c(-0.3, 0, 0, 0, 0))
+gl.map.structure(qmat, bc, K = 4, movepops = mp)
 }
 }
 \references{
@@ -109,5 +130,7 @@ multimodality in analysis of population structure. Bioinformatics
 \code{\link{gl.plot.structure}}
 }
 \author{
-Bernd Gruber (Post to \url{https://groups.google.com/d/forum/dartr})
+Author(s): Bernd Gruber. Custodian: Bernd Gruber -- Post to
+ \url{https://groups.google.com/d/forum/dartr}
 }
+\concept{population structure}
