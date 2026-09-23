@@ -80,6 +80,36 @@
   database there. **A fasta-file query with no surviving hit now returns an
   empty data frame with the BLAST columns instead of the input path.**
 
+* `gl.LDNe`: `mating = "monogamy"`, the documented value, errored with
+  "missing value where TRUE/FALSE needed"; only the undocumented
+  abbreviation `"mono"` ran. Both are now accepted.
+* `gl.LDNe`: when the first population had fewer than three individuals it
+  was given the *next* population's jackknife confidence limits, and that
+  population received NA. NeEstimator prints no jackknife line for such a
+  population, and the placeholder was inserted one position too late.
+  **Jackknife CI values change for datasets whose first population has
+  fewer than three individuals.**
+* `gl.LDNe`: an unrecognised `Waples.correction` no longer applies the
+  genome-length formula silently (it produced negative Ne); an invalid
+  `pairing` no longer fails on an internal object; non-SNP data, a missing
+  or non-scalar `Waples.correction.value`, and an unsupported operating
+  system now stop with an explanation. **Callers passing the string
+  `"NULL"` as `Waples.correction` must pass `NULL` instead.**
+* `gl.LDNe`: `plot.file` without `plot.out` no longer errors with "object
+  'p3' not found" after NeEstimator has run; `plot_colors_pop` accepts a
+  palette function or a vector longer than the number of populations, and
+  reports too few colours as such; `naive = TRUE` keeps the population
+  names on the returned list; the output file in `outpath` is refreshed by
+  a second run instead of silently keeping the first run's results; a
+  relative `outpath` such as `"."` now means the caller's working
+  directory, as documented.
+* `gl.LDNe`: each call runs NeEstimator in its own directory under
+  `tempdir()` and removes it afterwards, so concurrent calls (forked
+  parallel runs share the parent's `tempdir()`) no longer overwrite each
+  other's input and output files, and a failed run stops instead of reading
+  a file left by an earlier one. NeEstimator's own byproduct files no
+  longer persist in `tempdir()` after the call.
+
 ## Improvements
 
 * `gl.find.genes.for.loci`: two new output columns, `gene_strand` and
@@ -96,3 +126,9 @@
   history entry and "Completed" on every exit); the note pointing to
   `gl.list.reports()`/`gl.print.reports()`, which do not exist, is replaced
   by the paths of the three saved tables; documentation corrected.
+* `gl.LDNe`: console output honours `verbose` (`gl2genepop` silent below
+  3, NeEstimator's log only at `verbose >= 3`, the result tables printed at
+  `verbose >= 2`); `@return` now describes the named list of data frames
+  that the function returns; the `plot.dir`, `plot.file` and
+  `plot_colors_pop` defaults, the `mating` values and the second example
+  are documented as they behave.
