@@ -28,63 +28,73 @@ gl.plot.structure(
 \item{sr}{Structure run object from \code{\link{gl.run.structure}} [required].}
 
 \item{K}{The number for K of the q matrix that should be plotted. Needs to
-be within you simulated range of K's in your sr structure run object. If
+be within the range of K values in your sr structure run object. If
 NULL, all the K's are plotted [default NULL].}
 
 \item{met_clumpp}{The algorithm to use to infer the correct permutations.
 One of 'greedy' or 'greedyLargeK' or 'stephens' [default "greedyLargeK"].}
 
-\item{iter_clumpp}{The number of iterations to use if running either 'greedy'
-'greedyLargeK' [default 100].}
+\item{iter_clumpp}{The number of iterations to use if running either
+'greedy' or 'greedyLargeK' [default 100].}
 
 \item{clumpak}{Whether use the Clumpak method (see details) [default TRUE].}
 
 \item{plot_theme}{Theme for the plot. See Details for options
-[default NULL].}
+[default NULL, which uses theme_dartR()].}
 
-\item{color_clusters}{A color palette for clusters (K) or a list with
-as many colors as there are clusters (K) [default NULL].}
+\item{color_clusters}{A colour palette function (for example
+\code{rainbow}), which is called with the largest K, or a vector with at
+least as many colours as clusters in the largest K [default NULL, which
+uses gl.select.colors()].}
 
 \item{ind_name}{Whether to plot individual names [default TRUE].}
 
-\item{k_name}{Name of the structure plot to plot. It should be character
-[default NULL].}
+\item{k_name}{Label of the K panel to plot, as shown in the K column of the
+returned tables: "3" for K = 3, or "2.1", "2.2", ... when a K has more
+than one mode. It should be character [default NULL, all panels].}
 
 \item{border_ind}{The width of the border line between individuals
-[default 0.25].}
+[default 0.15].}
 
-\item{den}{Whether to include a dendrogram. It is necessary to include the 
-original genlight object used in gl.run.structure in the parameter x 
-[default FALSE].}
+\item{den}{Whether to include a dendrogram. It needs either the genlight
+object used in gl.run.structure (parameter x) or a distance matrix
+(parameter dis.mat) [default FALSE].}
 
-\item{dis.mat}{A dis object (distance matrix) to be used to order structure 
-plot which is plotted together with structure plot [default NULL].}
+\item{dis.mat}{A dist object (distance matrix) among the individuals in sr,
+used to build the dendrogram that orders the structure plot. Its labels
+must be the individual names. If NULL and den = TRUE, Manhattan distances
+are calculated from x [default NULL].}
 
-\item{x}{The original genlight object used in gl.run.structure description
-[default NULL].}
+\item{x}{The genlight object used in gl.run.structure; needed for the
+dendrogram when dis.mat is not supplied [default NULL].}
 
 \item{plot.out}{Specify if plot is to be produced [default TRUE].}
 
 \item{plot.file}{Name for the RDS binary file to save (base name only, exclude
 extension) [default NULL]}
 
-\item{plot.dir}{Directory in which to save files [default = working directory]}
+\item{plot.dir}{Directory in which to save files [default = tempdir(),
+unless specified using gl.set.wd].}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
-progress log ; 3, progress and results summary; 5, full report [default
- NULL, unless specified using gl.set.verbosity]}
+brief progress messages; 3, progress and results summary; 5, full report
+[default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-List of Q-matrices
+A list (invisible) with one data.table per plotted K panel, named
+ "1", "2", .... Each table has one row per individual, sorted by Label,
+ with columns Label (individual name), cluster1 ... clusterK (average
+ membership proportions), K (panel label, see k_name), orig.pop
+ (population) and ord (position of the individual in the plot).
 }
 \description{
 This function takes a structure run object (output from
  \code{\link{gl.run.structure}}) and plots the typical structure bar
-  plot that visualize the q matrix of a structure run.
+  plot that visualises the q matrix of a structure run.
 }
 \details{
 The function outputs a barplot which is the typical output of
- structure. For a Evanno plot use gl.evanno.
+ structure. For an Evanno plot use gl.evanno.
 
  This function is based on the methods of CLUMPP and Clumpak as implemented
  in the R package starmie (https://github.com/sa-lee/starmie).
@@ -95,13 +105,17 @@ The function outputs a barplot which is the typical output of
 
  The CLUMPP method permutes the clusters output by independent runs of
  clustering programs such as structure, so that they match up as closely as
- possible.
+ possible. The 'greedy' and 'greedyLargeK' searches use random
+ permutations, so cluster order (and colours) can differ between calls
+ unless \code{set.seed()} is used first.
 
  This function averages the replicates within each mode identified by the
  Clumpak method.
 
- Plots and table are saved to the working directory specified in plot.dir (tempdir )
- if plot.file is set.
+ When den = TRUE, individuals are ordered by a complete-linkage
+ hierarchical clustering (\code{hclust}) of dis.mat.
+
+ The plot is saved as an RDS file in plot.dir if plot.file is set.
 
 Examples of other themes that can be used can be consulted in \itemize{
  \item \url{https://ggplot2.tidyverse.org/reference/ggtheme.html} and \item
@@ -135,8 +149,11 @@ multimodality in analysis of population structure. Bioinformatics
 }
 }
 \seealso{
-\code{gl.run.structure}, \code{gl.plot.structure}
+\code{\link{gl.run.structure}}, \code{\link{gl.evanno}},
+ \code{\link{gl.map.structure}}
 }
 \author{
-Bernd Gruber & Luis Mijangos (Post to \url{https://groups.google.com/d/forum/dartr})
+Author(s): Bernd Gruber & Luis Mijangos. Custodian: Bernd Gruber
+ -- Post to \url{https://groups.google.com/d/forum/dartr}
 }
+\concept{population structure}
