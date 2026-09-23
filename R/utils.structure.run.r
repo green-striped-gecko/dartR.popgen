@@ -69,9 +69,9 @@
 #' STRUCTURE's own output is shown [default 0].
 #'
 #' @return \describe{ \item{\code{structureRun}}{a list where each element is a
-#' list with results from \code{structureRead} and a vector of the filenames
+#' list with results from \code{utils.structure.read} and a vector of the filenames
 #' used} \item{\code{structureWrite}}{a vector of the filenames used by
-#' STRUCTURE} \item{\code{structureRead}}{a list containing: \describe{
+#' STRUCTURE} \item{\code{utils.structure.read}}{a list containing: \describe{
 #' \item{\code{summary}}{new locus name, which is a combination of loci in
 #' group} \item{\code{q.mat}}{data.frame of assignment probabilities for each
 #' id} \item{\code{prior.anc}}{list of prior ancestry estimates for each
@@ -107,45 +107,6 @@ utils.structure.run <- function(g,
                                 ind.names = NULL,
                                 keep.dir = NULL,
                                 verbose = 0) {
-  ################################################################
-
-  .structureParseQmat <- function(q.mat.txt,
-                                  pops) {
-    q.mat.txt <- sub("[*]+", "", q.mat.txt)
-    q.mat.txt <- sub("[(]", "", q.mat.txt)
-    q.mat.txt <- sub("[)]", "", q.mat.txt)
-    q.mat.txt <- sub("[|][ ]+$", "", q.mat.txt)
-    cols1to4 <- c("row", "id", "pct.miss", "orig.pop")
-
-    strsplit(q.mat.txt, " ") %>%
-      purrr::map(function(q) {
-        q <- q[!q %in% c("", " ", ":")] %>%
-          as.character() %>%
-          rbind() %>%
-          as.data.frame(stringsAsFactors = FALSE)
-
-        stats::setNames(
-          q,
-          c(
-            cols1to4,
-            paste("Group", 1:(ncol(q) - 4), sep = ".")
-          )
-        )
-      }) %>%
-      dplyr::bind_rows() %>%
-      dplyr::mutate_at(dplyr::vars(
-        "row",
-        "pct.miss",
-        "orig.pop",
-        dplyr::starts_with("Group.")
-      ), as.numeric) %>%
-      dplyr::mutate(orig.pop = if (!is.null(pops)) {
-        pops[.data$orig.pop]
-      } else {
-        .data$orig.pop
-      })
-  }
-
   ################################################################
 
   .alleles2integer <- function(g,
@@ -326,125 +287,6 @@ utils.structure.run <- function(g,
   }
 
   ###########################################################
-  structureRead <- function(file,
-                            pops = NULL) {
-    if (!file.exists(file)) {
-      stop(error(paste("the file '", file, "' can't be found.",
-        sep = ""
-      )))
-    }
-
-    result <- scan(file, "character", quiet = TRUE)
-    loc <- grep("Estimated", result,
-      ignore.case = FALSE,
-      value = FALSE
-    )
-    est.ln.prob <- as.numeric(result[loc[1] + 6])
-    loc <- grep("likelihood", result,
-      ignore.case = FALSE,
-      value = FALSE
-    )
-    mean.lnL <- as.numeric(result[loc[1] + 2])
-    var.lnL <- as.numeric(result[loc[2] + 2])
-    loc <- grep("MAXPOPS", result, value = F)
-    maxpops <- result[loc]
-    maxpops <- sub("MAXPOPS=", "", maxpops)
-    maxpops <- as.integer(sub(",", "", maxpops))
-    loc <- grep("GENSBACK", result, value = F)
-    gensback <- result[loc]
-    gensback <- sub("GENSBACK=", "", gensback)
-    gensback <- as.integer(sub(",", "", gensback))
-    smry <- c(
-      k = maxpops, est.ln.prob = est.ln.prob, mean.lnL = mean.lnL,
-      var.lnL = var.lnL
-    )
-    result <- scan(file, "character",
-      sep = "\n",
-      quiet = TRUE
-    )
-    first <- grep("(%Miss)", result, value = FALSE) + 1
-    last <- grep("Estimated Allele", result, value = FALSE) -
-      1
-    tbl.txt <- result[first:last]
-    tbl.txt <- sub("[*]+", "", tbl.txt)
-    tbl.txt <- sub("[(]", "", tbl.txt)
-    tbl.txt <- sub("[)]", "", tbl.txt)
-    tbl.txt <- sub("[|][ ]+$", "", tbl.txt)
-    prior.lines <- grep("[|]", tbl.txt)
-
-    no.prior <- if (length(prior.lines) < length(tbl.txt)) {
-      no.prior.q.txt <- if (length(prior.lines) == 0) {
-        tbl.txt
-      } else {
-        tbl.txt[-prior.lines]
-      }
-      .structureParseQmat(no.prior.q.txt, pops)
-    } else {
-      NULL
-    }
-
-    if (maxpops == 1) {
-      no.prior$row <- NULL
-      return(list(summary = smry, q.mat = no.prior, prior.anc = NULL))
-    }
-
-    has.prior <- if (length(prior.lines) > 0) {
-      prior.txt <- strsplit(tbl.txt[prior.lines], "[|]")
-      prior.q.txt <- unlist(lapply(prior.txt, function(x) x[1]))
-      df <- .structureParseQmat(prior.q.txt, pops)
-
-      prior.anc <- purrr::map(prior.txt, function(x) {
-        anc.mat <- matrix(NA, nrow = maxpops, ncol = gensback + 1)
-        rownames(anc.mat) <- paste("Pop", 1:nrow(anc.mat), sep = ".")
-        colnames(anc.mat) <- paste("Gen", 0:gensback, sep = ".")
-
-        x <- sapply(strsplit(x[-1], "\\s|[:]"), function(y) {
-          y <- y[y != ""]
-          y[-1]
-        })
-
-        for (i in 1:ncol(x)) {
-          pop <- as.numeric(x[1, i])
-          anc.mat[pop, ] <- as.numeric(x[-1, i])
-        }
-        anc.mat
-      }) %>% stats::setNames(df$id)
-      prob.mat <- t(sapply(1:nrow(df), function(i) {
-        pop.probs <- rowSums(prior.anc[[i]])
-        pop.probs[is.na(pop.probs)] <- df$Group.1[i]
-        pop.probs
-      }))
-      colnames(prob.mat) <- paste("Group", 1:ncol(prob.mat),
-        sep = "."
-      )
-      df$Group.1 <- NULL
-      df <- cbind(df, prob.mat)
-      list(df = df, prior.anc = prior.anc)
-    } else {
-      NULL
-    }
-
-    has.prior.df <- if (is.null(has.prior)) {
-      NULL
-    } else {
-      has.prior$df
-    }
-
-    q.mat <- rbind(no.prior, has.prior.df)
-    q.mat <- q.mat[order(q.mat$row), ]
-    q.mat$row <- NULL
-    rownames(q.mat) <- NULL
-    q.mat[, -(1:3)] <- t(apply(q.mat[, -(1:3)], 1, function(i) i / sum(i)))
-    prior.anc <- if (is.null(has.prior)) {
-      NULL
-    } else {
-      has.prior$prior.anc
-    }
-
-    list(summary = smry, q.mat = q.mat, prior.anc = prior.anc)
-  }
-
-  ###########################################################
   # restore the individual names and order when ids were passed as an index
   .restoreIds <- function(result, ind.names) {
     if (is.null(ind.names) || is.null(result$q.mat)) {
@@ -571,7 +413,8 @@ utils.structure.run <- function(g,
       ))
     }
     files["out"] <- paste(files["out"], "_f", sep = "")
-    result <- structureRead(files[["out"]], sw.out$pops)
+    # shared with gl.read.structure
+    result <- utils.structure.read(files[["out"]], sw.out$pops)
     result <- .restoreIds(result, ind.names)
     c(result, list(files = files, label = run.label))
   })
