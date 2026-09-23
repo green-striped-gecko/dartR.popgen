@@ -53,7 +53,6 @@ Suggests:
   tidyr,
   viridis,
   zoo,
-  gsubfn,
   sp,
   testthat,
   withr

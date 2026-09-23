@@ -47,6 +47,8 @@
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 #'  brief progress messages; 3, progress and results summary; 5, full report
 #'  [default 2, unless specified using gl.set.verbosity].
+#' @param label.size Size of the population labels above the bars
+#' [default 12].
 #'
 #' @details The function outputs a barplot which is the typical output of
 #'  structure. For an Evanno plot use gl.evanno.
@@ -131,7 +133,8 @@ gl.plot.structure <- function(sr,
                               plot.out = TRUE,
                               plot.file = NULL,
                               plot.dir = NULL,
-                              verbose = NULL) {
+                              verbose = NULL,
+                              label.size = 12) {
   # SET VERBOSITY
   verbose <- gl.check.verbosity(verbose)
   
@@ -424,7 +427,7 @@ gl.plot.structure <- function(sr,
         linewidth = 1
       ),
       strip.background = element_blank(),
-      strip.text.x = element_text(size = 12, angle = 90),
+      strip.text.x = element_text(size = label.size, angle = 90),
       axis.title.x = element_blank(),
       axis.text.x = element_text(
         size = 8,
