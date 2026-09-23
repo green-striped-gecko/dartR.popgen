@@ -17,6 +17,10 @@
   combined figure is built with patchwork and returned as
   `plots$combined` (`gridExtra` is no longer used); `aes_string()`
   replaced. Help pages rewritten, including the delta K method.
+* `gl.run.structure`: the Evanno panel passes `verbose` to
+  `utils.structure.evanno`, so its warnings (delta K undefined because
+  replicates agree, K values not consecutive, one replicate per K) are
+  shown at `verbose >= 1` when the plot is drawn or saved.
 * `gl.map.structure`: each population's bars are drawn at its own centre.
   Previously the centres were matched to the q-matrix in the wrong
   direction, so when the population levels of `x` were not in alphabetical
