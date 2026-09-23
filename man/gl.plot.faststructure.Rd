@@ -137,12 +137,15 @@ multimodality in analysis of population structure. Bioinformatics
 
 Other population structure: 
 \code{\link{gl.evanno}()},
+\code{\link{gl.map.popcluster}()},
 \code{\link{gl.map.snmf}()},
 \code{\link{gl.map.structure}()},
+\code{\link{gl.plot.popcluster}()},
 \code{\link{gl.plot.snmf}()},
 \code{\link{gl.plot.structure}()},
 \code{\link{gl.read.structure}()},
 \code{\link{gl.run.faststructure}()},
+\code{\link{gl.run.popcluster}()},
 \code{\link{gl.run.snmf}()}
 }
 \author{

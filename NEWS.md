@@ -2,6 +2,23 @@
 
 ## Bug fixes
 
+* `gl.run.popcluster`: the likelihood table (`best_run`) is numeric (NA
+  where PopCluster writes "-"). It was kept as text, so the LogL(K) plot
+  had an alphabetically sorted axis and was drawn upside down (the best K
+  lowest), and the DLK plots were scrambled. **`best_run` columns become
+  numeric and the plots change.** `output.path` defaults to `tempdir()`
+  (input files were written to the working directory), `cleanup` works,
+  `plot_theme` is applied, the panels are combined with patchwork instead
+  of gridExtra, PopCluster's output is shown only at `verbose >= 3`, and
+  arguments and the executable are checked before running.
+* `gl.map.popcluster` now draws with `gl.map.snmf` (and `gl.map.structure`),
+  so each population's bars are drawn at its own centre, `movepops` is
+  added by name and extra populations in `x` are ignored. **Maps and
+  default colours change as for `gl.map.snmf`.**
+* `gl.plot.popcluster`: `verbose` follows `gl.set.verbosity()`, `plot.K`
+  must be one K of the run, a palette function is accepted, and `aes()`
+  uses `.data` (removing the R CMD check NOTE about global variables).
+
 * `gl.map.snmf` now draws with `gl.map.structure`, so it gets the fixes
   made there: each population's bars are drawn at its own centre (with
   population levels not in alphabetical order they were drawn at another
