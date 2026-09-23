@@ -2,46 +2,54 @@
 #'
 #' @title Plots STRUCTURE analysis results (Q-matrix)
 #'
+#' @family population structure
+#'
 #' @description
 #' This function takes a structure run object (output from
 #'  \code{\link{gl.run.structure}}) and plots the typical structure bar
-#'   plot that visualize the q matrix of a structure run.
+#'   plot that visualises the q matrix of a structure run.
 #'
 #' @param sr Structure run object from \code{\link{gl.run.structure}} [required].
 #' @param K The number for K of the q matrix that should be plotted. Needs to
-#'  be within you simulated range of K's in your sr structure run object. If
+#'  be within the range of K values in your sr structure run object. If
 #'  NULL, all the K's are plotted [default NULL].
 #' @param met_clumpp The algorithm to use to infer the correct permutations.
 #' One of 'greedy' or 'greedyLargeK' or 'stephens' [default "greedyLargeK"].
-#' @param iter_clumpp The number of iterations to use if running either 'greedy'
-#'  'greedyLargeK' [default 100].
+#' @param iter_clumpp The number of iterations to use if running either
+#'  'greedy' or 'greedyLargeK' [default 100].
 #' @param clumpak Whether use the Clumpak method (see details) [default TRUE].
 #' @param plot_theme Theme for the plot. See Details for options
-#' [default NULL].
-#' @param color_clusters A color palette for clusters (K) or a list with
-#' as many colors as there are clusters (K) [default NULL].
+#' [default NULL, which uses theme_dartR()].
+#' @param color_clusters A colour palette function (for example
+#'  \code{rainbow}), which is called with the largest K, or a vector with at
+#'  least as many colours as clusters in the largest K [default NULL, which
+#'  uses gl.select.colors()].
 #' @param ind_name Whether to plot individual names [default TRUE].
-#' @param k_name Name of the structure plot to plot. It should be character
-#'  [default NULL].
+#' @param k_name Label of the K panel to plot, as shown in the K column of the
+#'  returned tables: "3" for K = 3, or "2.1", "2.2", ... when a K has more
+#'  than one mode. It should be character [default NULL, all panels].
 #' @param border_ind The width of the border line between individuals
-#' [default 0.25].
-#' @param den Whether to include a dendrogram. It is necessary to include the 
-#' original genlight object used in gl.run.structure in the parameter x 
-#' [default FALSE].
-#' @param dis.mat A dis object (distance matrix) to be used to order structure 
-#' plot which is plotted together with structure plot [default NULL]. 
-#' @param x The original genlight object used in gl.run.structure description
-#' [default NULL]. 
+#' [default 0.15].
+#' @param den Whether to include a dendrogram. It needs either the genlight
+#'  object used in gl.run.structure (parameter x) or a distance matrix
+#'  (parameter dis.mat) [default FALSE].
+#' @param dis.mat A dist object (distance matrix) among the individuals in sr,
+#'  used to build the dendrogram that orders the structure plot. Its labels
+#'  must be the individual names. If NULL and den = TRUE, Manhattan distances
+#'  are calculated from x [default NULL].
+#' @param x The genlight object used in gl.run.structure; needed for the
+#'  dendrogram when dis.mat is not supplied [default NULL].
 #' @param plot.out Specify if plot is to be produced [default TRUE].
-#' @param plot.dir Directory in which to save files [default = working directory]
+#' @param plot.dir Directory in which to save files [default = tempdir(),
+#'  unless specified using gl.set.wd].
 #' @param plot.file Name for the RDS binary file to save (base name only, exclude
 #' extension) [default NULL]
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
-#'  progress log ; 3, progress and results summary; 5, full report [default
-#'   NULL, unless specified using gl.set.verbosity]
+#'  brief progress messages; 3, progress and results summary; 5, full report
+#'  [default 2, unless specified using gl.set.verbosity].
 #'
 #' @details The function outputs a barplot which is the typical output of
-#'  structure. For a Evanno plot use gl.evanno.
+#'  structure. For an Evanno plot use gl.evanno.
 #'
 #'  This function is based on the methods of CLUMPP and Clumpak as implemented
 #'  in the R package starmie (https://github.com/sa-lee/starmie).
@@ -52,22 +60,31 @@
 #'
 #'  The CLUMPP method permutes the clusters output by independent runs of
 #'  clustering programs such as structure, so that they match up as closely as
-#'  possible.
+#'  possible. The 'greedy' and 'greedyLargeK' searches use random
+#'  permutations, so cluster order (and colours) can differ between calls
+#'  unless \code{set.seed()} is used first.
 #'
 #'  This function averages the replicates within each mode identified by the
 #'  Clumpak method.
 #'
-#'  Plots and table are saved to the working directory specified in plot.dir (tempdir )
-#'  if plot.file is set.
+#'  When den = TRUE, individuals are ordered by a complete-linkage
+#'  hierarchical clustering (\code{hclust}) of dis.mat.
+#'
+#'  The plot is saved as an RDS file in plot.dir if plot.file is set.
 #'
 #' Examples of other themes that can be used can be consulted in \itemize{
 #'  \item \url{https://ggplot2.tidyverse.org/reference/ggtheme.html} and \item
 #'  \url{https://yutannihilation.github.io/allYourFigureAreBelongToUs/ggthemes/}
 #'  }
 #'
-#' @return List of Q-matrices
+#' @return A list (invisible) with one data.table per plotted K panel, named
+#'  "1", "2", .... Each table has one row per individual, sorted by Label,
+#'  with columns Label (individual name), cluster1 ... clusterK (average
+#'  membership proportions), K (panel label, see k_name), orig.pop
+#'  (population) and ord (position of the individual in the plot).
 #'
-#' @author Bernd Gruber & Luis Mijangos (Post to \url{https://groups.google.com/d/forum/dartr})
+#' @author Author(s): Bernd Gruber & Luis Mijangos. Custodian: Bernd Gruber
+#'  -- Post to \url{https://groups.google.com/d/forum/dartr}
 #'
 #' @examples
 #' # examples need structure to be installed on the system (see above)
@@ -82,7 +99,8 @@
 #' }
 #' @export
 #' @importFrom ggdendro ggdendrogram
-#' @seealso \code{gl.run.structure}, \code{gl.plot.structure}
+#' @seealso \code{\link{gl.run.structure}}, \code{\link{gl.evanno}},
+#'  \code{\link{gl.map.structure}}
 #' @references
 #' \itemize{
 #' \item Pritchard, J.K., Stephens, M., Donnelly, P. (2000) Inference of
@@ -124,49 +142,109 @@ gl.plot.structure <- function(sr,
   funname <- match.call()[[1]]
   utils.flag.start(
     func = funname,
-    build = "Jody",
     verbose = verbose
   )
-  
-  # DO THE JOB
-  
+
+  # FUNCTION SPECIFIC ERROR CHECKING
+
+  for (pkg in c("proxy", "reshape2")) {
+    if (!(requireNamespace(pkg, quietly = TRUE))) {
+      stop(error(
+        "Package", pkg, "needed for this function to work. Please install it.\n"
+      ))
+    }
+  }
+
   if (!is(sr, "structure.result")) {
     stop(error(
       "sr is not a structure result object returned from gl.run.structure.\n"
     ))
   }
-  
+
+  if (!(met_clumpp %in% c("greedy", "greedyLargeK", "stephens"))) {
+    stop(error(
+      "met_clumpp must be one of 'greedy', 'greedyLargeK' or 'stephens'.\n"
+    ))
+  }
+
+  ks_sr <- unname(sapply(sr, function(y) {
+    y$summary["k"]
+  }))
+
   if (is.null(K)) {
-    ks <- range((lapply(sr, function(x) {
-      x$summary[1]
-    })))
-    ks <- ks[1]:ks[2]
+    ks <- min(ks_sr):max(ks_sr)
   } else {
     ks <- K
   }
-  
+
+  missing_k <- setdiff(ks, ks_sr)
+  if (length(missing_k) > 0) {
+    stop(error(
+      "No entries for K =", paste(missing_k, collapse = ", "),
+      "found in 'sr'.\n"
+    ))
+  }
+
+  # a palette function is called with the largest K
+  if (is.function(color_clusters)) {
+    color_clusters <- color_clusters(max(ks))
+  }
+
+  if (is.null(color_clusters)) {
+    color_clusters <- gl.select.colors(ncolors = max(ks), verbose = 0)
+  }
+
+  if (length(color_clusters) < max(ks)) {
+    stop(error(
+      "color_clusters has", length(color_clusters), "colours but",
+      max(ks), "are needed (one per cluster of the largest K).\n"
+    ))
+  }
+
+  if (den) {
+    if (is.null(dis.mat) && is.null(x)) {
+      stop(error(
+        "den = TRUE needs the genlight object used in gl.run.structure",
+        "(parameter x) or a distance matrix (parameter dis.mat).\n"
+      ))
+    }
+    if (is.null(dis.mat)) {
+      dis.mat <- gl.dist.ind(x,
+                             method = "Manhattan",
+                             plot.display = FALSE,
+                             verbose = 0)
+      den_source <- "x"
+    } else {
+      den_source <- "dis.mat"
+    }
+    dis.mat <- stats::as.dist(dis.mat)
+    if (is.null(labels(dis.mat)) ||
+        !setequal(labels(dis.mat), sr[[1]]$q.mat$id)) {
+      stop(error(
+        "The individual names in", den_source,
+        "do not match the individuals in sr.\n"
+      ))
+    }
+  }
+
+  # DO THE JOB
+
   res <- list()
-  
+
   for (i in ks) {
     eq.k <- sapply(sr, function(x) {
       x$summary["k"] == i
     })
-    
-    if (sum(eq.k) == 0) {
-      stop(error(paste(
-        "No entries for K =", K, "found in 'sr'.\n"
-      )))
-    }
-    
+
     sr_tmp <- sr[eq.k]
-    
+
     Q_list_tmp <- lapply(sr_tmp, function(x) {
       as.matrix(x[[2]][, 4:ncol(x[[2]])])
     })
-    
+
     # If K = 1
     if (ncol(Q_list_tmp[[1]]) == 1) {
-      res[[length(res) + 1]] <- c(res, as.matrix(Q_list_tmp[1]))
+      res[[length(res) + 1]] <- Q_list_tmp[[1]]
       # If K > 1
     } else {
       # If just one replicate
@@ -209,14 +287,10 @@ gl.plot.structure <- function(sr,
           }
           # if there are more than 1 mode
         } else {
-          res_tmp_3 <- lapply(res_tmp_2, function(x) {
-            # if there is just one replicate within the mode
-            if (length(x[1]) == 1) {
-              return(x[[1]])
-              # if there are more than 1 replicate within the mode
-            } else {
-              return(Reduce("+", x[1]) / length(x[1]))
-            }
+          # average all the replicates within each mode (a mode with one
+          # replicate returns that replicate)
+          res_tmp_3 <- lapply(res_tmp_2, function(y) {
+            Reduce("+", y) / length(y)
           })
         }
       } else {
@@ -259,11 +333,7 @@ gl.plot.structure <- function(sr,
       K = rep(Ks[[i]], nrow(Q_list[[i]])),
       orig.pop = sr[[1]]$q.mat$orig.pop
     )
-    
-    if(den){
-      Q_list_tmp$orig.pop <- " "
-    }
-    
+
     n_col <- ncol(Q_list_tmp) - 3
     colnames(Q_list_tmp) <-
       c("Label", paste0(rep("cluster", n_col), 1:n_col), "K", "orig.pop")
@@ -291,10 +361,6 @@ gl.plot.structure <- function(sr,
     plot_theme <- theme_dartR()
   }
   
-  if (is.null(color_clusters)) {
-    color_clusters <- gl.select.colors(ncolors = max(ks), verbose = 0)
-  }
-  
   # #Melt and append Q matrices
   Q_melt <-
     do.call(
@@ -308,22 +374,16 @@ gl.plot.structure <- function(sr,
     )
   
   if(den){
-    if(!is.null(dis.mat)){
-      res <- dis.mat
-    }else{
-      res <- gl.dist.ind(x,method = "Manhattan",plot.display = FALSE,verbose = 0)
-    }
-    
     reorderfun <- function(d, w) reorder(d, w, agglo.FUN = mean)
-    
-    distr <- dist(res)
-    hcr <- hclust(distr)
+
+    # cluster the distances themselves (dis.mat is already a dist object)
+    hcr <- hclust(dis.mat)
     ddr <- as.dendrogram(hcr)
     ddr <- reorderfun(ddr, TRUE)
     p_den <- ggdendro::ggdendrogram(ddr)
     rowInd <- order.dendrogram(ddr)
-    rowInd_2 <- data.frame(Label=indNames(x)[rowInd])
-    rowInd_2$order_d <- 1:nInd(x)
+    rowInd_2 <- data.frame(Label = labels(dis.mat)[rowInd])
+    rowInd_2$order_d <- seq_along(rowInd)
     Q_melt <- merge(Q_melt,rowInd_2,by= "Label")
     Q_melt$ord <- Q_melt$order_d
     Q_melt$ord <- as.factor( Q_melt$ord)
@@ -344,7 +404,8 @@ gl.plot.structure <- function(sr,
     Q_melt$orig.pop <- ""
   }
   
-  p3 <- ggplot(Q_melt, aes_(x = ~ factor(ord), y = ~value, fill = ~Cluster)) +
+  p3 <- ggplot(Q_melt, aes(x = factor(.data$ord), y = .data$value,
+                           fill = .data$Cluster)) +
     geom_col(color = "black", linewidth = border_ind, width = 1) +
     facet_grid(K ~ orig.pop, scales = "free", space = "free") +
     scale_y_continuous(expand = c(0, 0)) +

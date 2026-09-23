@@ -2,6 +2,27 @@
 
 ## Bug fixes
 
+* `gl.plot.structure`: when Clumpak finds more than one mode at a K, each
+  mode is now the average of its replicates, as documented. Previously every
+  mode showed only its first replicate. **Returned q-matrices and bar
+  heights change whenever a K has more than one mode.**
+* `gl.plot.structure`: requesting K = 1 after another K (e.g. `K = c(2, 1)`)
+  no longer duplicates the earlier K panels, which were relabelled as extra
+  modes (`2.1`, `2.2`). **The returned list and the plot lose the duplicate
+  panels.**
+* `gl.plot.structure`: with `den = TRUE` the returned tables keep the
+  population names (only the plot hides them), so they can be passed to
+  `gl.map.structure()`. The dendrogram now clusters `dis.mat` itself;
+  previously it clustered Euclidean distances between the rows of the
+  distance matrix. **Individual order in `den = TRUE` plots changes.**
+* `gl.plot.structure`: arguments are checked before any work: `den = TRUE`
+  needs `x` or `dis.mat` (and `dis.mat` alone now works), `met_clumpp`,
+  missing K values and too few colours give informative errors;
+  `color_clusters` accepts a palette function as documented; `proxy` and
+  `reshape2` are guarded; `aes_()` is replaced by `aes()`, removing the
+  ggplot2 deprecation warning; help page corrected (`border_ind` default,
+  `plot.dir`, return value, `k_name`).
+
 * `gl.run.structure`: the STRUCTURE runs are now always returned. Previously
   the Evanno step ran unconditionally and stopped with "must have at least
   two values of k" whenever `k.range` had fewer than three values, so the
