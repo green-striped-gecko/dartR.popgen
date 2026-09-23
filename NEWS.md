@@ -2,6 +2,18 @@
 
 ## Bug fixes
 
+* `gl.run.stairway2` runs Stairway Plot 2 in a new subfolder of `tempdir()`
+  and `cleanup = TRUE` removes only that subfolder. Previously it deleted
+  the whole session `tempdir()`, including binaries downloaded there by
+  `gl.download.binary()` and files saved by other functions, and a
+  `plot.file` save then failed after the run. `run = FALSE` now returns
+  instead of stopping with "object 'res' not found". **The returned list
+  gains `run.dir`, the run folder (NULL once removed); the history column
+  `" low75"` is renamed `low75`; SilicoDArT input now errors at every
+  verbosity.** The plot uses `plot.theme`; Stairway Plot 2 output prints
+  only at `verbose >= 3`; the user's `future` plan is restored after
+  `parallel > 1`; a missing binary folder, missing Java or a failed run
+  stop with a clear message. Estimates are unchanged.
 * `gl.run.faststructure`: results are stored by K, so any `k.range` works.
   Previously `k.range` had to start at 2 without gaps: `3:4` or `c(2, 4)`
   stopped with "subscript out of bounds" after all runs had finished, and

@@ -2,7 +2,7 @@
 % Please edit documentation in R/gl.run.stairway2.r
 \name{gl.run.stairway2}
 \alias{gl.run.stairway2}
-\title{Run Stairway Plot 2 for Demographic History Inference}
+\title{Run Stairway Plot 2 for demographic history inference}
 \usage{
 gl.run.stairway2(
   x,
@@ -39,81 +39,96 @@ gl.run.stairway2(
 )
 }
 \arguments{
-\item{x}{A genlight/dartR object containing SNP data.}
+\item{x}{A genlight/dartR object containing SNP data [required].}
 
-\item{L}{the length of the sequence in base pairs. (see notes below)}
+\item{L}{the length of the sequence in base pairs (see details)
+[default NULL, number of loci x 69].}
 
-\item{mu}{the mutation rate per base pair per generation. (see notes below)}
+\item{mu}{the mutation rate per base pair per generation (see details) [required].}
 
-\item{stairway2.path}{the path to the Stairway Plot 2 executable. (check the example)}
+\item{stairway2.path}{the path to the folder that contains the Stairway
+Plot 2 folder \code{stairway_plot_es} (check the example) [required].}
 
-\item{minbinsize}{the minumum bin size for the SFS that should be used. (default=1)}
+\item{minbinsize}{the minimum bin size for the SFS that should be used [default 1].}
 
-\item{maxbinsize}{the maximum bin size for the SFS that should be used. (default=NULL, 
-so the maximum bin size is set to the number of samples in the dataset)}
+\item{maxbinsize}{the maximum bin size for the SFS that should be used
+[default NULL, the number of individuals in the dataset].}
 
-\item{gentime}{the generation time in years. (default=1)}
+\item{gentime}{the generation time in years [default 1].}
 
-\item{sfs}{the folded site frequency spectrum (SFS) to be used for the analysis. 
-If not provided the SFS is created from the genlight/dartR object (default=NULL)}
+\item{sfs}{the folded site frequency spectrum (SFS) to be used for the analysis.
+If not provided the SFS is created from the genlight/dartR object [default NULL].}
 
-\item{parallel}{the number of parallel processes to use for the analysis. (default=1)}
+\item{parallel}{the number of parallel processes to use for the analysis [default 1].}
 
 \item{run}{logical. If TRUE, the analysis is run immediately. Otherwise only the
-blueprint files are created [might be useful to run on a cluster]. (default=FALSE)}
+blueprint file is created [might be useful to run on a cluster] [default TRUE].}
 
-\item{blueprint}{the name of the blueprint file. (default="blueprint")}
+\item{blueprint}{the name of the blueprint file [default "blueprint"].}
 
-\item{filename}{the name of the filename. Also used for the plot. (default="sample")}
+\item{filename}{the name of the population, written as \code{popid} in the
+blueprint and used for the Stairway Plot 2 input file names (no white space)
+[default "sample"].}
 
-\item{pct_training}{the percentage of the data to use for training. (default=0.67)}
+\item{pct_training}{the proportion of sites to use for training [default 0.67].}
 
-\item{nrand}{the number of breakpoint to use for the analysis. (default=NULL)}
+\item{nrand}{the number of break point settings to try, spread between 0.5
+and 2 times (number of individuals - 1). If NULL, the four values
+recommended by Stairway Plot 2, (nseq-2)/4, (nseq-2)/2, (nseq-2)*3/4 and
+nseq-2, are used [default NULL].}
 
-\item{stairway_plot_dir}{the name of the directory where the stairway plot is saved. 
-(default="stairway_plot_es")}
+\item{stairway_plot_dir}{the name of the Stairway Plot 2 folder, as written
+in the blueprint. It must stay "stairway_plot_es", the name of the folder
+that is copied from \code{stairway2.path} [default "stairway_plot_es"].}
 
-\item{nreps}{the number of bootstrap replicates to use for the analysis. (default=200)}
+\item{nreps}{the number of bootstrap replicates to use for the analysis [default 200].}
 
-\item{seed}{the random seed to use for the analysis. (default=NULL)}
+\item{seed}{the random seed to use for the analysis [default NULL].}
 
-\item{plot_title}{the title of the plot. (default="Ne"+filename)}
+\item{plot_title}{the title of the plot; also the name of the Stairway Plot 2
+output files [default "Ne"].}
 
-\item{xmin}{minimum x value for the plot. (default=0)}
+\item{xmin}{minimum x value for the plot [default 0].}
 
-\item{xmax}{maximum x value for the plot. (default=0)}
+\item{xmax}{maximum x value for the plot [default 0].}
 
-\item{ymin}{minimum y value for the plot. (default=0)}
+\item{ymin}{minimum y value for the plot [default 0].}
 
-\item{ymax}{maximum y value for the plot. (default=0)}
+\item{ymax}{maximum y value for the plot [default 0].}
 
-\item{xspacing}{spacing between x values for the plot. (default=2)}
+\item{xspacing}{spacing between x values for the plot [default 2].}
 
-\item{yspacing}{spacing between y values for the plot. (default=2)}
+\item{yspacing}{spacing between y values for the plot [default 2].}
 
-\item{fontsize}{the font size for the plot. (default=12)}
+\item{fontsize}{the font size for the plot [default 12].}
 
-\item{cleanup}{logical. If TRUE, the stairway 2 plot output files are removed. 
-(default=TRUE)}
+\item{cleanup}{logical. If TRUE, the folder with the Stairway Plot 2 run
+files is removed [default TRUE].}
 
 \item{plot.display}{Specify if plot is to be produced [default TRUE].}
 
 \item{plot.theme}{User specified theme [default theme_dartR()].}
 
-\item{plot.dir}{Directory to save the plot RDS files [default as specified 
+\item{plot.dir}{Directory to save the plot RDS files [default as specified
 by the global working directory or tempdir()]}
 
 \item{plot.file}{Filename (minus extension) for the RDS plot file [Required for plot save]}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
-progress log; 3, progress and results summary; 5, full report
+brief progress messages; 3, progress and results summary, including the
+output of Stairway Plot 2; 5, full report
 [default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-returns a list with two components: 
+returns a list with three components:
 \itemize{
-\item{history: Ne estimates of over generations (generation, median, low and high)} 
-\item{plot: a ggplot of history }
+\item{history: the Stairway Plot 2 summary table: time in mutations per
+site and in years (\code{year}), the median effective population size
+(\code{Ne_median}) and its 95\% (\code{low95}, \code{high95}) and 75\%
+(\code{low75}, \code{high75}) limits; NULL when \code{run = FALSE}}
+\item{plot: a ggplot of history; NULL when \code{run = FALSE}}
+\item{run.dir: the folder with the Stairway Plot 2 run files; NULL when
+it was removed (\code{cleanup = TRUE} and \code{run = TRUE})}
 }
 }
 \description{
@@ -122,34 +137,52 @@ Stairway Plot 2 is a method for inferring demographic history using folded SNP f
 \itemize{
   \item \strong{Folded SNP Frequency Spectra}: The method uses folded SNP frequency spectra, which are less sensitive to errors in ancestral state inference compared to unfolded spectra.
   \item \strong{Demographic Inference}: By analyzing the SNP frequency spectra, Stairway Plot 2 can infer changes in population size over time, providing insights into historical demographic events.
-  \item \strong{Bootstrap Replicates}: The method employs bootstrap replicates to estimate confidence intervals for the inferred demographic history, ensuring robust and reliable results.
+  \item \strong{Bootstrap Replicates}: The method employs bootstrap replicates to estimate confidence intervals for the inferred demographic history.
   \item \strong{Flexible Modeling}: Stairway Plot 2 allows for flexible modeling of demographic history without assuming a specific parametric form for population size changes.
 }
-To be able to run Stairway Plot 2, the binaries need to be provided in a single folder and can be downloaded via the \code{gl.download.binary} function. In this case your system need to have Java installed as well. for more details on the method and how to install on your system refer to the githubh repository: \url{https://github.com/xiaoming-liu/stairway-plot-v2}. Please also refer to the original publication for more details on the method: \doi{10.1186/s13059-020-02196-9}. **Also if you use this method, make sure you cite the original publication in your work.**
+To be able to run Stairway Plot 2, the binaries need to be provided in a single folder and can be downloaded via the \code{gl.download.binary} function. In this case your system needs to have Java installed as well. For more details on the method and how to install on your system refer to the github repository: \url{https://github.com/xiaoming-liu/stairway-plot-v2}. Please also refer to the original publication for more details on the method: \doi{10.1186/s13059-020-02196-9}. **Also if you use this method, make sure you cite the original publication in your work.**
 This function implements the theoretical and computational procedures described by Liu and Fu (2020), making it suitable for a wide range of population-genomic datasets to uncover historical demographic patterns.
-Please note: There is currently not really a good way to estimate L, the length 
-of all sequences. Often users of dart data use the number of loci multiplied 
-by 69, but this is definitely an underestimate as monomorphic loci need to be 
+}
+\details{
+Please note: There is currently not really a good way to estimate L, the length
+of all sequences. Often users of dart data use the number of loci multiplied
+by 69, but this is definitely an underestimate as monomorphic loci need to be
 included (also the length of the restriction site should be added for each loci).
-For mutation rate u, the default value is set to 5e-9, but should be adapted 
-to the species of interest. The good news is, that settings of L and mu affects 
-only the axis of the inferred history, but not the shape of the history. 
-So users can infer the shape, but need to be careful with a temporal interpretation 
+For mutation rate u, the default value is set to 5e-9, but should be adapted
+to the species of interest. The good news is, that settings of L and mu affects
+only the axis of the inferred history, but not the shape of the history.
+So users can infer the shape, but need to be careful with a temporal interpretation
 as both x and y axis are affected by the mutation rate and L.
+
+The SFS assumes that every locus is scored in all 2n sequences. A locus with
+missing calls is counted in a lower frequency class than its true one, so
+filter loci to full call rate (\code{gl.filter.callrate(x, threshold = 1)})
+or impute them (\code{gl.impute}) before running the analysis.
+
+Stairway Plot 2 runs in a new subfolder of \code{tempdir()}. With
+\code{cleanup = TRUE} only that subfolder is deleted at the end; with
+\code{cleanup = FALSE} or \code{run = FALSE} it is kept and its path is
+returned as \code{run.dir}. With \code{run = FALSE} the subfolder holds the
+blueprint file and the Stairway Plot 2 folder, ready to be copied to another
+machine (e.g. a cluster) and run there with
+\code{java -cp stairway_plot_es Stairbuilder blueprint}.
 }
 \examples{
 \dontrun{
 #download binary, if not already installed, to tempdir()
 gl.download.binary(software="stairway2",os="windows")
 require(dartR.data)
-sw<- gl.run.stairway2(possums.gl[1:50,1:100], L=1e5, mu = 1e-9, 
-           stairway2.path = file.path(tempdir(),"stairway2"), 
+sw<- gl.run.stairway2(possums.gl[1:50,1:100], L=1e5, mu = 1e-9,
+           stairway2.path = file.path(tempdir(),"stairway2"),
            parallel=5, nreps = 10)
 head(sw$history)
 }
 }
 \references{
-Liu, X., & Fu, Y. X. (2020). Stairway Plot 2: demographic history inference with folded SNP frequency spectra. Genome Biology, 21(1), 280.
-
 Liu, X., Fu, YX. Stairway Plot 2: demographic history inference with folded SNP frequency spectra. Genome Biol 21, 280 (2020). \doi{10.1186/s13059-020-02196-9}
 }
+\author{
+Author(s): Bernd Gruber. Custodian: Bernd Gruber -- Post to
+\url{https://groups.google.com/d/forum/dartr}
+}
+\concept{demographic history}
