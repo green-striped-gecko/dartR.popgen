@@ -19,6 +19,10 @@
   before rep10); `prefix` is added only when set. **Run names change.**
   `rename_files = TRUE` stops instead of overwriting existing files. Help
   page completed.
+* `gl.read.structure` and `gl.run.structure` now read STRUCTURE output
+  files with one shared internal reader, `utils.structure.read`, instead of
+  two separate copies of the parser (the `usepopinfo` bug above was a
+  difference between them). `gl.run.structure` output is unchanged.
 
 * `gl.evanno` / `utils.structure.evanno`: delta K is `NA`, with a warning,
   where all replicates of a K report the same LnP(K). Previously it was

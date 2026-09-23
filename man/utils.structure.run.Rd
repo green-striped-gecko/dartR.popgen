@@ -126,9 +126,9 @@ STRUCTURE's own output is shown [default 0].}
 }
 \value{
 \describe{ \item{\code{structureRun}}{a list where each element is a
-list with results from \code{structureRead} and a vector of the filenames
+list with results from \code{utils.structure.read} and a vector of the filenames
 used} \item{\code{structureWrite}}{a vector of the filenames used by
-STRUCTURE} \item{\code{structureRead}}{a list containing: \describe{
+STRUCTURE} \item{\code{utils.structure.read}}{a list containing: \describe{
 \item{\code{summary}}{new locus name, which is a combination of loci in
 group} \item{\code{q.mat}}{data.frame of assignment probabilities for each
 id} \item{\code{prior.anc}}{list of prior ancestry estimates for each
