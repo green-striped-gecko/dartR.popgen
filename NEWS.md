@@ -2,6 +2,25 @@
 
 ## Bug fixes
 
+* `gl.map.structure`: each population's bars are drawn at its own centre.
+  Previously the centres were matched to the q-matrix in the wrong
+  direction, so when the population levels of `x` were not in alphabetical
+  order, bars were drawn at another population's centre under that
+  population's label. **Maps change for any `x` whose population levels are
+  not alphabetical.**
+* `gl.map.structure`: `movepops` is added to the `lon` and `lat` columns by
+  name (previously by position, which moved latitude on genlights storing
+  `lat` first), and its rows can be matched by population name.
+  **`movepops` shifts change for genlights whose `latlon` stores `lat`
+  first.**
+* `gl.map.structure`: populations of `x` that are not in `qmat` are ignored
+  (previously an error after many leaflet warnings); a `qmat` population
+  without coordinates, a `latlon` without `lon`/`lat` columns and malformed
+  `qmat` or `K` give informative errors. One population and K = 1 work.
+  `K` accepts a mode label such as `"2.2"`. New arguments `plot.colors`
+  (default: the `gl.plot.structure` palette instead of `rainbow()`, **so
+  default map colours change**), `plot.out` and `verbose`; `leaflet` is
+  guarded; the help example is corrected.
 * `gl.plot.structure`: when Clumpak finds more than one mode at a K, each
   mode is now the average of its replicates, as documented. Previously every
   mode showed only its first replicate. **Returned q-matrices and bar
