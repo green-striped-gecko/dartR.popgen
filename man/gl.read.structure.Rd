@@ -15,31 +15,94 @@ gl.read.structure(
 )
 }
 \arguments{
-\item{folder.path}{Path to folder containing STRUCTURE output files [required].}
+\item{folder.path}{Path to folder containing STRUCTURE output files
+[required].}
 
-\item{x}{Optional genlight object used to attach population labels to individuals [default NULL].}
+\item{x}{The genlight object that was analysed, used to attach population
+labels (and individual names) to the q-matrices [default NULL].}
 
-\item{pattern}{Optional regex to filter files in folder.path (e.g. ".*_f$" or "out$") [default NULL].}
+\item{pattern}{Optional regular expression to select files in folder.path
+(e.g. "_f$") [default NULL].}
 
 \item{recursive}{Logical; search folder recursively [default FALSE].}
 
-\item{rename_files}{Logical; if TRUE, renames source files on disk based on K and replicate [default FALSE].}
+\item{rename_files}{Logical; if TRUE, renames the output files on disk to
+<run name>_out. Stops, before renaming anything, if a file of that name
+already exists [default FALSE].}
 
-\item{prefix}{Optional prefix used for renaming/labels. If NULL, uses longest common prefix of filenames [default NULL].}
+\item{prefix}{Optional prefix for the run names, e.g. "myrun" gives
+"myrun.k2.r1" [default NULL, run names "k2.r1"].}
 
-\item{verbose}{Verbosity (as in dartR) [default 2 / gl.set.verbosity()].}
+\item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
+brief progress messages; 3, progress and results summary; 5, full report
+[default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-A list of class "structure.result". Each element contains:
+A list of class "structure.result", one element per run, named
+k<K>.r<replicate>. Each element contains:
 \itemize{
   \item summary: named numeric vector (k, est.ln.prob, mean.lnL, var.lnL)
   \item q.mat: data.frame (id, pct.miss, orig.pop, Group.1..Group.K)
-  \item prior.anc: optional list of ancestry matrices (if present)
-  \item files: file path
-  \item label: run label
+  \item prior.anc: list of ancestry matrices for individuals with a
+  population prior, or NULL
+  \item files: path of the output file
+  \item label: run name
 }
 }
 \description{
-Reads and processes STRUCTURE output files, extracting run summaries and Q-matrices.
-Optionally associates Q-matrices with population information from a genlight object.
+Reads STRUCTURE output files from a folder and returns them as a
+structure run object, the same object that \code{\link{gl.run.structure}}
+returns, so it can be passed to \code{\link{gl.evanno}},
+\code{\link{gl.plot.structure}} and \code{\link{gl.map.structure}}.
+Optionally attaches population and individual names from the genlight
+object that was analysed.
 }
+\details{
+Only STRUCTURE output files are read: files containing both
+"Estimated Ln Prob of Data" and "Estimated Allele Frequencies". Other files in the folder (data, params, log
+files) are skipped, with a note at verbose >= 2. K is taken from each
+file. Within each K, replicates are numbered in the order of the numbers
+in their file names (so rep2 comes before rep10) and runs are named
+k<K>.r<replicate>, as in \code{\link{gl.run.structure}}.
+
+Without x, the orig.pop column holds the population number used in the
+STRUCTURE data file, and id the label from the file. With x, individuals
+are matched to indNames(x) by name or, when the labels are the numbers
+1 to nInd(x) (as in files written by \code{\link{gl.run.structure}}), by
+position; id then holds the individual names and orig.pop the population
+names. Labels that match neither way stop the function with an error
+naming them (STRUCTURE truncates labels longer than 11 characters).
+
+For runs with USEPOPINFO, individuals with a population prior are read
+like other individuals: their q-matrix row holds the probability of
+belonging to their given population and, for every other population, the
+summed probability of ancestry from it over the GENSBACK generations,
+which is also returned per generation in prior.anc.
+}
+\examples{
+\dontrun{
+# read the output files kept by gl.run.structure
+sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3,
+                       exec = "./structure", delete.files = FALSE,
+                       plot.dir = "structure_runs")
+sr2 <- gl.read.structure(list.dirs("structure_runs",
+                                   recursive = FALSE)[1], x = bc)
+gl.evanno(sr2)
+qmat <- gl.plot.structure(sr2, K = 3)
+}
+
+}
+\seealso{
+\code{\link{gl.run.structure}}, \code{\link{gl.evanno}},
+\code{\link{gl.plot.structure}}
+
+Other population structure: 
+\code{\link{gl.evanno}()},
+\code{\link{gl.map.structure}()},
+\code{\link{gl.plot.structure}()}
+}
+\author{
+Author(s): Luis Mijangos & Bernd Gruber. Custodian: Luis Mijangos -- Post to
+ \url{https://groups.google.com/d/forum/dartr}
+}
+\concept{population structure}

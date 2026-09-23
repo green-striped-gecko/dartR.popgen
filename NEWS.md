@@ -2,6 +2,24 @@
 
 ## Bug fixes
 
+* `gl.read.structure`: individuals with a population prior (USEPOPINFO)
+  are read correctly. Previously the ancestry blocks after `|` were not
+  parsed, so these individuals got equal membership in every cluster (e.g.
+  0.5 / 0.5 instead of 0.042 / 0.958) and an all-NA `prior.anc`. **q
+  values and `prior.anc` change for every individual with a prior.**
+* `gl.read.structure`: with `x`, individuals are matched by name or, for
+  files written by `gl.run.structure`, by position, and their names are
+  restored. Previously such files got `orig.pop = NA` for every
+  individual without a message; ids that match neither way now stop with
+  an error.
+* `gl.read.structure`: only STRUCTURE output files are read, so a folder
+  kept by `gl.run.structure(delete.files = FALSE)` no longer fails on its
+  log and params files. Runs are named `k<K>.r<replicate>` (as in
+  `gl.run.structure`), with replicates in file-name number order (rep2
+  before rep10); `prefix` is added only when set. **Run names change.**
+  `rename_files = TRUE` stops instead of overwriting existing files. Help
+  page completed.
+
 * `gl.evanno` / `utils.structure.evanno`: delta K is `NA`, with a warning,
   where all replicates of a K report the same LnP(K). Previously it was
   `Inf` (sd = 0), as on a real STRUCTURE run of three testset.gl

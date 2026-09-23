@@ -2,26 +2,82 @@
 #'
 #' @title Read output files produced by the program STRUCTURE
 #'
+#' @family population structure
+#'
 #' @description
-#' Reads and processes STRUCTURE output files, extracting run summaries and Q-matrices.
-#' Optionally associates Q-matrices with population information from a genlight object.
+#' Reads STRUCTURE output files from a folder and returns them as a
+#' structure run object, the same object that \code{\link{gl.run.structure}}
+#' returns, so it can be passed to \code{\link{gl.evanno}},
+#' \code{\link{gl.plot.structure}} and \code{\link{gl.map.structure}}.
+#' Optionally attaches population and individual names from the genlight
+#' object that was analysed.
 #'
-#' @param folder.path Path to folder containing STRUCTURE output files [required].
-#' @param x Optional genlight object used to attach population labels to individuals [default NULL].
-#' @param pattern Optional regex to filter files in folder.path (e.g. ".*_f$" or "out$") [default NULL].
+#' @param folder.path Path to folder containing STRUCTURE output files
+#' [required].
+#' @param x The genlight object that was analysed, used to attach population
+#' labels (and individual names) to the q-matrices [default NULL].
+#' @param pattern Optional regular expression to select files in folder.path
+#' (e.g. "_f$") [default NULL].
 #' @param recursive Logical; search folder recursively [default FALSE].
-#' @param rename_files Logical; if TRUE, renames source files on disk based on K and replicate [default FALSE].
-#' @param prefix Optional prefix used for renaming/labels. If NULL, uses longest common prefix of filenames [default NULL].
-#' @param verbose Verbosity (as in dartR) [default 2 / gl.set.verbosity()].
+#' @param rename_files Logical; if TRUE, renames the output files on disk to
+#' <run name>_out. Stops, before renaming anything, if a file of that name
+#' already exists [default FALSE].
+#' @param prefix Optional prefix for the run names, e.g. "myrun" gives
+#' "myrun.k2.r1" [default NULL, run names "k2.r1"].
+#' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
+#'  brief progress messages; 3, progress and results summary; 5, full report
+#'  [default 2, unless specified using gl.set.verbosity].
 #'
-#' @return A list of class "structure.result". Each element contains:
+#' @details
+#' Only STRUCTURE output files are read: files containing both
+#' "Estimated Ln Prob of Data" and "Estimated Allele Frequencies". Other files in the folder (data, params, log
+#' files) are skipped, with a note at verbose >= 2. K is taken from each
+#' file. Within each K, replicates are numbered in the order of the numbers
+#' in their file names (so rep2 comes before rep10) and runs are named
+#' k<K>.r<replicate>, as in \code{\link{gl.run.structure}}.
+#'
+#' Without x, the orig.pop column holds the population number used in the
+#' STRUCTURE data file, and id the label from the file. With x, individuals
+#' are matched to indNames(x) by name or, when the labels are the numbers
+#' 1 to nInd(x) (as in files written by \code{\link{gl.run.structure}}), by
+#' position; id then holds the individual names and orig.pop the population
+#' names. Labels that match neither way stop the function with an error
+#' naming them (STRUCTURE truncates labels longer than 11 characters).
+#'
+#' For runs with USEPOPINFO, individuals with a population prior are read
+#' like other individuals: their q-matrix row holds the probability of
+#' belonging to their given population and, for every other population, the
+#' summed probability of ancestry from it over the GENSBACK generations,
+#' which is also returned per generation in prior.anc.
+#'
+#' @return A list of class "structure.result", one element per run, named
+#' k<K>.r<replicate>. Each element contains:
 #' \itemize{
 #'   \item summary: named numeric vector (k, est.ln.prob, mean.lnL, var.lnL)
 #'   \item q.mat: data.frame (id, pct.miss, orig.pop, Group.1..Group.K)
-#'   \item prior.anc: optional list of ancestry matrices (if present)
-#'   \item files: file path
-#'   \item label: run label
+#'   \item prior.anc: list of ancestry matrices for individuals with a
+#'   population prior, or NULL
+#'   \item files: path of the output file
+#'   \item label: run name
 #' }
+#'
+#' @author Author(s): Luis Mijangos & Bernd Gruber. Custodian: Luis Mijangos -- Post to
+#'  \url{https://groups.google.com/d/forum/dartr}
+#'
+#' @examples
+#' \dontrun{
+#' # read the output files kept by gl.run.structure
+#' sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3,
+#'                        exec = "./structure", delete.files = FALSE,
+#'                        plot.dir = "structure_runs")
+#' sr2 <- gl.read.structure(list.dirs("structure_runs",
+#'                                    recursive = FALSE)[1], x = bc)
+#' gl.evanno(sr2)
+#' qmat <- gl.plot.structure(sr2, K = 3)
+#' }
+#'
+#' @seealso \code{\link{gl.run.structure}}, \code{\link{gl.evanno}},
+#' \code{\link{gl.plot.structure}}
 #'
 #' @export
 gl.read.structure <- function(folder.path,
@@ -35,19 +91,24 @@ gl.read.structure <- function(folder.path,
   # SET VERBOSITY
   verbose <- gl.check.verbosity(verbose)
   
+  # FLAG SCRIPT START
   funname <- match.call()[[1]]
-  utils.flag.start(func = funname, build = "Jody", verbose = verbose)
+  utils.flag.start(func = funname, verbose = verbose)
   
-  # Dependencies (keep explicit, but do not attach)
-  req_packages <- c("purrr", "dplyr")
-  for (pkg in req_packages) {
-    if (!requireNamespace(pkg, quietly = TRUE)) {
-      stop(error("Package ", pkg, " is needed for this function to work. Please install it."))
+  # FUNCTION SPECIFIC ERROR CHECKING
+  
+  if (!is.null(x)) {
+    datatype <- utils.check.datatype(x, verbose = 0)
+    if (!datatype %in% c("SNP", "SilicoDArT")) {
+      stop(error(
+        "The x parameter must be a genlight object containing SNP or",
+        "SilicoDArT data.\n"
+      ))
     }
   }
   
   if (!dir.exists(folder.path)) {
-    stop(error("The folder '", folder.path, "' doesn't exist."))
+    stop(error(paste0("The folder '", folder.path, "' doesn't exist.\n")))
   }
   
   file_paths <- list.files(
@@ -59,24 +120,36 @@ gl.read.structure <- function(folder.path,
     file_paths <- file_paths[grepl(pattern, basename(file_paths))]
   }
   if (length(file_paths) == 0) {
-    stop(error("No files found in folder '", folder.path, "' with the requested criteria."))
+    stop(error(paste0(
+      "No files found in folder '", folder.path,
+      "' with the requested criteria.\n"
+    )))
+  }
+  
+  # keep STRUCTURE output files only (data, params and log files are
+  # skipped); the run log repeats the likelihood but has no allele
+  # frequency section
+  is_output <- vapply(file_paths, function(f) {
+    lines <- tryCatch(readLines(f, warn = FALSE),
+                      error = function(e) character(0))
+    any(grepl("Estimated Ln Prob of Data", lines, fixed = TRUE)) &&
+      any(grepl("Estimated Allele Frequencies", lines, fixed = TRUE))
+  }, logical(1))
+  if (any(!is_output) && verbose >= 2) {
+    cat(report(
+      "  Skipping", sum(!is_output), "file(s) that are not STRUCTURE output:",
+      paste(basename(file_paths[!is_output]), collapse = ", "), "\n"
+    ))
+  }
+  file_paths <- file_paths[is_output]
+  if (length(file_paths) == 0) {
+    stop(error(paste0(
+      "No STRUCTURE output files found in '",
+      folder.path, "'.\n"
+    )))
   }
   
   # ---- helpers ----
-  
-  longest_common_prefix <- function(strings) {
-    strings <- as.character(strings)
-    if (length(strings) == 0) return("")
-    s0 <- strings[which.min(nchar(strings))]
-    if (nchar(s0) == 0) return("")
-    for (i in seq_len(nchar(s0))) {
-      ch <- substr(s0, i, i)
-      if (any(substr(strings, i, i) != ch)) {
-        return(if (i == 1) "" else substr(s0, 1, i - 1))
-      }
-    }
-    s0
-  }
   
   # Detect K: prefer MAXPOPS=, fallback to "populations assumed"
   detect_k <- function(file) {
@@ -224,10 +297,14 @@ gl.read.structure <- function(folder.path,
         rownames(anc.mat) <- paste0("Pop.", seq_len(nrow(anc.mat)))
         colnames(anc.mat) <- paste0("Gen.", 0:gensback)
         
-        # x[-1] contains ancestry strings after '|'
+        # x[-1] holds one "Pop j: g0 g1 ... gGENSBACK" block per other
+        # population; drop the word "Pop" so the first token is j
         bits <- strsplit(x[-1], "\\s|:", perl = TRUE)
-        bits <- lapply(bits, function(y) y[y != ""])
-        # expected: first token is pop, remaining are gens 0..gensback
+        bits <- lapply(bits, function(y) {
+          y <- y[y != ""]
+          if (length(y) > 0 && y[1] == "Pop") y <- y[-1]
+          y
+        })
         for (b in bits) {
           if (length(b) < 2) next
           pop_i <- suppressWarnings(as.integer(b[1]))
@@ -243,17 +320,11 @@ gl.read.structure <- function(folder.path,
         names(prior.anc) <- df$id
       }
       
-      # reconstruct group probs (rowSums), fallback to first group when missing
+      # other populations: ancestry summed over generations; the given
+      # population (no ancestry block, so NA) takes the value before '|'
       prob.mat <- t(vapply(seq_len(nrow(df)), function(i) {
-        id_i <- df$id[i]
-        anc <- prior.anc[[id_i]]
-        p <- rowSums(anc, na.rm = TRUE)
-        # if everything is NA, fallback using first group column (STRUCTURE behaviour varies)
-        if (all(is.na(p)) || all(p == 0)) {
-          # if Group.1 exists, replicate it; otherwise NA
-          g1 <- if ("Group.1" %in% names(df)) df$Group.1[i] else NA_real_
-          p <- rep(g1, maxpops)
-        }
+        p <- rowSums(prior.anc[[i]])
+        p[is.na(p)] <- df$Group.1[i]
         p
       }, numeric(maxpops)))
       
@@ -300,24 +371,34 @@ gl.read.structure <- function(folder.path,
     stop(error("Could not detect K for any file in: ", folder.path))
   }
   
-  file_info <- file_info[order(file_info$k, file_info$f_name), , drop = FALSE]
+  # replicates in the order of the last number in the file name (rep2
+  # before rep10), then by name
+  last_num <- vapply(basename(file_info$f_name), function(b) {
+    n <- regmatches(b, gregexpr("[0-9]+", b))[[1]]
+    if (length(n) == 0) NA_real_ else as.numeric(n[length(n)])
+  }, numeric(1))
+  file_info <- file_info[order(file_info$k, last_num, file_info$f_name), ,
+                         drop = FALSE]
   file_info <- dplyr::group_by(file_info, .data$k)
   file_info <- dplyr::mutate(file_info, rep = dplyr::row_number())
   file_info <- as.data.frame(file_info)
   
-  # label/prefix
-  file_names <- basename(file_paths)
-  if (is.null(prefix)) {
-    prefix <- longest_common_prefix(file_names)
-    if (prefix == "") prefix <- "structure"
+  file_info$label <- paste0("k", file_info$k, ".r", file_info$rep)
+  if (!is.null(prefix)) {
+    file_info$label <- paste0(prefix, ".", file_info$label)
   }
-  
-  file_info$label <- paste0(prefix, ".k", file_info$k, ".r", file_info$rep)
   
   # optionally rename files on disk
   if (isTRUE(rename_files)) {
-    if (verbose >= 2) cat(report("Renaming STRUCTURE files on disk.\n"))
+    if (verbose >= 2) cat(report("  Renaming STRUCTURE files on disk.\n"))
     new_paths <- file.path(dirname(file_info$f_name), paste0(file_info$label, "_out"))
+    clash <- new_paths[file.exists(new_paths) & new_paths != file_info$f_name]
+    if (length(clash) > 0) {
+      stop(error(
+        "No files were renamed: these target files already exist:",
+        paste(clash, collapse = ", "), "\n"
+      ))
+    }
     ok <- file.rename(file_info$f_name, new_paths)
     if (!all(ok)) warning(warn("Not all files were successfully renamed."))
     file_info$f_name <- ifelse(ok, new_paths, file_info$f_name)
@@ -325,12 +406,14 @@ gl.read.structure <- function(folder.path,
   
   # ---- parse all runs ----
   
-  if (verbose >= 2) cat(report("Processing ", nrow(file_info), " STRUCTURE output files.\n"))
+  if (verbose >= 2) {
+    cat(report("  Processing", nrow(file_info), "STRUCTURE output files.\n"))
+  }
   
   run_results <- purrr::pmap(
     list(file_info$f_name, file_info$label),
     function(f, lab) {
-      if (verbose >= 3) cat(report("Processing: ", basename(f), "\n"))
+      if (verbose >= 3) cat(report("  Processing:", basename(f), "\n"))
       out <- structureRead2(file = f)
       out$files <- f
       out$label <- lab
@@ -342,27 +425,44 @@ gl.read.structure <- function(folder.path,
   
   # ---- attach pop data from genlight (optional) ----
   if (!is.null(x)) {
-    datatype <- utils.check.datatype(x, verbose = 0)
-    if (!datatype %in% c("SNP", "SilicoDArT")) {
-      stop(error("The x parameter must be a genlight object containing SNP or SilicoDArT data."))
-    }
-    
-    pop_tbl <- data.frame(id = indNames(x), pop = pop(x), stringsAsFactors = FALSE)
+    ind_names <- indNames(x)
+    ind_pops <- as.character(pop(x))
     
     run_results <- lapply(run_results, function(y) {
       if (is.null(y$q.mat) || !("id" %in% names(y$q.mat))) return(y)
-      merged <- merge(y$q.mat, pop_tbl, by = "id", all.x = TRUE, sort = FALSE)
-      # keep original ordering from y$q.mat
-      merged <- merged[match(y$q.mat$id, merged$id), , drop = FALSE]
-      merged$orig.pop <- merged$pop
-      merged$pop <- NULL
-      y$q.mat <- merged
+      ids <- as.character(y$q.mat$id)
+      if (all(ids %in% ind_names)) {
+        idx <- match(ids, ind_names)
+      } else if (all(grepl("^[0-9]+$", ids)) &&
+                 setequal(as.integer(ids), seq_along(ind_names))) {
+        # labels are positions in indNames(x), as written by
+        # gl.run.structure: restore the names
+        idx <- as.integer(ids)
+        y$q.mat$id <- ind_names[idx]
+        if (!is.null(y$prior.anc)) {
+          names(y$prior.anc) <- ind_names[as.integer(names(y$prior.anc))]
+        }
+      } else {
+        unmatched <- setdiff(ids, ind_names)
+        stop(error(
+          "Individuals in", basename(y$files),
+          "match neither indNames(x) nor positions 1 to nInd(x):",
+          paste(utils::head(unmatched, 10), collapse = ", "),
+          if (length(unmatched) > 10) "..." else "",
+          "(STRUCTURE truncates labels longer than 11 characters).\n"
+        ))
+      }
+      y$q.mat$orig.pop <- ind_pops[idx]
       y
     })
   }
   
   class(run_results) <- c("structure.result", class(run_results))
   
-  if (verbose >= 1) cat(report("\nCompleted: ", funname, "\n"))
+  # FLAG SCRIPT END
+  if (verbose >= 1) {
+    cat(report("Completed:", funname, "\n"))
+  }
+  
   run_results
 }

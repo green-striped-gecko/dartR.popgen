@@ -92,6 +92,11 @@ Mol Ecol Resour. doi:10.1111/1755-0998.12559
 }
 \seealso{
 \code{\link{gl.run.structure}}, \code{\link{gl.plot.structure}}
+
+Other population structure: 
+\code{\link{gl.map.structure}()},
+\code{\link{gl.plot.structure}()},
+\code{\link{gl.read.structure}()}
 }
 \author{
 Author(s): Bernd Gruber. Custodian: Bernd Gruber -- Post to
