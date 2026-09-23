@@ -176,6 +176,23 @@ gl.map.structure <- function(qmat,
   }
 
   qmat <- as.data.frame(qmat[eq.k][[1]])
+  # individuals without a population cannot be placed on the map
+  no_pop <- is.na(qmat$orig.pop)
+  if (all(no_pop)) {
+    stop(error(
+      "No individual in qmat has a population (orig.pop is NA). If qmat",
+      "comes from gl.read.structure, pass the genlight object as x there.\n"
+    ))
+  }
+  if (any(no_pop)) {
+    if (verbose >= 1) {
+      cat(warn(
+        "  Warning:", sum(no_pop), "individual(s) in qmat have no population",
+        "(orig.pop is NA) and are not mapped.\n"
+      ))
+    }
+    qmat <- qmat[!no_pop, , drop = FALSE]
+  }
   qmat$orig.pop <- factor(qmat$orig.pop)
   pops <- levels(qmat$orig.pop)
 

@@ -58,6 +58,12 @@
   (default: the `gl.plot.structure` palette instead of `rainbow()`, **so
   default map colours change**), `plot.out` and `verbose`; `leaflet` is
   guarded; the help example is corrected.
+* `gl.map.structure`: individuals whose `orig.pop` is NA are dropped with
+  a warning at `verbose >= 1`. Previously they added empty rows to the
+  returned tables and many leaflet warnings, and a q-matrix with no
+  populations at all stopped with "attempt to select less than one
+  element"; it now stops with a message pointing to `x` in
+  `gl.read.structure`.
 * `gl.plot.structure`: when Clumpak finds more than one mode at a K, each
   mode is now the average of its replicates, as documented. Previously every
   mode showed only its first replicate. **Returned q-matrices and bar
