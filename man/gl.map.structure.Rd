@@ -131,8 +131,11 @@ multimodality in analysis of population structure. Bioinformatics
 
 Other population structure: 
 \code{\link{gl.evanno}()},
+\code{\link{gl.map.snmf}()},
+\code{\link{gl.plot.snmf}()},
 \code{\link{gl.plot.structure}()},
-\code{\link{gl.read.structure}()}
+\code{\link{gl.read.structure}()},
+\code{\link{gl.run.snmf}()}
 }
 \author{
 Author(s): Bernd Gruber. Custodian: Bernd Gruber -- Post to
