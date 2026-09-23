@@ -133,6 +133,11 @@ Other population structure:
 \code{\link{gl.evanno}()},
 \code{\link{gl.map.popcluster}()},
 \code{\link{gl.map.snmf}()},
+\code{\link{gl.map.snmf}()},
+\code{\link{gl.plot.snmf}()},
+\code{\link{gl.plot.structure}()},
+\code{\link{gl.read.structure}()},
+\code{\link{gl.run.snmf}()}
 \code{\link{gl.plot.faststructure}()},
 \code{\link{gl.plot.popcluster}()},
 \code{\link{gl.plot.snmf}()},

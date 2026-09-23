@@ -116,6 +116,10 @@ Other population structure:
 \code{\link{gl.read.structure}()},
 \code{\link{gl.run.faststructure}()},
 \code{\link{gl.run.popcluster}()},
+\code{\link{gl.map.snmf}()},
+\code{\link{gl.map.structure}()},
+\code{\link{gl.plot.structure}()},
+\code{\link{gl.read.structure}()},
 \code{\link{gl.run.snmf}()}
 }
 \author{
