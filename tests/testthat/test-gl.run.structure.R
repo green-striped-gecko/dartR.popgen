@@ -115,6 +115,25 @@ test_that("num.k.rep = 2 with k.range = 1:3 returns six runs and draws the Evann
   expect_equal(names(sr), c("k1.r1", "k1.r2", "k2.r1", "k2.r2", "k3.r1", "k3.r2"))
 })
 
+test_that("Evanno warnings reach the user at verbose >= 1 (follow-up to gl.evanno review)", {
+  exec <- structure_exec()
+  wd <- withr::local_tempdir()
+  withr::local_options(dartR_wd = NULL)
+  pdf(NULL); on.exit(dev.off(), add = TRUE)
+  x <- st_fixture()
+  # a fixed seed without randomize gives identical replicates, so sd = 0;
+  # the Evanno step runs only when the plot is requested
+  run <- function(v) {
+    capture.output(sr <- run_in(gl.run.structure(
+      x, exec = exec, k.range = 1:3, num.k.rep = 2, burnin = 50,
+      numreps = 50, randomize = FALSE, seed = 7, plot.out = TRUE,
+      verbose = v), wd))
+  }
+  expect_true(any(grepl("all replicates agree on LnP\\(K\\) \\(sd = 0\\)",
+                        run(1))))
+  expect_length(run(0), 0)
+})
+
 test_that("delete.files = FALSE keeps the run files under plot.dir, not the working directory", {
   exec <- structure_exec()
   wd <- withr::local_tempdir()

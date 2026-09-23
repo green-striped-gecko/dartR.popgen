@@ -276,7 +276,7 @@ gl.run.structure <- function(x,
     } else {
       pa <- tryCatch(
         {
-          ev <- utils.structure.evanno(sr, plot = FALSE)
+          ev <- utils.structure.evanno(sr, plot = FALSE, verbose = verbose)
           bottom <- if (is.null(ev$plots$delta.k)) {
             ev$plots$ln.ppk
           } else {

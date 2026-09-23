@@ -17,6 +17,10 @@
   combined figure is built with patchwork and returned as
   `plots$combined` (`gridExtra` is no longer used); `aes_string()`
   replaced. Help pages rewritten, including the delta K method.
+* `gl.run.structure`: the Evanno panel passes `verbose` to
+  `utils.structure.evanno`, so its warnings (delta K undefined because
+  replicates agree, K values not consecutive, one replicate per K) are
+  shown at `verbose >= 1` when the plot is drawn or saved.
 
 * `gl.run.structure`: the STRUCTURE runs are now always returned. Previously
   the Evanno step ran unconditionally and stopped with "must have at least
