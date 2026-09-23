@@ -136,6 +136,10 @@ Other population structure:
 \code{\link{gl.plot.structure}()},
 \code{\link{gl.read.structure}()},
 \code{\link{gl.run.snmf}()}
+\code{\link{gl.plot.faststructure}()},
+\code{\link{gl.plot.structure}()},
+\code{\link{gl.read.structure}()},
+\code{\link{gl.run.faststructure}()}
 }
 \author{
 Author(s): Bernd Gruber. Custodian: Bernd Gruber -- Post to

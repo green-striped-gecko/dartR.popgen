@@ -21,7 +21,8 @@ gl.plot.structure(
   plot.out = TRUE,
   plot.file = NULL,
   plot.dir = NULL,
-  verbose = NULL
+  verbose = NULL,
+  label.size = 12
 )
 }
 \arguments{
@@ -79,6 +80,9 @@ unless specified using gl.set.wd].}
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 brief progress messages; 3, progress and results summary; 5, full report
 [default 2, unless specified using gl.set.verbosity].}
+
+\item{label.size}{Size of the population labels above the bars
+[default 12].}
 }
 \value{
 A list (invisible) with one data.table per plotted K panel, named
@@ -159,6 +163,9 @@ Other population structure:
 \code{\link{gl.plot.snmf}()},
 \code{\link{gl.read.structure}()},
 \code{\link{gl.run.snmf}()}
+\code{\link{gl.plot.faststructure}()},
+\code{\link{gl.read.structure}()},
+\code{\link{gl.run.faststructure}()}
 }
 \author{
 Author(s): Bernd Gruber & Luis Mijangos. Custodian: Bernd Gruber

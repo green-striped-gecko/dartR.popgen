@@ -6,7 +6,7 @@
 \usage{
 gl.plot.faststructure(
   sr,
-  k.range,
+  k.range = NULL,
   met_clumpp = "greedyLargeK",
   iter_clumpp = 100,
   clumpak = TRUE,
@@ -17,73 +17,89 @@ gl.plot.faststructure(
   label.size = 12,
   border_ind = 0.15,
   den = FALSE,
-  x = NULL
+  x = NULL,
+  dis.mat = NULL,
+  plot.out = TRUE,
+  plot.dir = NULL,
+  plot.file = NULL,
+  verbose = NULL
 )
 }
 \arguments{
 \item{sr}{fastStructure run object from \code{\link{gl.run.faststructure}}
 [required].}
 
-\item{k.range}{The number for K of the q matrix that should be plotted. Needs
-to be within you simulated range of K's in your sr structure run object. If
- NULL, all the K's are plotted [default NULL].}
+\item{k.range}{The values of K to be plotted. Need to be among the K values
+in sr. If NULL, all the K's are plotted [default NULL].}
 
 \item{met_clumpp}{The algorithm to use to infer the correct permutations.
 One of 'greedy' or 'greedyLargeK' or 'stephens' [default "greedyLargeK"].}
 
-\item{iter_clumpp}{The number of iterations to use if running either 'greedy'
-'greedyLargeK' [default 100].}
+\item{iter_clumpp}{The number of iterations to use if running either
+'greedy' or 'greedyLargeK' [default 100].}
 
 \item{clumpak}{Whether use the Clumpak method (see details) [default TRUE].}
 
 \item{plot_theme}{Theme for the plot. See Details for options
-[default NULL].}
+[default NULL, which uses theme_dartR()].}
 
-\item{colors_clusters}{A color palette for clusters (K) or a list with
-as many colors as there are clusters (K) [default NULL].}
+\item{colors_clusters}{A colour palette function (for example
+\code{rainbow}), which is called with the largest K, or a vector with at
+least as many colours as clusters in the largest K [default NULL, which
+uses gl.select.colors()].}
 
 \item{ind_name}{Whether to plot individual names [default TRUE].}
 
-\item{k_name}{Name of the structure plot to plot. It should be character
-[default NULL].}
+\item{k_name}{Label of the K panel to plot, as shown in the K column of the
+returned tables: "3" for K = 3, or "2.1", "2.2", ... when a K has more
+than one mode. It should be character [default NULL, all panels].}
 
-\item{label.size}{Specify the size of the population labels [default 12].}
+\item{label.size}{Size of the population labels [default 12].}
 
 \item{border_ind}{The width of the border line between individuals
-[default 0.25].}
+[default 0.15].}
 
-\item{den}{Whether to include a dendrogram. It is necessary to include the 
-original genlight object used in gl.run.structure in the parameter x 
-[default FALSE].}
+\item{den}{Whether to include a dendrogram. It needs either the genlight
+object used in gl.run.faststructure (parameter x) or a distance matrix
+(parameter dis.mat) [default FALSE].}
 
-\item{x}{The original genlight object used in gl.run.structure description
+\item{x}{The genlight object used in gl.run.faststructure; needed for the
+dendrogram when dis.mat is not supplied [default NULL].}
+
+\item{dis.mat}{A dist object (distance matrix) among the individuals, used
+to build the dendrogram; its labels must be the individual names
 [default NULL].}
+
+\item{plot.out}{Specify if plot is to be produced [default TRUE].}
+
+\item{plot.dir}{Directory in which to save files [default = tempdir(),
+unless specified using gl.set.wd].}
+
+\item{plot.file}{Name for the RDS binary file to save (base name only,
+exclude extension) [default NULL].}
+
+\item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
+brief progress messages; 3, progress and results summary; 5, full report
+[default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-List of Q-matrices
+A list (invisible) with one data.table per plotted K panel, as
+returned by \code{\link{gl.plot.structure}}: one row per individual, with
+columns Label, cluster1 ... clusterK, K, orig.pop and ord.
 }
 \description{
 This function takes a fastStructure run object (output from
  \code{\link{gl.run.faststructure}}) and plots the typical structure bar
-  plot that visualize the q matrix of a fastStructure run.
+  plot that visualises the q matrix of a fastStructure run. The replicate
+  runs are aligned, grouped into modes and averaged exactly as in
+  \code{\link{gl.plot.structure}}, which draws the plot.
 }
 \details{
 The function outputs a barplot which is the typical output of
- fastStructure.
-
- This function is based on the methods of CLUMPP and Clumpak as implemented
- in the R package starmie (https://github.com/sa-lee/starmie).
-
- The Clumpak method identifies sets of highly similar runs among
- all the replicates of the same K. The method then separates the distinct
- groups of runs representing distinct modes in the space of possible solutions.
-
- The CLUMPP method permutes the clusters output by independent runs of
- clustering programs such as structure, so that they match up as closely as
- possible.
-
- This function averages the replicates within each mode identified by the
- Clumpak method.
+ fastStructure. The fastStructure run object is converted to the layout of
+ a structure run object and passed to \code{\link{gl.plot.structure}}; see
+ its help for the CLUMPP and Clumpak methods, the averaging of the
+ replicates within each mode, and the dendrogram.
 
 Examples of other themes that can be used can be consulted in \itemize{
  \item \url{https://ggplot2.tidyverse.org/reference/ggtheme.html} and \item
@@ -95,7 +111,7 @@ Examples of other themes that can be used can be consulted in \itemize{
 t1 <- gl.filter.callrate(platypus.gl, threshold = 1)
 res <- gl.run.faststructure(t1,
   exec = "./fastStructure", k.range = 2:3,
-  num.k.rep = 2, output = paste0(getwd(), "/res_str")
+  num.k.rep = 2, exec.plink = getwd()
 )
 qmat <- gl.plot.faststructure(res, k.range = 2:3)
 gl.map.structure(qmat, K = 2, t1, scalex = 1, scaley = 0.5)
@@ -106,8 +122,6 @@ gl.map.structure(qmat, K = 2, t1, scalex = 1, scaley = 0.5)
 \item Raj, A., Stephens, M., & Pritchard, J. K. (2014). fastSTRUCTURE:
 variational inference of population structure in large SNP data sets.
 Genetics, 197(2), 573-589.
-\item Pritchard, J.K., Stephens, M., Donnelly, P. (2000) Inference of
-population structure using multilocus genotype data. Genetics 155, 945-959.
 \item Kopelman, Naama M., et al. "Clumpak: a program for identifying
 clustering modes and packaging population structure inferences across K."
 Molecular ecology resources 15.5 (2015): 1179-1191.
@@ -119,8 +133,17 @@ multimodality in analysis of population structure. Bioinformatics
 }
 }
 \seealso{
-\code{gl.run.faststructure}
+\code{\link{gl.run.faststructure}}, \code{\link{gl.plot.structure}}
+
+Other population structure: 
+\code{\link{gl.evanno}()},
+\code{\link{gl.map.structure}()},
+\code{\link{gl.plot.structure}()},
+\code{\link{gl.read.structure}()},
+\code{\link{gl.run.faststructure}()}
 }
 \author{
-Bernd Gruber & Luis Mijangos (Post to \url{https://groups.google.com/d/forum/dartr})
+Author(s): Bernd Gruber & Luis Mijangos. Custodian: Luis Mijangos
+ -- Post to \url{https://groups.google.com/d/forum/dartr}
 }
+\concept{population structure}

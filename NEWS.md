@@ -23,6 +23,29 @@
   `gl.set.verbosity()` and is silent at 0, `plot.K` must be one K of the
   run (clear error), a palette function is accepted in `color.clusters`,
   and `aes_()` is replaced.
+* `gl.run.faststructure`: results are stored by K, so any `k.range` works.
+  Previously `k.range` had to start at 2 without gaps: `3:4` or `c(2, 4)`
+  stopped with "subscript out of bounds" after all runs had finished, and
+  `1:2` dropped K = 1 and returned an empty element. **Calls with other
+  `k.range` values now return results.**
+* `gl.run.faststructure`: each call writes to a new subfolder of `output`,
+  whose default is now `tempdir()` instead of the working directory, and
+  reads only that subfolder; previously files of earlier runs in the same
+  folder were read back. With `seed`, replicate r uses `seed + r - 1`;
+  previously every replicate was identical. **Seeded results change after
+  the first replicate.** The executables are checked before running, a
+  failed run stops with the K and replicate, progress and program output
+  follow `verbose`, and the likelihood plot uses `theme_dartR()` with new
+  `plot.out`, `plot.theme`, `plot.dir`, `plot.file` arguments. `gsubfn`
+  is no longer needed.
+* `gl.plot.faststructure` now draws with `gl.plot.structure`, so it gets
+  the fixes made there: each mode is the average of its replicates (it was
+  one replicate), K = 1 after another K is not duplicated, the dendrogram
+  clusters the distance matrix itself. **Returned q-matrices change when a
+  K has several modes, and are data.tables.** `k.range = NULL` plots every
+  K; new `dis.mat`, `plot.out`, `plot.dir`, `plot.file`, `verbose`.
+  `gl.plot.structure` gains `label.size` (default 12, the previous fixed
+  size).
 
 * `gl.read.structure`: individuals with a population prior (USEPOPINFO)
   are read correctly. Previously the ancestry blocks after `|` were not
