@@ -2,41 +2,45 @@
 #'
 #' @title Plots ancestry coefficient from snmf
 #'
+#' @family population structure
+#'
 #' @description
-#' This function takes a Q matrix (output from
+#' This function takes a snmf run object (output from
 #'  \code{\link{gl.run.snmf}}) and plots the typical structure bar
-#'   plot that visualize the Q matrix of a structure run.
+#'   plot that visualises the Q matrix of the best run for one K.
 #' @param snmf.result run object from \code{\link{gl.run.snmf}} [required].
 #' @param border.ind The width of the border line between individuals
 #' [default 0.25].
-#' @param plot.K The number for K of the Q matrix that should be plotted. Needs to
-#'  be within you simulated range of K's in your snmf run object [required].
+#' @param plot.K The K of the Q matrix to be plotted: a single value among the
+#'  K values in the snmf run object [required].
 #' @param plot.theme Theme for the plot. See Details for options
 #' [default NULL].
-#' @param color.clusters A color palette for clusters (K) or a list with
-#' as many colors as there are clusters (K) [default NULL].
+#' @param color.clusters A colour palette function (for example
+#'  \code{rainbow}), which is called with plot.K, or a vector with at least
+#'  plot.K colours [default NULL, which uses gl.colors("structure")].
 #' @param ind.name Whether to plot individual names [default TRUE].
 #' @param plot.out Specify if plot is to be produced [default TRUE].
 #' @param plot.file Name for the RDS binary file to save (base name only, exclude
 #' extension) [default NULL].
-#' @param plot.dir Directory in which to save files [default = working directory].
-#' @param den Whether to include a dendrogram. It is necessary to include the 
-#' original genlight object used in gl.run.structure in the parameter x 
+#' @param plot.dir Directory in which to save files [default = tempdir(),
+#'  unless specified using gl.set.wd].
+#' @param den Whether to include a dendrogram, built by hierarchical
+#' clustering (\code{hclust}) of Manhattan distances between individuals. It
+#' needs the genlight object used in gl.run.snmf in the parameter x
 #' [default FALSE].
 #' @param inverse.den Flip dendrogram upside down [default TRUE].
-#' @param x The original genlight object used in gl.run.structure description
-#' [default NULL]. 
+#' @param x The genlight object used in gl.run.snmf [default NULL].
 #' @param plot.colors.pop A color palette for population plots or a list with
 #' as many colors as there are populations in the dataset 
-#' [default gl.colors("dis")].
+#' [default NULL, which uses gl.colors("dis")].
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
-#'  progress log ; 3, progress and results summary; 5, full report [default
-#'   2, unless specified using gl.set.verbosity].
+#'  brief progress messages; 3, progress and results summary; 5, full report
+#'  [default 2, unless specified using gl.set.verbosity].
 #'
 #' @details The function outputs a barplot which is the typical output of
-#'  snmf.
-#'  Plots and table are saved to the working directory specified in plot.dir
-#'  if plot.file is set.
+#'  snmf. It shows the best run (lowest cross-entropy) for plot.K, as kept by
+#'  gl.run.snmf; replicates are not averaged.
+#'  The plot is saved as an RDS file in plot.dir if plot.file is set.
 #'
 #' Examples of other themes that can be used can be consulted in \itemize{
 #'  \item \url{https://ggplot2.tidyverse.org/reference/ggtheme.html} and \item
@@ -45,24 +49,21 @@
 #'
 #'The Q matrices can be input to other R packages for plotting ancestry proportion, e.g. FSTruct
 #'\url{https://github.com/MaikeMorrison/FSTruct}
-#' @return Q-matrix
+#' @return The Q matrix of plot.K (invisible), as in the matrix element of the
+#' gl.run.snmf result: columns Pop_1 ... Pop_K, Cluster, Pop, Label, Order.
 #'
-#' @author Ching Ching Lau (Post to \url{https://groups.google.com/d/forum/dartr})
+#' @author Author(s): Ching Ching Lau. Custodian: Ching Ching Lau -- Post to
+#'  \url{https://groups.google.com/d/forum/dartr}
 #'
 #' @examples
 #' # examples need LEA to be installed on the system (see above)
 #' \dontrun{
-#' m <- gl.run.snmf(x=bandicoot.gl, minK=1, 
-#' maxK=5, rep=10)
-#' Q <- gl.plot.snmf(snmf.result=m, plot.K = 3, ind.name=T)
-#' gl.map.snmf(bandicoot.gl, qmat=Q)
-#' # move population 4 (out of 5) 0.5 degrees to the right and populations 1
-#' # 0.3 degree to the north of the map.
-#' mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
-#' gl.map.snmf(bandicoot.gl, qmat=Q, movepops=mp)
+#' m <- gl.run.snmf(x = bandicoot.gl, minK = 1, maxK = 5, rep = 10)
+#' Q <- gl.plot.snmf(snmf.result = m, plot.K = 3, ind.name = TRUE)
+#' gl.map.snmf(bandicoot.gl, qmat = Q)
 #' }
 #' @export
-#' @seealso \code{gl.run.snmf}, \code{gl.plot.snmf}
+#' @seealso \code{\link{gl.run.snmf}}, \code{\link{gl.map.snmf}}
 #' @references
 #' \itemize{
 #' \item Frichot E, Mathieu F, Trouillon T, Bouchard G, Francois O. (2014). Fast and Efficient 
@@ -82,8 +83,8 @@ gl.plot.snmf <- function(snmf.result,
                          den = FALSE,
                          inverse.den = TRUE,
                          x = NULL,
-                         plot.colors.pop = gl.colors("dis"),
-                         verbose = 2) {
+                         plot.colors.pop = NULL,
+                         verbose = NULL) {
   
   # SET WORKING DIRECTORY
   plot.dir <- gl.check.wd(plot.dir, verbose = 0)
@@ -95,9 +96,35 @@ gl.plot.snmf <- function(snmf.result,
   funname <- match.call()[[1]]
   utils.flag.start(
     func  = funname,
-    build = "Jody",
     verbose = verbose
   )
+
+  # FUNCTION SPECIFIC ERROR CHECKING
+
+  run_K <- names(snmf.result$matrix)
+  if (length(plot.K) != 1 || !paste0("K", plot.K) %in% run_K) {
+    stop(error(
+      "plot.K must be one of the K values in snmf.result:",
+      paste(sub("^K", "", run_K), collapse = ", "), "\n"
+    ))
+  }
+
+  if (is.function(color.clusters)) {
+    color.clusters <- color.clusters(plot.K)
+  }
+  if (is.null(color.clusters)) {
+    color.clusters <- gl.colors(type = "structure", verbose = 0)[1:plot.K]
+  }
+  if (length(color.clusters) < plot.K) {
+    stop(error(
+      "color.clusters has", length(color.clusters), "colours but", plot.K,
+      "are needed.\n"
+    ))
+  }
+
+  if (is.null(plot.colors.pop)) {
+    plot.colors.pop <- gl.colors("dis", verbose = 0)
+  }
   
   if (is.null(plot.theme)) {
     plot.theme <- theme_dartR()
@@ -118,10 +145,6 @@ gl.plot.snmf <- function(snmf.result,
   
   Q_long$K <- as.factor(Q_long$K)
   
-  if (is.null(color.clusters)) {
-    color.clusters <- gl.colors(type = "structure")[1:max(plot.K)]
-  }
-  
   # Dendrogram 
   if (den) {
     
@@ -134,8 +157,8 @@ gl.plot.snmf <- function(snmf.result,
     
     reorderfun <- function(d, w) stats::reorder(d, w, agglo.FUN = mean)
     
-    distr <- stats::dist(res)
-    hcr   <- stats::hclust(distr)
+    # cluster the distances themselves (res is already a dist object)
+    hcr   <- stats::hclust(res)
     ddr   <- stats::as.dendrogram(hcr)
     ddr   <- reorderfun(ddr, TRUE)
     
@@ -303,8 +326,8 @@ gl.plot.snmf <- function(snmf.result,
   lab_df <- Q_long_plot %>%
     dplyr::distinct(Pop, pos_pop, Label)
   
-  p3 <- ggplot(Q_long, aes_(x = ~Order, y = ~values, fill = ~K)) +
-    geom_col(aes(colour = K), linewidth = border.ind, width = 1) +
+  p3 <- ggplot(Q_long, aes(x = .data$Order, y = .data$values, fill = .data$K)) +
+    geom_col(aes(colour = .data$K), linewidth = border.ind, width = 1) +
     facet_grid(
       ~ factor(Pop, levels = unique(Q_long$Pop)),
       scales = "free",

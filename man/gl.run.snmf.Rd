@@ -2,8 +2,7 @@
 % Please edit documentation in R/gl.run.snmf.r
 \name{gl.run.snmf}
 \alias{gl.run.snmf}
-\title{Creates an input file for the function \link[LEA]{snmf} (package LEA) 
-and runs it if package LEA is installed.}
+\title{Runs a snmf analysis (package LEA) using a genlight object}
 \usage{
 gl.run.snmf(
   x,
@@ -33,56 +32,83 @@ gl.run.snmf(
 
 \item{rep}{Number of replicates runs per K [default 1].}
 
-\item{regularization}{Alpha value for regularization when analyzing small 
+\item{regularization}{Alpha value for regularization when analyzing small
 dataset [default 10].}
 
 \item{ploidy_lv}{Ploidy level of dataset [default 2].}
 
 \item{ncores}{How many cores should be used [default 1].}
 
-\item{cleanup}{Clean data in tmp [default  TRUE].}
+\item{cleanup}{Remove the LEA run files from the temporary folder when
+finished [default TRUE].}
 
-\item{plot.out}{Specify if plot is to be produced [default TRUE].}
+\item{plot.out}{Specify if the cross-entropy plot is to be shown; it is
+returned either way [default TRUE].}
 
-\item{plot.dir}{Directory in which to save files 
-[default = working directory].}
+\item{plot.dir}{Directory in which to save files [default = tempdir(),
+unless specified using gl.set.wd].}
 
-\item{plot.file}{Name for the RDS binary file to save (base name only, 
+\item{plot.file}{Name for the RDS binary file to save (base name only,
 exclude extension) [default NULL].}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
-progress log; 3, progress and results summary; 5, full report
-[default 2 or as specified using gl.set.verbosity].}
+brief progress messages; 3, progress and results summary, including the
+output of LEA; 5, full report
+[default 2, unless specified using gl.set.verbosity].}
 
-\item{...}{Parameters passed to function \link[LEA]{snmf} (package LEA).}
+\item{...}{Parameters passed to function \link[LEA]{snmf} (package LEA),
+e.g. seed.}
 }
 \value{
-The file list of best run, plot of cross-entropy across different 
-number of K and Q matrices,
+A list with three elements: best_run, the best run for each K
+(the path of its folder when cleanup = FALSE, otherwise its name, e.g.
+"K2/run1"); cross_entropy, a list with the cross-entropy plot (a
+recordedplot); and matrix, a list named K1, K2, ... of data frames with one
+row per individual: columns Pop_1 ... Pop_K (ancestry coefficients of the
+best run), Cluster (the cluster with the largest coefficient), Pop
+(population), Label (individual name) and Order (position in the bar
+plot, sorted by population and cluster).
 }
 \description{
-Refer to the documentation of function \link[LEA]{snmf} (package LEA) 
-for further information of the function and its parameters.
+Creates an input file for the function \link[LEA]{snmf} (package LEA)
+and runs it. Refer to the documentation of function \link[LEA]{snmf} for
+further information on the method and its parameters.
+}
+\details{
+For each K, only the replicate run with the lowest cross-entropy (the
+best run) is kept; replicates are not averaged.
 }
 \examples{
 \dontrun{
 m <- gl.run.snmf(x = bandicoot.gl, minK = 1, maxK = 5, rep = 10)
-Q <- gl.plot.snmf(snmf_result = m, plot.K = 3, ind_name = TRUE)
+Q <- gl.plot.snmf(snmf.result = m, plot.K = 3, ind.name = TRUE)
 gl.map.snmf(bandicoot.gl, qmat = Q)
-# move population 4 (out of 5) 0.5 degrees to the right and populations 1
-# 0.3 degree to the north of the map.
-mp <- data.frame(lon = c(0,0,0,0.5,0), lat = c(-0.3,0,0,0,0))
+# move population 4 (out of 5) 0.5 degrees to the right and population 1
+# 0.3 degrees to the south of the map.
+mp <- data.frame(lon = c(0, 0, 0, 0.5, 0), lat = c(-0.3, 0, 0, 0, 0))
 gl.map.snmf(bandicoot.gl, qmat = Q, movepops = mp)
 }
 }
 \references{
 \itemize{
-\item Frichot E, Mathieu F, Trouillon T, Bouchard G, Francois O. (2014). 
-Fast and Efficient Estimation of Individual Ancestry Coefficients. Genetics, 
+\item Frichot E, Mathieu F, Trouillon T, Bouchard G, Francois O. (2014).
+Fast and Efficient Estimation of Individual Ancestry Coefficients. Genetics,
 194(4): 973--983.
 }
 }
+\seealso{
+Other population structure: 
+\code{\link{gl.evanno}()},
+\code{\link{gl.map.snmf}()},
+\code{\link{gl.map.structure}()},
+\code{\link{gl.plot.faststructure}()},
+\code{\link{gl.plot.snmf}()},
+\code{\link{gl.plot.structure}()},
+\code{\link{gl.read.structure}()},
+\code{\link{gl.run.faststructure}()}
+}
 \author{
-Custodian: Ching Ching Lau -- Post to
+Author(s): Ching Ching Lau. Custodian: Ching Ching Lau -- Post to
  \url{https://groups.google.com/d/forum/dartr}
 }
+\concept{population structure}
