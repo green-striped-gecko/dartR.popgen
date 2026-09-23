@@ -218,3 +218,22 @@ test_that("verbose = 0 is silent and plot.out = FALSE still returns [approved 8]
                                                  verbose = 3)))
   expect_true(any(grepl("Completed: gl.map.structure", out3)))
 })
+
+test_that("individuals without a population: dropped with a warning, all NA is an error (follow-up)", {
+  skip_if_not_installed("leaflet")
+  x <- ms_genlight()
+  q <- ms_qmat(x)
+  q[[1]]$orig.pop <- as.character(q[[1]]$orig.pop)
+  q[[1]]$orig.pop[1:3] <- NA
+  out <- capture.output(r <- ms_run(gl.map.structure(q, x, K = 2,
+                                                     plot.out = FALSE,
+                                                     verbose = 1)))
+  expect_true(any(grepl("3 individual\\(s\\) in qmat have no population",
+                        out)))
+  expect_equal(sum(vapply(r$qmats, nrow, 0L)), nInd(x) - 3)
+  expect_false(anyNA(unlist(lapply(r$qmats, `[[`, "Label"))))
+  expect_length(ms_calls(r, "addRectangles"), (nInd(x) - 3) * 2)
+  q[[1]]$orig.pop <- NA
+  expect_error(ms_run(gl.map.structure(q, x, K = 2, verbose = 0)),
+               "No individual in qmat has a population")
+})
