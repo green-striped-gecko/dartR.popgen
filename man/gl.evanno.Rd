@@ -4,25 +4,67 @@
 \alias{gl.evanno}
 \title{Creates an Evanno plot from a STRUCTURE run object}
 \usage{
-gl.evanno(sr, plot.out = TRUE)
+gl.evanno(
+  sr,
+  plot.out = TRUE,
+  plot.theme = theme_dartR(),
+  plot.dir = NULL,
+  plot.file = NULL,
+  verbose = NULL
+)
 }
 \arguments{
-\item{sr}{structure run object from \code{\link{gl.run.structure}} [required].}
+\item{sr}{Structure run object from \code{\link{gl.run.structure}}
+[required].}
 
-\item{plot.out}{TRUE: all four plots are shown. FALSE: all four plots are
-returned as a ggplot but not shown [default TRUE].}
+\item{plot.out}{TRUE: the plots are shown. FALSE: the plots are returned as
+ggplot objects but not shown [default TRUE].}
+
+\item{plot.theme}{Theme for the plots. See Details for options
+[default theme_dartR()].}
+
+\item{plot.dir}{Directory in which to save files [default = tempdir(),
+unless specified using gl.set.wd].}
+
+\item{plot.file}{Name for the RDS binary file to save the combined plot
+(base name only, exclude extension) [default NULL].}
+
+\item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
+brief progress messages; 3, progress and results summary; 5, full report
+[default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-An Evanno plot is created and a list of all four plots is returned.
+A list with two elements: df, a data frame with one row per K and
+columns k, reps (number of replicates), mean.ln.k, sd.ln.k, ln.pk
+(LnP'(K)), ln.ppk (|LnP''(K)|) and delta.k; and plots, a list of ggplot
+objects mean.ln.k, ln.pk, ln.ppk, delta.k (only when delta K could be
+computed for at least one K) and combined (all panels in one figure).
 }
 \description{
-This function takes a genlight object and runs a STRUCTURE analysis based on
-functions from \code{strataG}
+This function takes a structure run object (output from
+\code{\link{gl.run.structure}}), computes the Evanno et al. (2005)
+statistics used to choose the number of clusters K, and plots them.
 }
 \details{
-The function is basically a convenient wrapper around the beautiful
-strataG function \code{evanno} (Archer et al. 2016). For a detailed
-description please refer to this package (see references below).
+For each K the function takes the mean and standard deviation of the
+estimated Ln probability of the data, LnP(K), over the replicate runs,
+and computes LnP'(K) = LnP(K) - LnP(K - 1),
+|LnP''(K)| = |LnP'(K + 1) - LnP'(K)| and
+delta K = |LnP''(K)| / sd(LnP(K)). The differences are taken on the mean
+LnP(K) of each K, as in the strataG package (Archer et al. 2016) from
+which the code was adapted. The K with the largest delta K is the usual
+choice.
+
+The method needs at least three consecutive values of K and at least two
+replicates per K. Delta K is NA for the smallest and largest K, for K
+values whose neighbours K - 1 or K + 1 were not run, for K with a single
+replicate, and for K whose replicates all report the same LnP(K)
+(sd = 0); a warning names these K at verbose >= 1.
+
+Examples of other themes that can be used can be consulted in \itemize{
+ \item \url{https://ggplot2.tidyverse.org/reference/ggtheme.html} and \item
+ \url{https://yutannihilation.github.io/allYourFigureAreBelongToUs/ggthemes/}
+ }
 }
 \examples{
 # examples need structure to be installed on the system (see above)
@@ -30,7 +72,7 @@ description please refer to this package (see references below).
  bc <- bandicoot.gl[,1:100]
  sr <- gl.run.structure(bc, k.range = 2:5, num.k.rep = 3, exec = './structure.exe')
  ev <- gl.evanno(sr)
- ev
+ ev$df
  qmat <- gl.plot.structure(sr, K=3)
  head(qmat)
  gl.map.structure(qmat, bc, K=3, scalex=1, scaley=0.5)
@@ -49,8 +91,10 @@ Mol Ecol Resour. doi:10.1111/1755-0998.12559
 }
 }
 \seealso{
-\code{\link{gl.run.structure}},  \code{clumpp},
+\code{\link{gl.run.structure}}, \code{\link{gl.plot.structure}}
 }
 \author{
-Bernd Gruber (Post to \url{https://groups.google.com/d/forum/dartr})
+Author(s): Bernd Gruber. Custodian: Bernd Gruber -- Post to
+ \url{https://groups.google.com/d/forum/dartr}
 }
+\concept{population structure}

@@ -2,6 +2,22 @@
 
 ## Bug fixes
 
+* `gl.evanno` / `utils.structure.evanno`: delta K is `NA`, with a warning,
+  where all replicates of a K report the same LnP(K). Previously it was
+  `Inf` (sd = 0), as on a real STRUCTURE run of three testset.gl
+  populations. **`delta.k` changes from `Inf` to `NA` in that case.**
+* `gl.evanno` / `utils.structure.evanno`: LnP'(K), |LnP''(K)| and delta K
+  are computed only from K - 1 and K + 1. Previously a `k.range` with gaps
+  was differenced as if consecutive (delta K at K = 3 from K = 1 and
+  K = 5). **These values become `NA` where they were computed across a
+  gap.**
+* `gl.evanno`: new arguments `plot.theme` (default `theme_dartR()`),
+  `plot.dir`, `plot.file` and `verbose`; clear errors for a wrong input or
+  fewer than three K; a warning when delta K needs more replicates. The
+  combined figure is built with patchwork and returned as
+  `plots$combined` (`gridExtra` is no longer used); `aes_string()`
+  replaced. Help pages rewritten, including the delta K method.
+
 * `gl.run.structure`: the STRUCTURE runs are now always returned. Previously
   the Evanno step ran unconditionally and stopped with "must have at least
   two values of k" whenever `k.range` had fewer than three values, so the
