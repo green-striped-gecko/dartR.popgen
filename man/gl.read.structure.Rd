@@ -98,7 +98,11 @@ qmat <- gl.plot.structure(sr2, K = 3)
 
 Other population structure: 
 \code{\link{gl.evanno}()},
+\code{\link{gl.map.snmf}()},
 \code{\link{gl.map.structure}()},
+\code{\link{gl.plot.snmf}()},
+\code{\link{gl.plot.structure}()},
+\code{\link{gl.run.snmf}()}
 \code{\link{gl.plot.faststructure}()},
 \code{\link{gl.plot.structure}()},
 \code{\link{gl.run.faststructure}()}
