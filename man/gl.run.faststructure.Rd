@@ -10,27 +10,34 @@ gl.run.faststructure(
   num.k.rep = 1,
   exec = "./fastStructure",
   exec.plink = getwd(),
-  output = getwd(),
+  output = tempdir(),
   tol = 1e-05,
   prior = "simple",
   cv = 0,
   seed = NULL,
-  verbose = NULL
+  verbose = NULL,
+  plot.out = TRUE,
+  plot.theme = theme_dartR(),
+  plot.dir = NULL,
+  plot.file = NULL
 )
 }
 \arguments{
 \item{x}{Name of the genlight object containing the SNP data [required].}
 
-\item{k.range}{Range of the number of populations [required].}
+\item{k.range}{Values of K (number of populations) to run, e.g. 2:5 or
+c(1, 3, 5) [required].}
 
-\item{num.k.rep}{Number of replicates [default 1].}
+\item{num.k.rep}{Number of replicates for each K [default 1].}
 
-\item{exec}{Full path and name+extension where the fastStructure executable
-is located [default working directory "./fastStructure"].}
+\item{exec}{Full path and name of the fastStructure executable
+[default "./fastStructure"].}
 
-\item{exec.plink}{path to plink executable [default working directory].}
+\item{exec.plink}{Path of the folder that holds the PLINK executable,
+named plink [default getwd()].}
 
-\item{output}{Path to output file [default getwd()].}
+\item{output}{Folder in which a new subfolder is created for the files of
+this run (PLINK input, fastStructure output) [default tempdir()].}
 
 \item{tol}{Convergence criterion [default 10e-6].}
 
@@ -39,38 +46,49 @@ is located [default working directory "./fastStructure"].}
 \item{cv}{Number of test sets for cross-validation, 0 implies no CV step
 [default 0].}
 
-\item{seed}{Seed for random number generator [default NULL].}
+\item{seed}{Seed for the random number generator; replicate r uses
+seed + r - 1, so replicates differ and can be repeated [default NULL].}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
-progress log; 3, progress and results summary; 5, full report
-[default NULL, unless specified using gl.set.verbosity].}
+one line per run; 3, progress and results summary, including the output
+of PLINK and fastStructure; 5, full report
+[default 2, unless specified using gl.set.verbosity].}
+
+\item{plot.out}{Specify if the marginal likelihood plot is to be produced
+[default TRUE].}
+
+\item{plot.theme}{Theme for the plot [default theme_dartR()].}
+
+\item{plot.dir}{Directory in which to save the plot [default = tempdir(),
+unless specified using gl.set.wd].}
+
+\item{plot.file}{Name for the RDS binary file to save the plot (base name
+only, exclude extension) [default NULL].}
 }
 \value{
-A list in which each list entry is a single faststructure run output
-(there are k.range * num.k.rep number of runs).
+A list with two elements: q_list, a list named by K, each element
+a list named by replicate ("1", "2", ...) of data frames with one row per
+individual (columns id, orig.pop, V1 ... VK: the fastStructure
+q-matrix); and plot, the ggplot of the mean marginal likelihood per K.
 }
 \description{
 This function takes a genlight object and runs a faststructure analysis.
 }
 \details{
-Download faststructure binary for your system from here (only runs on Mac or
-Linux):
+fastStructure does not run on Windows. Download the faststructure binary
+for Mac or Linux from here:
 
 https://github.com/StuntsPT/Structure_threader/tree/master/structure_threader/bins
 
-Move faststructure file to working directory. Make file executable using
-terminal app.
+and make it executable, e.g.
+\code{system(paste0("chmod u+x ", getwd(), "/fastStructure"))}.
 
-\code{system(paste0("chmod u+x ",getwd(), "/faststructure"))}
-
-Download plink binary for your system from here:
+Download the PLINK 1.9 binary for your system from here:
 
 https://www.cog-genomics.org/plink/
 
-Move plink file to working directory. Make file executable using
-terminal app.
-
-\code{system(paste0("chmod u+x ",getwd(), "/plink"))}
+and pass the folder that holds it as exec.plink. The genlight object is
+converted to PLINK binary files with gl2plink.
 
 To install fastStructure dependencies follow these directions:
 https://github.com/rajanil/fastStructure
@@ -84,7 +102,10 @@ the mainparams and extraparam files. The inference algorithm used by
 
  To identify the number of populations that best approximates the marginal
  likelihood of the data, the marginal likelihood is extracted from each run
- of K, averaged across replications and plotted.
+ of K, averaged across replicates and plotted.
+
+ Each call writes its files to a new subfolder of output (named
+ fastStructure_<date>_<time>), so files from earlier runs are never read.
 }
 \examples{
 \dontrun{
@@ -93,7 +114,7 @@ the mainparams and extraparam files. The inference algorithm used by
 t1 <- gl.filter.callrate(platypus.gl, threshold = 1)
 res <- gl.run.faststructure(t1,
   exec = "./fastStructure", k.range = 2:3,
-  num.k.rep = 2, output = paste0(getwd(), "/res_str")
+  num.k.rep = 2, exec.plink = getwd()
 )
 qmat <- gl.plot.faststructure(res, k.range = 2:3)
 gl.map.structure(qmat, K = 2, t1, scalex = 1, scaley = 0.5)
@@ -106,6 +127,18 @@ variational inference of population structure in large SNP data sets.
 Genetics, 197(2), 573-589.
 }
 }
-\author{
-Luis Mijangos (Post to \url{https://groups.google.com/d/forum/dartr})
+\seealso{
+\code{\link{gl.plot.faststructure}}
+
+Other population structure: 
+\code{\link{gl.evanno}()},
+\code{\link{gl.map.structure}()},
+\code{\link{gl.plot.faststructure}()},
+\code{\link{gl.plot.structure}()},
+\code{\link{gl.read.structure}()}
 }
+\author{
+Author(s): Luis Mijangos. Custodian: Luis Mijangos -- Post to
+ \url{https://groups.google.com/d/forum/dartr}
+}
+\concept{population structure}
