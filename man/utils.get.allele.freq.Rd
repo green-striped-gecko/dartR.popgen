@@ -4,7 +4,7 @@
 \alias{utils.get.allele.freq}
 \title{utils.get.allele.freq}
 \usage{
-utils.get.allele.freq(x, verbose = 2)
+utils.get.allele.freq(x, verbose = NULL)
 }
 \arguments{
 \item{x}{Name of the genlight object containing the SNP or Tag P/A
@@ -25,11 +25,15 @@ Generates percentage allele frequencies by locus and population -- This is copy 
 This is a support script, to take SNP data or SilicoDArT presence/absence
 data grouped into populations in a genlight object \{adegenet\} and generate
 a table of allele frequencies for each population and locus
+
+The frequency column is the percentage of the alternative allele
+(or of presence), rounded to 2 decimals; use sum and nobs for exact
+values.
 }
 \examples{
 m <-  utils.get.allele.freq(testset.gl)
 }
 \author{
-Custodian: Arthur Georges (Post to
-\url{https://groups.google.com/d/forum/dartr})
+Author(s): Arthur Georges. Custodian: Arthur Georges -- Post to
+\url{https://groups.google.com/d/forum/dartr}
 }
