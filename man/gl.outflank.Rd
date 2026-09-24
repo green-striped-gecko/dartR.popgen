@@ -2,8 +2,8 @@
 % Please edit documentation in R/gl.outflank.r
 \name{gl.outflank}
 \alias{gl.outflank}
-\title{Identifies loci under selection per population using the outflank
- method of Whitlock and Lotterhos (2015)}
+\title{Identify Fst outlier loci with the OutFLANK method of Whitlock and
+Lotterhos (2015)}
 \usage{
 gl.outflank(
   gi,
@@ -12,14 +12,15 @@ gl.outflank(
   RightTrimFraction = 0.05,
   Hmin = 0.1,
   qthreshold = 0.05,
-  ...
+  verbose = NULL
 )
 }
 \arguments{
-\item{gi}{A genlight or genind object, with a defined population structure
-[required].}
+\item{gi}{A genlight object with SNP data, or a genind object, with at
+least two populations defined [required].}
 
-\item{plot}{A switch if a barplot is wanted [default TRUE].}
+\item{plot}{Logical: plot the histogram of Fst (uncorrected for sample
+size) with the inferred neutral distribution [default TRUE].}
 
 \item{LeftTrimFraction}{The proportion of loci that are trimmed from the
 lower end of the range of Fst before the likelihood function is applied
@@ -29,31 +30,67 @@ lower end of the range of Fst before the likelihood function is applied
 upper end of the range of Fst before the likelihood function is applied
 [default 0.05].}
 
-\item{Hmin}{The minimum heterozygosity required before including calculations
-from a locus [default 0.1].}
+\item{Hmin}{The minimum expected heterozygosity required for a locus to be
+tested [default 0.1].}
 
-\item{qthreshold}{The desired false discovery rate threshold for calculating
-q-values [default 0.05].}
+\item{qthreshold}{The false discovery rate threshold used to flag outliers
+from the q-values [default 0.05].}
 
-\item{...}{additional parameters (see documentation of outflank on github).}
+\item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
+brief progress messages; 3, progress and results summary; 5, full report
+[default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-Returns an index of outliers and the full outflank list
+A list with two elements:
+\itemize{
+\item index: a logical vector with one value per input locus, in input
+  order: TRUE for loci that are NOT outliers (including loci below
+  \code{Hmin}), FALSE for outliers, NA for monomorphic loci and loci
+  without calls. Outliers are selected with \code{which(!res$index)}.
+\item outflank: the OutFLANK output, a list with FSTbar (mean Fst of
+  non-outlier loci), FSTNoCorrbar (the same without sample size
+  correction), dfInferred (inferred degrees of freedom of the neutral
+  chi-square distribution), numberLowFstOutliers, numberHighFstOutliers,
+  and results, a data frame with one row per input locus (LocusName, He,
+  FST, T1, T2, FSTNoCorr, T1NoCorr, T2NoCorr, meanAlleleFreq (frequency of
+  the reference allele), indexOrder, GoodH, qvalues, pvalues,
+  pvaluesRightTail, OutlierFlag).
+}
 }
 \description{
-Identifies loci under selection per population using the outflank
- method of Whitlock and Lotterhos (2015)
+Runs OutFLANK on a SNP genlight (or genind) object: a single Fst outlier
+scan across all populations that flags loci whose Fst is higher (or
+lower) than expected under a neutral chi-square distribution inferred from
+the trimmed centre of the Fst distribution.
 }
 \details{
-This function is a wrapper around the outflank function provided by
-Whitlock and Lotterhos. To be able to run this function the packages qvalue
-(from bioconductor) and outflank (from github) needs to be installed. To do
-so see example below.
+The code of OutFLANK (Whitlock and Lotterhos) is bundled in dartR.popgen,
+so the OutFLANK package itself is not needed; the Bioconductor package
+qvalue is. Results are identical to running OutFLANK::MakeDiploidFSTMat()
+and OutFLANK::OutFLANK() on the same genotypes.
+
+Each SNP enters the analysis once, as the number of copies of the
+alternate allele (0, 1, 2) per individual. Every input locus is kept in
+the output, in input order. Loci that are monomorphic or missing in every
+individual are not tested and get NA. Loci with expected heterozygosity
+below \code{Hmin} are not tested either, but OutFLANK reports them with
+OutlierFlag FALSE (GoodH = "lowH" in the results), so their index is
+TRUE.
+
+Negative Fst estimates cannot be tested against the chi-square
+distribution; they are flagged as outliers only when the lowest positive
+Fst values are outliers. Low-Fst outliers are not reliable (Whitlock and
+Lotterhos 2015).
 }
 \examples{
 \donttest{
-gl.outflank(bandicoot.gl, plot = TRUE)
+if (requireNamespace("qvalue", quietly = TRUE)) {
+  res <- gl.outflank(bandicoot.gl, plot = FALSE)
+  # names of the outlier loci
+  locNames(bandicoot.gl)[which(!res$index)]
 }
+}
+
 }
 \references{
 Whitlock, M.C. and Lotterhos K.J. (2015) Reliable detection of loci
@@ -61,11 +98,15 @@ responsible for local adaptation: inference of a neutral model through
 trimming the distribution of Fst. The American Naturalist 186: 24 - 36.
 
 Github repository: Whitlock & Lotterhos:
- \url{https://github.com/whitlock/OutFLANK} (Check the readme.pdf within the
-  repository for an explanation. Be aware you now can run OufFLANK from a
-  genlight object)
+ \url{https://github.com/whitlock/OutFLANK}
 }
 \seealso{
 \code{\link{utils.outflank}}, \code{\link{utils.outflank.plotter}},
  \code{\link{utils.outflank.MakeDiploidFSTMat}}
 }
+\author{
+Author(s): Bernd Gruber; OutFLANK code by Whitlock and Lotterhos.
+  Custodian: Bernd Gruber -- Post to
+  \url{https://groups.google.com/d/forum/dartr}
+}
+\concept{selection}
