@@ -2,6 +2,23 @@
 
 ## Bug fixes
 
+* `gl.select.panel`: `method = "dapc"` selected loci by the row names of
+  the DAPC output, which do not always equal the locus names; on
+  possums.gl (the help example) it matched none and returned every locus.
+  It now selects by position. `"pahigh"` no longer stops on data without SNP
+  metadata, and `"monopop"` no longer stops when a population has fewer
+  monomorphic loci than its share. Individuals keep their input order
+  (previously sorted by population). Arguments are checked, `verbose = 0`
+  is silent, and the unused `plot.out`, `plot.file` and `plot.dir`
+  arguments are removed. On bandicoot.gl every method selects the same
+  loci as before. **dapc panels change where it returned all loci;
+  individual order changes for unsorted input; calls passing plot
+  arguments now error.**
+* `gl.check.panel` accepts `parameter = "Nall"` as documented (and `"Na"`),
+  requires the panel and the full data to hold the same individuals by
+  name (previously only population labels were compared), honours
+  `plot.out`, `plot.file`, `plot.dir` and `verbose`, and documents that it
+  returns the data frame of full-data vs panel values.
 * `gl.ld.distance` no longer fails when `ld.resolution` exceeds the
   largest distance ("subscript out of bounds" inside `fields::stats.bin`);
   bins are now computed in base R, with the same means, so `fields` is no
