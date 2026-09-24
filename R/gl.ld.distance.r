@@ -49,7 +49,9 @@
 #' @author Author(s): Luis Mijangos. Custodian: Luis Mijangos -- Post to
 #'  \url{https://groups.google.com/d/forum/dartr}
 #' @examples
-#' if (requireNamespace("snpStats", quietly = TRUE)) {
+#' # gl.report.ld.map (dartR.base) needs snpStats and fields
+#' if (requireNamespace("snpStats", quietly = TRUE) &&
+#'     requireNamespace("fields", quietly = TRUE)) {
 #'   require("dartR.data")
 #'   x <- platypus.gl
 #'   x <- gl.filter.callrate(x, threshold = 1)

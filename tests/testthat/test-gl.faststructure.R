@@ -176,6 +176,8 @@ test_that("run: repeated calls in one folder never mix [approved 2]", {
 })
 
 test_that("run: binaries checked, verbose 0 silent [approved 4, 5]", {
+  # on Windows gl.run.faststructure stops before looking for binaries
+  skip_on_os("windows")
   x <- fs_genlight()
   d <- withr::local_tempdir()
   expect_error(gl.run.faststructure(x, k.range = 2,

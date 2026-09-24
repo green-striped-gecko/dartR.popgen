@@ -36,7 +36,7 @@ test_that("missing binaries name the files and the download [approved 3]", {
       gl.run.epos(ep_genlight(), epos.path = tempfile("nope"), L = 1e5,
                   u = 1e-8, verbose = 0)
     ),
-    "Cannot find epos, epos2plot.*gl.download.binary"
+    "Cannot find epos(\\.exe)?, epos2plot(\\.exe)?.*gl.download.binary"
   )
 })
 
