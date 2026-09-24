@@ -2,6 +2,18 @@
 
 ## Bug fixes
 
+* `gl.run.stairway2` runs Stairway Plot 2 in a new subfolder of `tempdir()`
+  and `cleanup = TRUE` removes only that subfolder. Previously it deleted
+  the whole session `tempdir()`, including binaries downloaded there by
+  `gl.download.binary()` and files saved by other functions, and a
+  `plot.file` save then failed after the run. `run = FALSE` now returns
+  instead of stopping with "object 'res' not found". **The returned list
+  gains `run.dir`, the run folder (NULL once removed); the history column
+  `" low75"` is renamed `low75`; SilicoDArT input now errors at every
+  verbosity.** The plot uses `plot.theme`; Stairway Plot 2 output prints
+  only at `verbose >= 3`; the user's `future` plan is restored after
+  `parallel > 1`; a missing binary folder, missing Java or a failed run
+  stop with a clear message. Estimates are unchanged.
 * `gl.run.popcluster`: the likelihood table (`best_run`) is numeric (NA
   where PopCluster writes "-"). It was kept as text, so the LogL(K) plot
   had an alphabetically sorted axis and was drawn upside down (the best K
