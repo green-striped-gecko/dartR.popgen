@@ -12,30 +12,37 @@ gl.sfs(
   plot.out = TRUE,
   plot.file = NULL,
   plot.dir = NULL,
+  plot.theme = theme_dartR(),
   verbose = NULL
 )
 }
 \arguments{
-\item{x}{dartR/genlight object}
+\item{x}{dartR/genlight object with SNP data [required].}
 
 \item{minbinsize}{remove bins from the left of the sfs. For example to remove
 singletons (alleles only occurring once among all individuals) set
-minbinsize to 2. If set to zero, also monomorphic (d0) loci are returned.}
+minbinsize to 2. If set to zero, also monomorphic (d0) loci are returned.
+For a multidimensional sfs see details [default 0].}
 
 \item{folded}{if set to TRUE (default) a folded sfs (minor allele frequency
 sfs) is returned. If set to FALSE then an unfolded (derived allele frequency
  sfs) is returned. It is assumed that 0 is homozygote for the reference and
  2 is homozygote for the derived allele. So you need to make sure your
- coding is correct.}
+ coding is correct [default TRUE].}
 
 \item{singlepop}{switch to force to create a one-dimensional sfs, even
-though the genlight/dartR object contains more than one population}
+though the genlight/dartR object contains more than one population
+[default FALSE].}
 
 \item{plot.out}{Specify if plot is to be produced [default TRUE].}
 
-\item{plot.file}{Name for the RDS binary file to save (base name only, exclude extension) [default NULL]}
+\item{plot.file}{Name for the RDS binary file to save (base name only,
+exclude extension); only a one-dimensional sfs is plotted [default NULL]}
 
-\item{plot.dir}{Directory in which to save files [default = working directory]}
+\item{plot.dir}{Directory in which to save files [default as specified by
+the global working directory or tempdir()]}
+
+\item{plot.theme}{User specified theme [default theme_dartR()].}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 progress log ; 3, progress and results summary; 5, full report
@@ -49,26 +56,52 @@ an n-dimensional array (n is the number of populations in the genlight/dartR
   multidimensional site frequency spectrum for each population is returned
    [=a multidimensional site frequency spectrum]. Be aware the
    multidimensional spectrum works only for a limited number of population
-    and individuals [if too high the table command used internally will
-    through an error as the number of populations and individuals (and
+    and individuals [if too high the function stops with an error as the
+    number of populations and individuals (and
     therefore dimensions) are too large]. To get a single sfs for a
     genlight/dartR object with multiple populations, you need to set
     singlepop to TRUE. The returned sfs can be used to analyse demographics,
      e.g. using fastsimcoal2.
 }
 \description{
-Creates a site frequency spectrum based on a dartR or genlight object
+Creates a folded or unfolded site frequency spectrum (SFS), for all
+individuals together or as a multidimensional (joint) SFS with one
+dimension per population.
+}
+\details{
+Only loci scored in every individual are used. A locus with missing calls
+cannot be placed in a frequency class of the full sample: counted against
+the full sample size it lands in a lower class, and a locus fixed in all
+called individuals would appear polymorphic. Loci with missing calls are
+therefore excluded and their number is reported (verbose >= 1); to keep
+more loci, filter individuals with low call rate or impute
+(\code{gl.impute}) before running the function.\cr
+A folded multidimensional SFS is folded on the minor allele of all
+populations combined (the joint minor allele frequency SFS of
+fastsimcoal2): for each locus, if the alternative allele is the more
+frequent one over all individuals, the counts of every population are
+taken for the reference allele.\cr
+For a multidimensional SFS, minbinsize sets to zero the cells whose total
+count over all populations is below minbinsize (for minbinsize = 1, only
+the cell of loci monomorphic in all populations); the array keeps its
+full dimensions, so polymorphisms private to one population are kept.
 }
 \examples{
 gl.sfs(bandicoot.gl, singlepop = TRUE)
 gl.sfs(possums.gl[c(1:5, 31:33), ], minbinsize = 1)
 }
 \references{
-Excoffier L., Dupanloup I., Huerta-Sánchez E., Sousa V. C. and
+Excoffier L., Dupanloup I., Huerta-Sanchez E., Sousa V. C. and
  Foll M. (2013) Robust demographic inference from genomic and SNP data. PLoS
  genetics 9(10)
 }
-\author{
-Custodian: Bernd Gruber & Carlo Pacioni (Post to
- \url{https://groups.google.com/d/forum/dartr})
+\seealso{
+Other demographic history: 
+\code{\link{gl.run.epos}()},
+\code{\link{gl.run.stairway2}()}
 }
+\author{
+Author(s): Bernd Gruber. Custodian: Bernd Gruber & Carlo Pacioni --
+Post to \url{https://groups.google.com/d/forum/dartr}
+}
+\concept{demographic history}
