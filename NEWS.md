@@ -2,6 +2,15 @@
 
 ## Bug fixes
 
+* `gl.ld.distance` no longer fails when `ld.resolution` exceeds the
+  largest distance ("subscript out of bounds" inside `fields::stats.bin`);
+  bins are now computed in base R, with the same means, so `fields` is no
+  longer needed. No empty bin is added when the bins end exactly on the
+  largest distance. The returned table gains `n.pairs`, the number of
+  pairs behind each bin mean. The table prints only at `verbose >= 3`;
+  `pop.colors` accepts a palette function; the threshold line is labelled
+  in the legend and documented as an R.squared threshold. **The returned
+  table gains a column.**
 * `gl.outflank` analyses each SNP once, from the 0/1/2 genotype matrix, and
   now reproduces the OutFLANK package exactly. Previously the genlight was
   converted to genind and both allele columns of every SNP were analysed,
