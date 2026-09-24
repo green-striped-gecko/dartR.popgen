@@ -2,6 +2,19 @@
 
 ## Bug fixes
 
+* `gl.collapse` builds population groups as connected components. The old
+  single pass could leave a population in two groups when similar
+  populations formed a chain, and `gl.merge.pop()` then stopped ("not
+  present in the dataset"; 24 of 363 random test matrices). When all
+  populations fall into one group, the one-population result is returned
+  instead of an error, and when none merge the input `fd` is returned
+  unchanged. `tloc` must now match the value used in `gl.fixed.diff()`:
+  previously the returned matrices were recomputed with `gl.collapse`'s
+  `tloc` (default 0) while the grouping used the input's, so the help
+  example mixed 0.05 and 0. Arguments are checked; NA distances do not join
+  populations. **Calls whose `tloc` differs from the one used to build `fd`
+  now stop with an error; runtime about doubles (one extra
+  `gl.fixed.diff()` run for the check).**
 * `gl.select.panel`: `method = "dapc"` selected loci by the row names of
   the DAPC output, which do not always equal the locus names; on
   possums.gl (the help example) it matched none and returned every locus.
