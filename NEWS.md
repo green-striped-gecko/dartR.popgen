@@ -2,6 +2,17 @@
 
 ## Bug fixes
 
+* `gl.run.epos` sends EPOS the SFS with its true class numbers. Previously
+  `folded = FALSE` was run as a folded SFS of twice the sample size (no
+  `-U`), `minbinsize = 2` relabelled doubletons as singletons, and
+  `minbinsize = 0` (zero class instead of `L`) always failed. `upper` and
+  `lower` are now passed to epos2plot. **Estimates change for
+  `folded = FALSE`, `minbinsize >= 2` and non-default `upper`/`lower`;
+  default calls are unchanged. SilicoDArT input now errors.** New `seed`
+  argument (passed to epos and bootSfs); `u` can be left NULL as documented;
+  `L` is required unless `minbinsize = 0`; an unnamed `sfs` vector is
+  accepted; missing binaries and EPOS failures stop with a clear message;
+  `verbose = 0` is silent.
 * `gl.run.stairway2` runs Stairway Plot 2 in a new subfolder of `tempdir()`
   and `cleanup = TRUE` removes only that subfolder. Previously it deleted
   the whole session `tempdir()`, including binaries downloaded there by

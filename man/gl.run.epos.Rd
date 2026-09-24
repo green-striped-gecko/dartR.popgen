@@ -2,7 +2,7 @@
 % Please edit documentation in R/gl.run.epos.R
 \name{gl.run.epos}
 \alias{gl.run.epos}
-\title{Run EPOS for Inference of Historical Population-Size Changes}
+\title{Run EPOS for inference of historical population-size changes}
 \usage{
 gl.run.epos(
   x,
@@ -18,6 +18,7 @@ gl.run.epos(
   method = "greedy",
   depth = 2,
   other.options = "",
+  seed = NULL,
   outfile = "epos.out",
   outpath = NULL,
   cleanup = TRUE,
@@ -29,101 +30,129 @@ gl.run.epos(
 )
 }
 \arguments{
-\item{x}{dartR/genlight object}
+\item{x}{dartR/genlight object with SNP data [required].}
 
-\item{epos.path}{path to epos and other required programs (epos, epos2plot are always required and bootSfs in case a bootstrap and confidence estimate is required )}
+\item{epos.path}{path to the folder with epos and epos2plot (always required)
+and bootSfs (required if boot > 0) [required].}
 
-\item{sfs}{if no sfs is provided function gl.sfs(x, minbinsize=1, singlepop=TRUE) is used to calculate the sfs that is provided to epos}
+\item{sfs}{the SFS to use instead of calculating it from x. Either named as
+returned by \code{gl.sfs} ("d0", "d1", ...; the names give the classes), or
+an unnamed vector of counts for the classes minbinsize, minbinsize + 1, ...
+[default NULL, calculated with gl.sfs(x, singlepop = TRUE)].}
 
-\item{minbinsize}{remove bins from the left of the sfs. if you run epos from a genlight object the sfs is calculated by the function (using gl.sfs) and as default minbinsize is set to 1 (the monomorphic loci of the sfs are removed). This parameter is ignored if sfs is provide via the sfs parameter (see below). Be aware even if you genlight object has more than one population the sfs is calculated with singlepop set to true (one sfs for all individuals) as epos does not work with multidimensional sfs)}
+\item{minbinsize}{the smallest SFS class used. 0 keeps the zero class
+(monomorphic sites), which EPOS then uses instead of L; 1 (default) drops it;
+2 also excludes singletons, and so on (option -x in epos). If your
+genlight object has more than one population the sfs is calculated with
+singlepop set to TRUE (one sfs for all individuals), as epos does not work
+with a multidimensional sfs [default 1].}
 
-\item{folded}{if set to TRUE (default) a folded sfs (minor allele frequency sfs) is returned. If set to FALSE then an unfolded (derived allele frequency sfs) is returned. It is assumed that 0 is homozygote for the reference and 2 is homozygote for the derived allele. So you need to make sure your coding is correct. option -U in epos.}
+\item{folded}{if set to TRUE (default) a folded sfs (minor allele frequency sfs) is used. If set to FALSE an unfolded (derived allele frequency sfs) is used. It is assumed that 0 is homozygote for the reference and 2 is homozygote for the derived allele. So you need to make sure your coding is correct. Option -U in epos [default TRUE].}
 
-\item{L}{length of sequences (including monomorphic and polymorphic sites). If the sfs is provided with minbinsize=1 (default) then L needs to be specified. 
-option -l in epos}
+\item{L}{length of sequences (including monomorphic and polymorphic sites).
+Required unless minbinsize = 0. Option -l in epos [default NULL].}
 
 \item{u}{mutation rate. If not provided the default value of epos is used (5e-9).
-option -u in epos}
+Option -u in epos [default NULL].}
 
-\item{boot}{if set to a value >0 the programm bootSfs is used to provide multiple
+\item{boot}{if set to a value >0 the program bootSfs is used to provide multiple
 bootstrapped sfs, which allows to calculate confidence intervals of the historic Ne
-sizes. Be aware the runtime can be extended. default:0 no bootstrapped simulations are
-run, otherwise boot number of bootstraps are run (option -i in bootSfs)}
+sizes. Be aware the runtime can be extended. 0: no bootstrapped simulations are
+run, otherwise boot number of bootstraps are run (option -i in bootSfs) [default 0].}
 
-\item{upper}{upper quantile of the bootstrap (only used if boot>0). default 0.975.
-(option -u in epos2plot)}
+\item{upper}{upper quantile of the bootstrap (only used if boot>0).
+Option -u in epos2plot [default 0.975].}
 
-\item{lower}{lower quantile of the bootstrap (only used if boot>0). default 0.025.
-(option -l in epos2plot)}
+\item{lower}{lower quantile of the bootstrap (only used if boot>0).
+Option -l in epos2plot [default 0.025].}
 
-\item{method}{either "exhaustive" or "greedy". check the epos manual for details. If method="exhaustive" then the paramter depth is used. default: "greedy".}
+\item{method}{either "exhaustive" or "greedy". Check the epos manual for details. If method="exhaustive" then the parameter depth is used [default "greedy"].}
 
-\item{depth}{if method="exhaustive" then this parameter is used to set the search depth, default is 2. If method is set to greedy this is setting is ignored.}
+\item{depth}{if method="exhaustive" then this parameter is used to set the search depth. If method is set to greedy this setting is ignored [default 2].}
 
-\item{other.options}{additional options for epos (e.g -m, -x etc.)}
+\item{other.options}{additional options for epos, as typed on the command
+line (e.g "-m 10") [default ""].}
 
-\item{outfile}{File name of the output file [default 'genepop.gen'].}
+\item{seed}{seed for the random number generators of epos and bootSfs
+(option -s). If NULL, both programs use a seed from the system clock and
+results differ between runs [default NULL].}
 
-\item{outpath}{Path where to save the output file [default global working 
+\item{outfile}{File name of the output file (the raw epos output) [default 'epos.out'].}
+
+\item{outpath}{Path where to save the output file [default global working
 directory or if not specified, tempdir()].}
 
-\item{cleanup}{if set to true intermediate tempfiles are deleted after the run}
+\item{cleanup}{if set to true intermediate tempfiles are deleted after the run [default TRUE].}
 
 \item{plot.display}{Specify if plot is to be produced [default TRUE].}
 
 \item{plot.theme}{User specified theme [default theme_dartR()].}
 
-\item{plot.dir}{Directory to save the plot RDS files [default as specified 
+\item{plot.dir}{Directory to save the plot RDS files [default as specified
 by the global working directory or tempdir()]}
 
 \item{plot.file}{Filename (minus extension) for the RDS plot file [Required for plot save]}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
-progress log; 3, progress and results summary; 5, full report
+brief progress messages; 3, progress and results summary, including the
+messages of epos; 5, full report
 [default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-returns a list with four components: 
+returns a list with four components:
 \itemize{
-\item{history: Ne estimates of over generations (generation, median, low and high)} 
+\item{history: Ne estimates over generations (generation, low, median and high)}
 \item{plot: a ggplot of history }
-\item{sfs: the sfs used for the analysis}
+\item{sfs: the sfs used for the analysis (class r and count fr)}
 \item{diagnostics: a list with the several diagnostics and a plot of observed and expected sfs}
 }
 }
 \description{
 This function runs EPOS (based on Lynch et al. 2019) to estimate historical population-size
 \url{https://github.com/EvolBioInf/epos}. It relies on a compiled version of the software
- epos, epos2plot and if a bootstrap output is required bootSfs. For more information on the 
- approach check the publication (Lynch at al. 2019), the github repository 
- \url{https://github.com/EvolBioInf/epos} and look out for the manual epos.pdf 
- (\url{https://github.com/EvolBioInf/epos/blob/master/doc/epos.pdf}. 
-The binaries need to be provided in a single folder and can be downloaded via the 
-\code{gl.download.binary} function (including the necessary dlls for windows; under Linux gls, blas need to be installed on your system). Please note: if you use this method, make sure you cite the original publication in your work.
-EPOS (Estimation of Population Size changes) is a software tool developed based on the theoretical framework outlined by Lynch et al. (2019). It is designed to infer historical changes in population size using allele-frequency data obtained from population-genomic surveys. Below is a brief summary of the main concepts of EPOS:\cr\cr
-EPOS (Estimation of Population Size changes) is a software tool that infers historical 
-changes in population size using allele-frequency data from population-genomic surveys. 
+ epos, epos2plot and if a bootstrap output is required bootSfs. For more information on the
+ approach check the publication (Lynch at al. 2019), the github repository
+ \url{https://github.com/EvolBioInf/epos} and look out for the manual epos.pdf
+ (\url{https://github.com/EvolBioInf/epos/blob/master/doc/epos.pdf}).
+The binaries need to be provided in a single folder and can be downloaded via the
+\code{gl.download.binary} function (including the necessary dlls for windows; under Linux gsl, blas need to be installed on your system). Please note: if you use this method, make sure you cite the original publication in your work.
+}
+\details{
+EPOS (Estimation of Population Size changes) is a software tool that infers historical
+changes in population size using allele-frequency data from population-genomic surveys.
 The method relies on the site-frequency spectrum (SFS) of nearly neutral polymorphisms.
 The underlying theory uses coalescence models, which describe how gene sequences have
 originated from a common ancestor. By analyzing the probability distributions of the
-starting and ending points of branch segments over all possible coalescence trees, 
+starting and ending points of branch segments over all possible coalescence trees,
 EPOS can estimate historic population sizes.\cr
-The function uses a model-flexible approach, meaning it estimates historic population 
+The function uses a model-flexible approach, meaning it estimates historic population
 sizes, without the necessity to provide a candidate scenario. An efficient statistical
 procedure is employed, to estimate historic effective population sizes.\cr
  For all the possible settings, please refer to the manual of EPOS. \cr
  The main parameters that are necessary to run the function are a genlight/dartR object,
 L (length of sequences), u (mutation rate), and the path to the epos binaries.
 For details check the example below.\cr
-Please note: There is currently not really a good way to estimate L, the length 
-of all sequences. Often users of dart data use the number of loci multiplied 
-by 69, but this is definitely an underestimate as monomorphic loci need to be 
+Please note: There is currently not really a good way to estimate L, the length
+of all sequences. Often users of dart data use the number of loci multiplied
+by 69, but this is definitely an underestimate as monomorphic loci need to be
 included (also the length of the restriction site should be added for each loci).
-For mutation rate u, the default value is set to 5e-9, but should be adapted 
-to the species of interest. The good news is, that settings of L and mu affects 
-only the axis of the inferred history, but not the shape of the history. 
-So users can infer the shape, but need to be careful with a temporal interpretation 
-as both x and y axis are affected by the mutation rate and L.
+For mutation rate u, the default value is set to 5e-9, but should be adapted
+to the species of interest. The good news is, that settings of L and mu affects
+only the axis of the inferred history, but not the shape of the history.
+So users can infer the shape, but need to be careful with a temporal interpretation
+as both x and y axis are affected by the mutation rate and L.\cr
+EPOS needs the number of monomorphic sites, either as the sequence length L
+(option -l) or as the zero class of the SFS (\code{minbinsize = 0}). The zero
+class counts only the monomorphic loci kept in the genlight object, which for
+DArT data is usually far below the true number of monomorphic sites, so L is
+usually the better choice.\cr
+The SFS is sent to EPOS with its true class numbers: classes below
+\code{minbinsize} are excluded with the EPOS option -x, and an unfolded SFS
+(\code{folded = FALSE}) is sent as classes 1 to 2n-1 with option -U.\cr
+The SFS assumes that every locus is scored in all 2n sequences. A locus with
+missing calls is counted in a lower frequency class than its true one, so
+filter loci to full call rate (\code{gl.filter.callrate(x, threshold = 1)})
+or impute them (\code{gl.impute}) before running the analysis.
 }
 \examples{
 \dontrun{
@@ -136,9 +165,14 @@ epos$history
 
 }
 \references{
-Lynch, Michael, Bernhard Haubold, Peter Pfaffelhuber, and Takahiro Maruki. 2019. Inference of Historical Population-Size Changes with Allele-Frequency Data. G3: Genes|Genomes|Genetics 10, no. 1: 211–23. \doi{10.1534/g3.119.400854}.
+Lynch, Michael, Bernhard Haubold, Peter Pfaffelhuber, and Takahiro Maruki. 2019. Inference of Historical Population-Size Changes with Allele-Frequency Data. G3: Genes|Genomes|Genetics 10, no. 1: 211-23. \doi{10.1534/g3.119.400854}.
+}
+\seealso{
+Other demographic history: 
+\code{\link{gl.run.stairway2}()}
 }
 \author{
-Custodian: Bernd Gruber -- Post to 
+Author(s): Bernd Gruber. Custodian: Bernd Gruber -- Post to
 \url{https://groups.google.com/d/forum/dartr}
 }
+\concept{demographic history}
