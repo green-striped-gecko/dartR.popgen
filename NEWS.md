@@ -2,6 +2,21 @@
 
 ## Bug fixes
 
+* `gl.outflank` analyses each SNP once, from the 0/1/2 genotype matrix, and
+  now reproduces the OutFLANK package exactly. Previously the genlight was
+  converted to genind and both allele columns of every SNP were analysed,
+  so `numberHighFstOutliers` and `numberLowFstOutliers` were doubled (26
+  reported for 13 flagged loci in a simulation) and `dfInferred` and the
+  q-values departed from OutFLANK; locus names containing a dot failed.
+  Loci missing in every individual stay in the output as NA, so `index` and
+  `results` have one row per input locus in input order (previously they
+  were dropped and later loci shifted). New `verbose` argument; `...`
+  removed (it was ignored); clear errors for fewer than two populations,
+  SilicoDArT input or a missing qvalue package; the plot uses `Hmin`; the
+  help page states that `index` is TRUE for loci that are not outliers.
+  About 6 times faster. **Outlier counts, `dfInferred`, q-values and
+  `meanAlleleFreq` (now the reference-allele frequency) change; calls that
+  pass extra arguments now error.**
 * `gl.find.loci.in.genes` selects a gene when its own row or any descendant
   feature (mRNA, lnc_RNA, CDS, exon, followed through `Parent`) matches
   `gene`, and treats pseudogenes as genes. Previously only gene rows and
