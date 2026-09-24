@@ -2,8 +2,7 @@
 % Please edit documentation in R/gl.ld.distance.r
 \name{gl.ld.distance}
 \alias{gl.ld.distance}
-\title{Plots linkage disequilibrium against distance by population
-disequilibrium patterns}
+\title{Plots linkage disequilibrium against distance by population}
 \usage{
 gl.ld.distance(
   ld.report,
@@ -21,11 +20,11 @@ gl.ld.distance(
 \item{ld.report}{Output from function \code{\link[dartR.base]{gl.report.ld.map}}
 [required].}
 
-\item{ld.resolution}{Resolution at which LD should be reported in number of
-base pairs [default NULL].}
+\item{ld.resolution}{Width of the distance bins in number of base pairs
+[default 100000].}
 
-\item{pop.colors}{A color palette for box plots by population or a list
- with as many colors as there are populations in the dataset
+\item{pop.colors}{A palette function (e.g. \code{rainbow}) or a vector
+ with at least as many colors as there are populations in the dataset
 [default NULL].}
 
 \item{plot.title}{Title of the plot [default " "].}
@@ -36,24 +35,38 @@ base pairs [default NULL].}
 
 \item{plot.file}{Name for the RDS binary file to save (base name only, exclude extension) [default NULL]}
 
-\item{plot.dir}{Directory in which to save files [default = working directory]}
+\item{plot.dir}{Directory in which to save files [default = tempdir(),
+unless specified using gl.set.wd].}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 progress log; 3, progress and results summary; 5, full report
 [default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-A dataframe with information of LD against distance by population.
+A data.table with one row per population and bin: pop, distance
+  (upper edge of the bin in base pairs), ld.stat (mean LD of the pairs in
+  the bin; NA for an empty bin) and n.pairs (number of pairs with an LD
+  value in the bin).
 }
 \description{
-The function creates a plot showing
-the pairwise LD measure against distance in number of base pairs pooled over
-all the chromosomes and a red line representing the threshold (R.squared =
-0.2) that is commonly used to imply that two loci are unlinked (Delourme et
-al., 2013; Li et al., 2014).
+The function bins SNP pairs by the distance between them, in base pairs
+pooled over all chromosomes, and plots the mean pairwise LD of each bin
+for each population, with a red line at R.squared = 0.2, the threshold
+commonly used to imply that two loci are unlinked (Delourme et al., 2013;
+Li et al., 2014).
+}
+\details{
+Bins are (1, 1 + ld.resolution], (1 + ld.resolution, 1 + 2 *
+ld.resolution], ..., with the first bin closed on the left and the last
+bin ending at the largest distance in \code{ld.report}. Each point is the
+mean LD of the pairs in a bin and is plotted at the upper edge of the bin.
+
+The red threshold line applies to R.squared, the default LD measure of
+\code{\link[dartR.base]{gl.report.ld.map}}. If the report was computed
+with another measure (e.g. D.prime), the line has no meaning.
 }
 \examples{
-if ((requireNamespace("snpStats", quietly = TRUE)) & (requireNamespace("fields", quietly = TRUE))) {
+if (requireNamespace("snpStats", quietly = TRUE)) {
   require("dartR.data")
   x <- platypus.gl
   x <- gl.filter.callrate(x, threshold = 1)
@@ -67,7 +80,7 @@ if ((requireNamespace("snpStats", quietly = TRUE)) & (requireNamespace("fields",
 \references{
 \itemize{
 \item Delourme, R., Falentin, C., Fomeju, B. F., Boillot, M., Lassalle, G.,
-André, I., . . . Marty, A. (2013). High-density SNP-based genetic map
+Andre, I., . . . Marty, A. (2013). High-density SNP-based genetic map
 development and linkage disequilibrium assessment in Brassica napusL. BMC
 genomics, 14(1), 120.
 \item Li, X., Han, Y., Wei, Y., Acharya, A., Farmer, A. D., Ho, J., . . .
@@ -81,7 +94,7 @@ Other ld functions:
 \code{\link{gl.ld.haplotype}()}
 }
 \author{
-Custodian: Luis Mijangos -- Post to
+Author(s): Luis Mijangos. Custodian: Luis Mijangos -- Post to
  \url{https://groups.google.com/d/forum/dartr}
 }
 \concept{ld functions}
