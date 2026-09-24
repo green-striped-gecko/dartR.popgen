@@ -2,6 +2,20 @@
 
 ## Bug fixes
 
+* `gl.TajimasD`: `sim_pval` now tests D against a neutral null of unlinked
+  SNPs, simulated in R (derived counts drawn with P(k) proportional to 1/k
+  from 2N sequences); `rep` alone runs it, and ms/sample_stats are no longer
+  needed (`ms.path` is accepted and ignored). Previously ms simulated all
+  sites on one non-recombining locus from N (not 2N) sequences, which for
+  unlinked DArT SNPs gives far too wide a null. The documentation now says
+  that `Pval.normal` and `Pval.beta` assume one non-recombining locus and
+  are conservative for unlinked SNPs, and that ascertainment of polymorphic
+  loci shifts D upwards. D is computed from exact allele counts with
+  per-site sample sizes in Watterson's term. **`sim_pval` changes; D changes
+  in the 5th decimal on complete data and by a few percent with missing
+  calls; SilicoDArT input now errors; `simulation.out` holds the simulated
+  D values.** `utils.get.allele.freq` works on genlight objects without
+  dartR flags and honours `verbose`; `verbose = 0` is silent.
 * `gl.sfs` builds the spectrum only from loci scored in every individual and
   reports how many loci with missing calls were excluded (verbose >= 1).
   Previously such loci were counted against the full sample size, so they

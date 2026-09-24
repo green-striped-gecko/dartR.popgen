@@ -97,6 +97,7 @@ Excoffier L., Dupanloup I., Huerta-Sanchez E., Sousa V. C. and
 }
 \seealso{
 Other demographic history: 
+\code{\link{gl.TajimasD}()},
 \code{\link{gl.run.epos}()},
 \code{\link{gl.run.stairway2}()}
 }

@@ -169,6 +169,7 @@ Lynch, Michael, Bernhard Haubold, Peter Pfaffelhuber, and Takahiro Maruki. 2019.
 }
 \seealso{
 Other demographic history: 
+\code{\link{gl.TajimasD}()},
 \code{\link{gl.run.stairway2}()},
 \code{\link{gl.sfs}()}
 }
