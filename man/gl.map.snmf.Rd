@@ -13,75 +13,85 @@ gl.map.snmf(
   scaley = 1,
   movepops = NULL,
   pop.labels = TRUE,
-  pop.labels.cex = 12
+  pop.labels.cex = 12,
+  plot.out = TRUE,
+  verbose = NULL
 )
 }
 \arguments{
 \item{x}{Name of the genlight object containing the coordinates in the
-\code{\@other$latlon} slot to calculate the population centers [required]}
+\code{\@other$latlon} slot (columns named lon and lat) to calculate the
+population centres [required].}
 
-\item{qmat}{Q-matrix from a gl.plot.snmf [required]
-[from \code{\link{gl.run.snmf}} and \code{\link{gl.plot.snmf}}]
- [required]}
+\item{qmat}{Q-matrix returned by \code{\link{gl.plot.snmf}} (or an element
+of the matrix list returned by \code{\link{gl.run.snmf}}) [required].}
 
-\item{color_clusters}{A color palette for clusters (K) or a list with}
+\item{color_clusters}{A colour palette function (for example
+\code{rainbow}), which is called with the number of clusters, or a vector
+with at least as many colours as clusters [default NULL, which uses
+gl.select.colors()].}
 
 \item{provider}{Provider passed to leaflet. Check \link[leaflet]{providers}
 for a list of possible backgrounds [default "Esri.NatGeoWorldMap"].}
 
 \item{scalex}{Scaling factor to determine the size of the bars in x direction
-[default 1]}
+[default 1].}
 
 \item{scaley}{Scaling factor to determine the size of the bars in y direction
-[default 1]}
+[default 1].}
 
-\item{movepops}{A two-dimensional data frame that allows to move the center of
-the barplots manually in case they overlap. Often if populations are
-horizontally close to each other. This needs to be a data.frame of the
-dimensions [rows=number of populations, columns = 2 (lon/lat)]. For each
-population you have to specify the x and y (lon and lat) units you want to
-move the center of the plot, (see example for details) [default NULL]}
+\item{movepops}{A data frame with two columns, lon and lat, that moves the
+centre of the barplots manually in case they overlap. Rows are matched to
+populations by row name when the row names are population names;
+otherwise there must be one row per population of x, in the order of
+levels(pop(x)) (see example) [default NULL].}
 
-\item{pop.labels}{Switch for population labels below the parplots
-[default TRUE]}
+\item{pop.labels}{Switch for population labels below the barplots
+[default TRUE].}
 
-\item{pop.labels.cex}{Size of population labels [default 12]}
+\item{pop.labels.cex}{Size of population labels [default 12].}
+
+\item{plot.out}{Specify if the map is to be printed [default TRUE].}
+
+\item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
+brief progress messages; 3, progress and results summary; 5, full report
+[default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-An interactive map that shows the PopCluster plots broken down by
-population.
-
-returns the map and a list of the qmat split into sorted matrices per
- population. This can be used to create your own map.
+A list with the map (element map) and the Q matrix split into
+ tables per population, in the order the bars are drawn (element Q_name,
+ with the population in column Pop_name). This can be used to create your
+ own map.
 }
 \description{
-This function takes the output of gl.plot.snmf (the Q matrix) and maps the
-Q-matrix across using the population centers from the genlight object that
-was used to run the snmf analysis via (\code{\link{gl.run.snmf}})
-and plots the typical snmf bar plots on a spatial map, providing a
-barplot for each subpopulation. Therefore it requires coordinates from a
- genlight object. This kind of plots should support the interpretation of the
-  spatial snmf of a population, but in principle is not different from
-  (\code{\link{gl.plot.snmf}})
+This function takes the Q matrix of a snmf run (as returned by
+\code{\link{gl.plot.snmf}}) and maps it using the population centres from
+the genlight object that was used to run the snmf analysis via
+\code{\link{gl.run.snmf}}. It plots the typical snmf bar plots on a spatial
+map, providing a barplot for each subpopulation. Therefore it requires
+coordinates from a genlight object. This kind of plot should support the
+interpretation of the spatial structure of a population, but in principle
+is not different from \code{\link{gl.plot.snmf}}.
 }
 \details{
-Creates a mapped version of snmf plots. For possible background maps
+Creates a mapped version of snmf plots with
+\code{\link{gl.map.structure}}, which places each population's bars at its
+own centre. Individuals are matched to x by name (column Label); only the
+populations present in qmat are mapped. For possible background maps
 check as specified via the provider:
 \url{http://leaflet-extras.github.io/leaflet-providers/preview/index.html}.
 You may need to adjust scalex and scaley values [default 1], as the size
 depends on the scale of the map and the position of the populations.
 }
 \examples{
-# examples need snmf to be installed on the system
 \dontrun{
-m <- gl.run.snmf(x=bandicoot.gl, minK=1, 
-maxK=5, rep=10)
-Q <- gl.plot.snmf(snmf_result=m, plot.K = 3, ind_name=T)
-gl.map.snmf(bandicoot.gl, qmat=Q)
-# move population 4 (out of 5) 0.5 degrees to the right and populations 1
-# 0.3 degree to the north of the map.
-mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
-gl.map.snmf(bandicoot.gl, qmat=Q, movepops=mp)
+m <- gl.run.snmf(x = bandicoot.gl, minK = 1, maxK = 5, rep = 10)
+Q <- gl.plot.snmf(snmf.result = m, plot.K = 3, ind.name = TRUE)
+gl.map.snmf(bandicoot.gl, qmat = Q)
+# move population 4 (out of 5) 0.5 degrees to the right and population 1
+# 0.3 degrees to the south of the map.
+mp <- data.frame(lon = c(0, 0, 0, 0.5, 0), lat = c(-0.3, 0, 0, 0, 0))
+gl.map.snmf(bandicoot.gl, qmat = Q, movepops = mp)
 }
 }
 \references{
@@ -92,9 +102,28 @@ Estimation of Individual Ancestry Coefficients. Genetics, 194(4): 973--983.
 }
 }
 \seealso{
-\code{\link{gl.run.snmf}},
-\code{\link{gl.plot.snmf}}
+\code{\link{gl.run.snmf}}, \code{\link{gl.plot.snmf}},
+\code{\link{gl.map.structure}}
+
+Other population structure: 
+\code{\link{gl.evanno}()},
+\code{\link{gl.map.popcluster}()},
+\code{\link{gl.map.structure}()},
+\code{\link{gl.plot.faststructure}()},
+\code{\link{gl.plot.popcluster}()},
+\code{\link{gl.plot.snmf}()},
+\code{\link{gl.plot.structure}()},
+\code{\link{gl.read.structure}()},
+\code{\link{gl.run.faststructure}()},
+\code{\link{gl.run.popcluster}()},
+\code{\link{gl.map.structure}()},
+\code{\link{gl.plot.snmf}()},
+\code{\link{gl.plot.structure}()},
+\code{\link{gl.read.structure}()},
+\code{\link{gl.run.snmf}()}
 }
 \author{
-Ching Ching Lau (Post to \url{https://groups.google.com/d/forum/dartr})
+Author(s): Ching Ching Lau. Custodian: Ching Ching Lau -- Post to
+ \url{https://groups.google.com/d/forum/dartr}
 }
+\concept{population structure}

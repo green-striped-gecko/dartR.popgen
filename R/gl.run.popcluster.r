@@ -1,6 +1,8 @@
 #' @name gl.run.popcluster
 #' 
 #' @title Runs a PopCluster analysis using a genlight object
+#'
+#' @family population structure
 #' 
 #' @description
 #' Creates an input file for the program PopCluster and runs it if
@@ -24,10 +26,11 @@
 #' set. 
 #' 
 #' @param x Name of the genlight object containing the SNP data [required].
-#' @param popcluster.path Path to the directory that contain the PopCluster
-#' program [default getwd()].
-#' @param output.path Path to store the parameter file and input
-#' data [default getwd()].
+#' @param popcluster.path Path to the directory that contains the PopCluster
+#' program (PopClusterMac, PopClusterLnx or PopClusterWin.exe)
+#' [default getwd()].
+#' @param output.path Folder in which the PopCluster parameter file and input
+#' data are written; created if missing [default tempdir()].
 #' @param filename Prefix of all the files that will be produced
 #'  [default “output”].
 #' @param minK Minimum K [default 1].
@@ -56,15 +59,19 @@
 #' @param parallel Use parallelisation (implemented only in LINUX for the
 #'  moment) [default FALSE].
 #' @param ncores How many cores should be used [default 1].
-#' @param cleanup clean data in tmp [default  TRUE].
-#' @param plot.dir Directory in which to save files [default getwd()].
+#' @param cleanup Remove the temporary folder in which PopCluster runs (a
+#' copy of the program and all its output files) when finished
+#' [default TRUE].
+#' @param plot.dir Directory in which to save files [default = tempdir(),
+#'  unless specified using gl.set.wd].
 #' @param plot.out Specify if plot is to be produced [default TRUE].
 #' @param plot.file Name for the RDS binary file to save (base name only, 
 #' exclude extension) [default NULL].
-#' @param plot_theme Theme of the plot [default theme_dartR()].
+#' @param plot_theme Theme of the plots [default theme_dartR()].
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
-#' progress log; 3, progress and results summary; 5, full report
-#' [default 2 or as specified using gl.set.verbosity].
+#'  brief progress messages; 3, progress and results summary, including the
+#'  output of PopCluster; 5, full report
+#'  [default 2, unless specified using gl.set.verbosity].
 #' 
 #' @details
 #'
@@ -84,8 +91,20 @@
 #' will let the program check for relatedness and automatically choose the 
 #' best prior (Equal or Unequal) based on the results.
 #'
-#' @return The plot of likelihood, DLK1, DLK2, FST.FIS, best run, Q-matrices 
-#' of PopCluster.
+#' For each K, the Q matrix of the best run chosen by PopCluster is returned;
+#' replicates are not averaged.
+#'
+#' PopCluster builds carry an expiry date, printed when the program starts
+#' (seen with verbose = 3); download a current build when it has passed.
+#'
+#' @return A list with: output_path, the folder with the parameter and input
+#' files; best_run, a data frame with one row per K and the numeric columns
+#' K, LogL_Mean, LogL_Min, LogL_Max, DLK1, DLK2, FST.FIS (NA where PopCluster
+#' reports "-") plus BestRun (the name of the best run); plots, a list of four
+#' ggplots (LogL_Mean, DLK1, DLK2, FST.FIS against K); and matrix, a list
+#' named by best run of data frames with one row per individual: Index,
+#' Order (position in the bar plot), Label, PercentMiss, Cluster,
+#' Pop_1 ... Pop_K (ancestry proportions) and Pop (population).
 #'
 #' @importFrom pillar align
 #' @importFrom stringr str_split
@@ -97,26 +116,25 @@
 #' from genotype data from a few microsatellites to millions of SNPs. 
 #' Heredity, 129(2), 79-92.
 #' }
-#' @author Custodian: Ching Ching Lau -- Post to
+#' @author Author(s): Ching Ching Lau. Custodian: Ching Ching Lau -- Post to
 #'  \url{https://groups.google.com/d/forum/dartr}
 #' @examples
 #' \dontrun{
-#' m <- gl.run.popcluster(x=bandicoot.gl, 
-#' popcluster.path="/User/PopCluster/Bin/",
-#' output.path="/User/Documents/Output/", minK=1, maxK=3, rep=2)
-#' Q <- gl.plot.popcluster(pop_cluster_result=m, plot.K = 3, ind_name=T)
+#' m <- gl.run.popcluster(x = bandicoot.gl,
+#'   popcluster.path = "/User/PopCluster/Bin/", minK = 1, maxK = 3, rep = 2)
+#' Q <- gl.plot.popcluster(pop_cluster_result = m, plot.K = 3, ind_name = TRUE)
 #' gl.map.popcluster(x = bandicoot.gl, qmat = Q)
-#' # move population 4 (out of 5) 0.5 degrees to the right and populations 1
-#' # 0.3 degree to the north of the map.
-#' mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
-#' gl.map.popcluster(bandicoot.gl, qmat=Q, movepops=mp)
+#' # move population 4 (out of 5) 0.5 degrees to the right and population 1
+#' # 0.3 degrees to the south of the map.
+#' mp <- data.frame(lon = c(0, 0, 0, 0.5, 0), lat = c(-0.3, 0, 0, 0, 0))
+#' gl.map.popcluster(bandicoot.gl, qmat = Q, movepops = mp)
 #' }
 #'
 #' @export
 
 gl.run.popcluster <- function(x,
                               popcluster.path = getwd(),
-                              output.path = getwd(),
+                              output.path = tempdir(),
                               filename = "output",
                               minK = 1,
                               maxK = 2,
@@ -142,73 +160,45 @@ gl.run.popcluster <- function(x,
 
   # SET VERBOSITY
   verbose <- gl.check.verbosity(verbose)
+
+  # SET WORKING DIRECTORY
+  plot.dir <- gl.check.wd(plot.dir, verbose = 0)
   
   # FLAG SCRIPT START
   funname <- match.call()[[1]]
-  utils.flag.start(
-    func = funname,
-    build = "Jody",
-    verbose = verbose
-  )
+  utils.flag.start(func = funname, verbose = verbose)
   
   # CHECK DATATYPE
   datatype <- dartR.base::utils.check.datatype(x, verbose = verbose)
-  
-  pkg <- "stringr"
-  if (!(requireNamespace(pkg, quietly = TRUE))) {
-    cat(error(
-      "Package",
-      pkg,
-      " needed for this function to work. Please install it.\n"
-    ))
-    return(-1)
+
+  # FUNCTION SPECIFIC ERROR CHECKING
+
+  whole <- function(v) {
+    is.numeric(v) && length(v) == 1 && !is.na(v) && v >= 1 && v == round(v)
   }
-  
-  pkg <- "pillar"
-  if (!(requireNamespace(pkg, quietly = TRUE))) {
-    cat(error(
-      "Package",
-      pkg,
-      " needed for this function to work. Please install it.\n"
+  if (!whole(minK) || !whole(maxK) || minK > maxK) {
+    stop(error(
+      "minK and maxK must be whole numbers of at least 1, with minK <= maxK.\n"
     ))
-    return(-1)
   }
-  
-  #create tempdir
-  tempd <- tempfile(pattern = "dir")
-  dir.create(tempd, showWarnings = FALSE)
-  
-  if(model == 4 &&
-     nPop(x) != maxK && 
-     maxK != minK ){
-   cat(error(
-     "For migration model, K must be fixed (i.e. maxK = minK) and equal to sampling locations or known populations\n"
-   )) 
-    stop()
+  if (!whole(rep)) {
+    stop(error("rep must be a whole number of at least 1.\n"))
   }
-  
-  
-  if (model == "4" &&
-      nPop(x) != maxK ||
-      model == "4" &&
-      maxK != minK ||
-      model == "4" &&
-      PopFlag == "0") {
-    cat(error(
-      "For migration model:
-                1. Minimum and maximum values of K must be the same
-                2. K must be equal to number populations
-                3. Population info must be used"
+
+  if (model == 4 &&
+      (minK != maxK || maxK != nPop(x) || PopFlag == 0)) {
+    stop(error(
+      "For the migration model (model = 4), minK and maxK must be equal to",
+      "each other and to the number of populations in x, and PopFlag must",
+      "be 1.\n"
     ))
-    stop()
   }
-  
-  if(PopFlag == "1" &&
-      minK < nPop(x)){
-    cat(error(
-      "If population information is used, the minimum value of K must be at least the number of populations"
+
+  if (PopFlag == 1 && minK < nPop(x)) {
+    stop(error(
+      "If population information is used (PopFlag = 1), minK must be at",
+      "least the number of populations in x.\n"
     ))
-    stop()
   }
   
   # check OS
@@ -218,21 +208,37 @@ gl.run.popcluster <- function(x,
                             "impi.dll",
                             "libiomp5md.dll")
   } else if (os == "Darwin") {
-
     popcluster_version <- paste0("PopCluster", "Mac")
-    
   } else if (os == "Linux") {
-    if(parallel){
-      
+    if (parallel) {
       popcluster_version <- "PopClusterLnx_impi"
-       
-    }else{
-      
+    } else {
       popcluster_version <- paste0("PopCluster", "Lnx")
-      
     }
-    
+  } else {
+    stop(error(
+      "PopCluster runs on Windows, macOS and Linux; this system is", os, "\n"
+    ))
   }
+
+  fex <- file.exists(file.path(popcluster.path, popcluster_version))
+  if (!all(fex)) {
+    stop(error(
+      "Cannot find", paste(popcluster_version[!fex], collapse = ", "),
+      "in popcluster.path:", popcluster.path, ". Download PopCluster from",
+      "https://www.zsl.org/about-zsl/resources/software/popcluster\n"
+    ))
+  }
+  
+  # DO THE JOB
+
+  if (!dir.exists(output.path)) {
+    dir.create(output.path, recursive = TRUE)
+  }
+
+  #create tempdir
+  tempd <- tempfile(pattern = "dir")
+  dir.create(tempd, showWarnings = FALSE)
   
   # create INPUT FILE
   if(PopFlag == 0){
@@ -250,21 +256,9 @@ gl.run.popcluster <- function(x,
   # IndivLoc is not used in structure inference. It is used solely for
   # visualizing population structuring in relation to individual geographic
   # locations in PopCluster’s GUI.
-  # if (location == 1) {
-  #   lat <- x@other$latlon$lat
-  #   lon <- x@other$latlon$lon
-  #   names <- data.frame(id = paste0(ind_numbers,
-  #                                   " ", family,
-  #                                   " ", PopFlag,
-  #                                   " ", lat,
-  #                                   " ", lon))
-  # } else if (location == 0) {
-  #   lat <- NULL
-  #   lon <- NULL
-    names <- data.frame(id = paste0(ind_numbers,
-                                    " ", family,
-                                    " ", PopFlag))
-  # }
+  names <- data.frame(id = paste0(ind_numbers,
+                                  " ", family,
+                                  " ", PopFlag))
   
   names2 <- apply(names, 1, paste0, collapse = " ")
   genotype2 <- apply(genotype, 1, paste0, collapse = "")
@@ -330,8 +324,6 @@ gl.run.popcluster <- function(x,
   )
   
   #create PARAMETER FILE
-  create_parameter <- file(file.path(output.path, 
-                                     paste0(filename, ".popcluster", ".PcPjt")))
   write.table(
     cbind(
       pillar::align(parameter, align = "left"),
@@ -343,85 +335,64 @@ gl.run.popcluster <- function(x,
     col.names = FALSE,
     row.names = FALSE
   )
-  close(create_parameter)
   
-  # check input files existence
   input_file <- c(paste0(filename, ".popcluster.PcPjt"),
                   paste0(filename, ".popcluster.dat"))
-  fex <- file.exists(file.path(popcluster.path, popcluster_version))
-  fex2 <- file.exists(file.path(output.path, input_file))
-  
-  if (all(fex)) {
-    file.copy(
-      file.path(popcluster.path, popcluster_version),
-      to = tempd,
-      overwrite = TRUE,
-      recursive = TRUE
-    )
-  } else {
-    cat(error(
-      "  Cannot find",
-      popcluster_version[!fex],
-      "in the specified folder given by popcluster.path:",
-      popcluster.path,
-      "\n"
-    ))
-    stop()
-  }
-  
-  if (all(fex2)) {
-    file.copy(
-      file.path(output.path, input_file),
-      to = tempd,
-      overwrite = TRUE,
-      recursive = TRUE
-    )
-  } else {
-    cat(error(
-      "  Cannot find",
-      input_file[!fex2],
-      "in the specified folder given by output.path:",
-      output.path,
-      "\n"
-    ))
-    stop()
-  }
+  file.copy(
+    file.path(popcluster.path, popcluster_version),
+    to = tempd,
+    overwrite = TRUE,
+    recursive = TRUE
+  )
+  file.copy(
+    file.path(output.path, input_file),
+    to = tempd,
+    overwrite = TRUE,
+    recursive = TRUE
+  )
   
   old.path <- getwd()
   setwd(tempd)
-  on.exit(setwd(old.path))
+  on.exit(setwd(old.path), add = TRUE)
+
+  # PopCluster's own output only at verbose >= 3
+  quiet <- verbose < 3
   if (os == "Linux" | os == "Darwin") {
-    system(paste0("chmod 777", " ", popcluster_version))
-    system(paste0("chmod 777", " ", paste0(filename, ".popcluster.PcPjt")))
-    system(paste0("chmod 777", " ", paste0(filename, ".popcluster.dat")))
+    for (f in c(popcluster_version, input_file)) {
+      system(paste0("chmod 777", " ", f),
+             ignore.stdout = quiet, ignore.stderr = quiet)
+    }
   }
   
   # RUN POPCLUSTER
-    if(os == "Linux" & parallel){
-      
-      system(paste0(
-      "mpirun -np ",ncores," --use-hwthread-cpus ",
-      file.path(tempd, popcluster_version), 
+  if (verbose >= 2) {
+    cat(report("  Running PopCluster for K =", minK, "to", maxK, "\n"))
+  }
+  if (os == "Linux" & parallel) {
+    system(paste0(
+      "mpirun -np ", ncores, " --use-hwthread-cpus ",
+      file.path(tempd, popcluster_version),
       " INP:",
       paste0(filename, ".popcluster.PcPjt MPI:1")
-      ))
-      
-    }else{
-      
-      system(paste0(
-        file.path(tempd, popcluster_version[1]),
-        " INP:",
-        paste0(filename, ".popcluster.PcPjt")
-      ))
-      
-    }
+    ), ignore.stdout = quiet, ignore.stderr = quiet)
+  } else {
+    system(paste0(
+      file.path(tempd, popcluster_version[1]),
+      " INP:",
+      paste0(filename, ".popcluster.PcPjt")
+    ), ignore.stdout = quiet, ignore.stderr = quiet)
+  }
+
+  k_file <- file.path(tempd, paste0(filename, ".popcluster.K"))
+  if (!file.exists(k_file)) {
+    stop(error(
+      "PopCluster did not produce its results; rerun with verbose = 3 to see",
+      "its output.\n"
+    ))
+  }
 
   # Summarise best run and likelihood
-  # res <- readLines(con <- file(file.path(
-  #   tempd, paste0(filename, ".popcluster.K")
-  # )), n = maxK + 1)[-1]
-  res <- readLines(con <- file(file.path(tempd, paste0(filename, ".popcluster.K"))), 
-                   n = ((maxK-minK)+2))[-1]
+  res <- readLines(con <- file(k_file), n = ((maxK - minK) + 2))[-1]
   close(con)
   res2 <- stringr::str_split(gsub('\"', "", res), " ")
   for (i in 1:length(res2)) {
@@ -432,7 +403,6 @@ gl.run.popcluster <- function(x,
   for (j in 1:length(res2)) {
     best_run_file <- data.frame(rbind(best_run_file, res2[[j]]))
   }
-  K <- LogL_Mean <- LogL_Min <- LogL_Max <- DLK1 <- DLK2 <- FST.FIS <- NA
   colnames(best_run_file) <- c("K",
                                "BestRun",
                                "LogL_Mean",
@@ -441,54 +411,34 @@ gl.run.popcluster <- function(x,
                                "DLK1",
                                "DLK2",
                                "FST.FIS")
-  
-  # plot likelihood
-  plot.list <- list()
-  plot.list[[1]] <- ggplot2::ggplot(best_run_file, 
-                                    aes(K, LogL_Mean, group = 1)) +
-    geom_line() + 
-    geom_point(fill = "white",shape = 21, size = 3) + 
-    theme(axis.title.x = element_blank()) +
-    theme_dartR()
-  
-  plot.list[[2]] <- ggplot2::ggplot(best_run_file, 
-                                    aes(K, DLK1, group = 1)) + 
-    geom_line() +
-    geom_point(fill = "white",shape = 21, size = 3) + 
-    theme(axis.title.x = element_blank()) +
-    theme_dartR()
-  
-  plot.list[[3]] <- ggplot2::ggplot(best_run_file, 
-                                    aes(K, DLK2, group =1)) + 
-    geom_line() + geom_point(fill = "white",shape = 21, size = 3) + 
-    theme(axis.title.x = element_blank()) +
-    theme_dartR()
-  
-  plot.list[[4]] <- ggplot2::ggplot(best_run_file,
-                                    aes(K, FST.FIS, group = 1)) + 
-    geom_line() + 
-    geom_point(fill = "white", shape = 21, size = 3) + 
-    theme(axis.title.x = element_blank()) +
-    theme_dartR()
-  
-  names(plot.list) <- c("LogL_Mean", "DLK1", "DLK2", "FST.FIS")
-  
-  p <- plot.list %>% purrr::map(function(x) {
-    ggplot2::ggplot_gtable(ggplot2::ggplot_build(x))
+  # numbers are read as text; PopCluster writes "-" where a value is undefined
+  num_cols <- setdiff(colnames(best_run_file), "BestRun")
+  best_run_file[num_cols] <- lapply(best_run_file[num_cols], function(v) {
+    v[v == "-"] <- NA
+    as.numeric(v)
   })
-  maxWidth <- do.call(grid::unit.pmax, purrr::map(p, function(x)
-    x$widths[2:3]))
   
-  for (i in 1:length(p)){
-    p[[i]]$widths[2:3] <- maxWidth
+  # plot likelihood and related statistics against K
+  plot_stat <- function(col) {
+    d <- best_run_file[!is.na(best_run_file[[col]]), , drop = FALSE]
+    ggplot2::ggplot(d, aes(x = .data$K, y = .data[[col]])) +
+      geom_line() +
+      geom_point(fill = "white", shape = 21, size = 3) +
+      scale_x_continuous(breaks = best_run_file$K) +
+      ylab(col) +
+      plot_theme +
+      theme(axis.title.x = element_blank())
   }
-  
-  p$bottom <- "K"
-  p$ncol <- 2
-  if (plot.out) {
-    do.call(gridExtra::grid.arrange, p)
-  }
+  plot.list <- lapply(c("LogL_Mean", "DLK1", "DLK2", "FST.FIS"), plot_stat)
   names(plot.list) <- c("LogL_Mean", "DLK1", "DLK2", "FST.FIS")
+
+  if (plot.out) {
+    print(patchwork::wrap_plots(plot.list, ncol = 2) +
+            patchwork::plot_annotation(
+              caption = "K",
+              theme = theme(plot.caption = element_text(hjust = 0.5))
+            ))
+  }
   
   #extract admixture analysis from best run
   Q_matrices <- NULL
@@ -537,7 +487,8 @@ gl.run.popcluster <- function(x,
                      paste0("Pop_", seq_len(ncol(Q) - 4)))
     Q$Label <- sample_name[Q$Index]
     Q$Cluster <- as.character(Q$Cluster)
-    Q$Pop <- as.character(x$pop)
+    # population by the same individual index as the label
+    Q$Pop <- as.character(x$pop)[Q$Index]
     # restore the documented column order
     Q <- Q[, c("Index", "Order", "Label", "PercentMiss", "Cluster",
                paste0("Pop_", seq_len(sum(startsWith(names(Q), "Pop_")))),
@@ -555,6 +506,11 @@ gl.run.popcluster <- function(x,
                            file = plot.file,
                            verbose = verbose)
   }
+
+  setwd(old.path)
+  if (cleanup) {
+    unlink(tempd, recursive = TRUE)
+  }
   
   # FLAG SCRIPT END
   
@@ -571,10 +527,4 @@ gl.run.popcluster <- function(x,
       matrix = Q_matrices
     )
   )
-  setwd(old.path)
-  
-  if (cleanup){
-    unlink(tempd, recursive = TRUE)
-  }
-  
 }

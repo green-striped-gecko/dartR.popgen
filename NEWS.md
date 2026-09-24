@@ -14,6 +14,44 @@
   only at `verbose >= 3`; the user's `future` plan is restored after
   `parallel > 1`; a missing binary folder, missing Java or a failed run
   stop with a clear message. Estimates are unchanged.
+* `gl.run.popcluster`: the likelihood table (`best_run`) is numeric (NA
+  where PopCluster writes "-"). It was kept as text, so the LogL(K) plot
+  had an alphabetically sorted axis and was drawn upside down (the best K
+  lowest), and the DLK plots were scrambled. **`best_run` columns become
+  numeric and the plots change.** `output.path` defaults to `tempdir()`
+  (input files were written to the working directory), `cleanup` works,
+  `plot_theme` is applied, the panels are combined with patchwork instead
+  of gridExtra, PopCluster's output is shown only at `verbose >= 3`, and
+  arguments and the executable are checked before running.
+* `gl.map.popcluster` now draws with `gl.map.snmf` (and `gl.map.structure`),
+  so each population's bars are drawn at its own centre, `movepops` is
+  added by name and extra populations in `x` are ignored. **Maps and
+  default colours change as for `gl.map.snmf`.**
+* `gl.plot.popcluster`: `verbose` follows `gl.set.verbosity()`, `plot.K`
+  must be one K of the run, a palette function is accepted, and `aes()`
+  uses `.data` (removing the R CMD check NOTE about global variables).
+
+* `gl.map.snmf` now draws with `gl.map.structure`, so it gets the fixes
+  made there: each population's bars are drawn at its own centre (with
+  population levels not in alphabetical order they were drawn at another
+  population's centre), `movepops` is added to `lon`/`lat` by name, and
+  populations of `x` that are not in `qmat` are ignored instead of causing
+  an error. **Maps change in those cases, and default colours change from
+  `rainbow()` to the dartR palette.** New `plot.out` and `verbose`.
+* `gl.run.snmf`: `cleanup` works (its code came after `return()`, so the
+  LEA run files were never removed); with `cleanup = TRUE` (default)
+  `best_run` holds run names such as `"K2/run1"` instead of paths.
+  **`best_run` changes with the default.** `plot.out` is respected (the
+  cross-entropy plot is still returned), `plot.file` is saved in
+  `plot.dir` (default `tempdir()`) instead of the working directory, LEA's
+  output is shown only at `verbose >= 3`, and `minK`, `maxK`, `rep` are
+  checked.
+* `gl.plot.snmf`: the dendrogram (`den = TRUE`) clusters the distance
+  matrix itself instead of Euclidean distances between its rows. **The
+  individual order changes with `den = TRUE`.** `verbose` follows
+  `gl.set.verbosity()` and is silent at 0, `plot.K` must be one K of the
+  run (clear error), a palette function is accepted in `color.clusters`,
+  and `aes_()` is replaced.
 * `gl.run.faststructure`: results are stored by K, so any `k.range` works.
   Previously `k.range` had to start at 2 without gaps: `3:4` or `c(2, 4)`
   stopped with "subscript out of bounds" after all runs had finished, and

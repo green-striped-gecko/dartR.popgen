@@ -17,8 +17,8 @@ gl.plot.snmf(
   den = FALSE,
   inverse.den = TRUE,
   x = NULL,
-  plot.colors.pop = gl.colors("dis"),
-  verbose = 2
+  plot.colors.pop = NULL,
+  verbose = NULL
 )
 }
 \arguments{
@@ -27,14 +27,15 @@ gl.plot.snmf(
 \item{border.ind}{The width of the border line between individuals
 [default 0.25].}
 
-\item{plot.K}{The number for K of the Q matrix that should be plotted. Needs to
-be within you simulated range of K's in your snmf run object [required].}
+\item{plot.K}{The K of the Q matrix to be plotted: a single value among the
+K values in the snmf run object [required].}
 
 \item{plot.theme}{Theme for the plot. See Details for options
 [default NULL].}
 
-\item{color.clusters}{A color palette for clusters (K) or a list with
-as many colors as there are clusters (K) [default NULL].}
+\item{color.clusters}{A colour palette function (for example
+\code{rainbow}), which is called with plot.K, or a vector with at least
+plot.K colours [default NULL, which uses gl.colors("structure")].}
 
 \item{ind.name}{Whether to plot individual names [default TRUE].}
 
@@ -43,38 +44,40 @@ as many colors as there are clusters (K) [default NULL].}
 \item{plot.file}{Name for the RDS binary file to save (base name only, exclude
 extension) [default NULL].}
 
-\item{plot.dir}{Directory in which to save files [default = working directory].}
+\item{plot.dir}{Directory in which to save files [default = tempdir(),
+unless specified using gl.set.wd].}
 
-\item{den}{Whether to include a dendrogram. It is necessary to include the 
-original genlight object used in gl.run.structure in the parameter x 
+\item{den}{Whether to include a dendrogram, built by hierarchical
+clustering (\code{hclust}) of Manhattan distances between individuals. It
+needs the genlight object used in gl.run.snmf in the parameter x
 [default FALSE].}
 
 \item{inverse.den}{Flip dendrogram upside down [default TRUE].}
 
-\item{x}{The original genlight object used in gl.run.structure description
-[default NULL].}
+\item{x}{The genlight object used in gl.run.snmf [default NULL].}
 
 \item{plot.colors.pop}{A color palette for population plots or a list with
 as many colors as there are populations in the dataset 
-[default gl.colors("dis")].}
+[default NULL, which uses gl.colors("dis")].}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
-progress log ; 3, progress and results summary; 5, full report [default
- 2, unless specified using gl.set.verbosity].}
+brief progress messages; 3, progress and results summary; 5, full report
+[default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-Q-matrix
+The Q matrix of plot.K (invisible), as in the matrix element of the
+gl.run.snmf result: columns Pop_1 ... Pop_K, Cluster, Pop, Label, Order.
 }
 \description{
-This function takes a Q matrix (output from
+This function takes a snmf run object (output from
  \code{\link{gl.run.snmf}}) and plots the typical structure bar
-  plot that visualize the Q matrix of a structure run.
+  plot that visualises the Q matrix of the best run for one K.
 }
 \details{
 The function outputs a barplot which is the typical output of
- snmf.
- Plots and table are saved to the working directory specified in plot.dir
- if plot.file is set.
+ snmf. It shows the best run (lowest cross-entropy) for plot.K, as kept by
+ gl.run.snmf; replicates are not averaged.
+ The plot is saved as an RDS file in plot.dir if plot.file is set.
 
 Examples of other themes that can be used can be consulted in \itemize{
  \item \url{https://ggplot2.tidyverse.org/reference/ggtheme.html} and \item
@@ -87,14 +90,9 @@ The Q matrices can be input to other R packages for plotting ancestry proportion
 \examples{
 # examples need LEA to be installed on the system (see above)
 \dontrun{
-m <- gl.run.snmf(x=bandicoot.gl, minK=1, 
-maxK=5, rep=10)
-Q <- gl.plot.snmf(snmf.result=m, plot.K = 3, ind.name=T)
-gl.map.snmf(bandicoot.gl, qmat=Q)
-# move population 4 (out of 5) 0.5 degrees to the right and populations 1
-# 0.3 degree to the north of the map.
-mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
-gl.map.snmf(bandicoot.gl, qmat=Q, movepops=mp)
+m <- gl.run.snmf(x = bandicoot.gl, minK = 1, maxK = 5, rep = 10)
+Q <- gl.plot.snmf(snmf.result = m, plot.K = 3, ind.name = TRUE)
+gl.map.snmf(bandicoot.gl, qmat = Q)
 }
 }
 \references{
@@ -105,8 +103,27 @@ Estimation of Individual Ancestry Coefficients. Genetics, 194(4): 973--983.
 }
 }
 \seealso{
-\code{gl.run.snmf}, \code{gl.plot.snmf}
+\code{\link{gl.run.snmf}}, \code{\link{gl.map.snmf}}
+
+Other population structure: 
+\code{\link{gl.evanno}()},
+\code{\link{gl.map.popcluster}()},
+\code{\link{gl.map.snmf}()},
+\code{\link{gl.map.structure}()},
+\code{\link{gl.plot.faststructure}()},
+\code{\link{gl.plot.popcluster}()},
+\code{\link{gl.plot.structure}()},
+\code{\link{gl.read.structure}()},
+\code{\link{gl.run.faststructure}()},
+\code{\link{gl.run.popcluster}()},
+\code{\link{gl.map.snmf}()},
+\code{\link{gl.map.structure}()},
+\code{\link{gl.plot.structure}()},
+\code{\link{gl.read.structure}()},
+\code{\link{gl.run.snmf}()}
 }
 \author{
-Ching Ching Lau (Post to \url{https://groups.google.com/d/forum/dartr})
+Author(s): Ching Ching Lau. Custodian: Ching Ching Lau -- Post to
+ \url{https://groups.google.com/d/forum/dartr}
 }
+\concept{population structure}
