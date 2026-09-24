@@ -34,15 +34,14 @@ test_that("bins are (1, res], ... labelled by their upper edge; means by pop", {
   expect_equal(res$n.pairs, rep(c(2L, 2L, 2L), 2))
 })
 
-test_that("matches fields::stats.bin where that works", {
-  skip_if_not_installed("fields")
-  ld <- make_ld_report()
-  res <- run_quiet(ld, ld.resolution = 500, verbose = 0)
-  brk <- unique(c(seq(1, 3000, 500), 3000))
-  a <- ld[ld$pop == "A", ]
-  s <- fields::stats.bin(a$distance, a$ld.stat, breaks = brk)
-  expect_equal(res[res$pop == "A", ]$ld.stat, unname(s$stats[2, ]))
-  expect_equal(res[res$pop == "A", ]$n.pairs, unname(s$stats[1, ]))
+test_that("finer bins give the hand-computed means and counts", {
+  res <- run_quiet(make_ld_report(), ld.resolution = 500, verbose = 0)
+  a <- res[res$pop == "A", ]
+  # breaks 1, 501, 1001, 1501, 2001, 2501, 3000; one pair per bin, as the
+  # old fields::stats.bin() binning gave on the same data
+  expect_equal(a$distance, c(501, 1001, 1501, 2001, 2501, 3000))
+  expect_equal(a$ld.stat, c(0.8, 0.6, 0.4, 0.2, 0.1, 0.1))
+  expect_equal(a$n.pairs, rep(1L, 6))
 })
 
 test_that("empty bins give NA means and zero pairs", {

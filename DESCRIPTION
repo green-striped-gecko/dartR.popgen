@@ -37,7 +37,6 @@ Suggests:
   pegas,
   SIBER,
   expm,
-  fields,
   gplots,
   gridExtra,
   igraph,
