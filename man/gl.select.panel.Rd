@@ -2,75 +2,88 @@
 % Please edit documentation in R/gl.select.panel.R
 \name{gl.select.panel}
 \alias{gl.select.panel}
-\title{Select Loci Panel Based on Various Methods}
+\title{Select a panel of loci based on various methods}
 \usage{
-gl.select.panel(
-  x,
-  method = "random",
-  nl = 10,
-  exact = TRUE,
-  plot.out = TRUE,
-  plot.file = NULL,
-  plot.dir = NULL,
-  verbose = NULL
-)
+gl.select.panel(x, method = "random", nl = 10, exact = TRUE, verbose = NULL)
 }
 \arguments{
-\item{x}{A 'dartR or genlight' object containing the genomic data.}
+\item{x}{A genlight object with SNP data [required].}
 
-\item{method}{A character string specifying the selection method. Options include:
-\itemize{
-  \item `"dapc"`: Select loci contributing most to discrimination between populations using DAPC (Discriminant Analysis of Principal Components).
-  \item `"pahigh"`: Select loci with private alleles having high frequency.
-  \item `"random"`: Randomly select loci.
-  \item `"monopop"`: Select monomorphic loci within populations.
-  \item `"stratified"`: Stratified sampling of loci based on allele frequencies.
-  \item `"hafall"`: Select loci with the highest allele frequencies across all populations.
-  \item `"hafpop"`: Select loci with the highest allele frequencies within each population.
-}}
+\item{method}{The selection method, one of "random", "dapc", "pahigh",
+"monopop", "stratified", "hafall", "hafpop", "pic" or "picdart" (see
+Details) [default "random"].}
 
-\item{nl}{An integer specifying the number of loci to select.}
+\item{nl}{The number of loci to select, between 1 and nLoc(x)
+[default 10].}
 
-\item{exact}{Logical. If `TRUE`, ensures that the number of selected loci is exactly `nl`. 
-If `FALSE`, allows for a random selection that may not match `nl` exactly.}
+\item{exact}{Logical. If TRUE, the panel has exactly \code{nl} loci:
+surplus loci are dropped at random, and missing ones are added at random
+from the remaining loci. If FALSE, the panel holds what the method
+selected, which can be more or fewer than \code{nl} [default TRUE].}
 
-\item{plot.out}{Logical. If `TRUE`, generates plots summarizing selected loci.}
-
-\item{plot.file}{A character string specifying the file name for saving plots. If `NULL`, plots are not saved.}
-
-\item{plot.dir}{A character string specifying the directory to save plots. Defaults to the working directory.}
-
-\item{verbose}{Integer level of verbosity for reporting progress and information.}
+\item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
+brief progress messages; 3, progress and results summary; 5, full report
+[default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-A 'dartR or genlight' object containing the selected loci.
+A genlight object with the selected loci; individuals are in the
+  same order as in \code{x}.
 }
 \description{
-This function selects a panel of loci from a genomic dataset ('dartR or genlight' object)
-based on various selection methods.
+This function selects a panel of loci from a SNP genlight object based on
+various selection methods, for example to design a targeted genotyping
+panel. Use \code{\link{gl.check.panel}} to compare the panel with the
+full data.
 }
 \details{
-The function applies various methods to select loci based on the input 'dartR or genlight' object.
 Each method has specific criteria for selecting loci:
 \itemize{
-  \item `dapc`: Performs DAPC and identifies loci with the highest contributions to discrimination between population pairs.
-  \item `pahigh`: Identifies loci with private alleles that have high frequency differences between populations.
-  \item `random`: Selects loci randomly.
-  \item `monopop`: Selects loci that are monomorphic within populations.
-  \item `stratified`: Uses stratified sampling to select loci based on allele frequencies.
-  \item `hafall`: Selects loci with the highest allele frequencies across the dataset.
-  \item `hafpop`: Selects loci with the highest allele frequencies within individual populations.
-  \item `pic`: Selects loci based on the highest polymorphic information content (PIC).
-  \item `picdart`: Selects loci based on the average PIC calculated from the 'dartR' metrics.
+  \item "random": selects loci at random.
+  \item "dapc": for each pair of populations, runs a DAPC and takes the
+  ceiling(nl / number of pairs) loci contributing most to the first
+  discriminant function.
+  \item "pahigh": for each pair of populations and each direction, takes
+  the ceiling(nl / (2 * number of pairs)) private-allele loci whose private
+  alleles have the highest frequency.
+  \item "monopop": for each population, takes up to ceiling(nl / number of
+  populations) loci at random among those monomorphic in that population.
+  \item "stratified": for each population, bins loci by minor allele
+  frequency into ceiling(nl / number of populations) classes between 0 and
+  0.5 and takes one locus at random from each class.
+  \item "hafall": takes the loci with the highest minor allele frequency
+  (closest to 0.5) across all individuals.
+  \item "hafpop": for each population, takes the ceiling(nl / number of
+  populations) loci with the highest minor allele frequency in that
+  population.
+  \item "pic": takes the loci with the highest polymorphic information
+  content, 1 - (p^2 + q^2) - 2 p^2 q^2.
+  \item "picdart": takes the loci with the highest AvgPIC, recalculated
+  with gl.recalc.metrics.
 }
+The per-population and per-pair methods can select more than \code{nl}
+loci (rounding up, then combining); with \code{exact = TRUE} the surplus
+is dropped at random, so the ranking is not used to choose which loci go.
+"random", "monopop", "stratified" and the \code{exact} adjustment use
+R's random number generator; call \code{set.seed()} first for a
+reproducible panel.
+
+All methods except "random", "hafall", "pic" and "picdart" need
+populations; "dapc" and "pahigh" need at least two.
 }
 \examples{
-# Example usage:
-
-# Select 20 loci randomly
+# Select 50 loci randomly
 selected <- gl.select.panel(possums.gl, method = "random", nl = 50)
 
-# Select loci based on DAPC
+# Select 5 loci based on DAPC
 selected <- gl.select.panel(possums.gl, method = "dapc", nl = 5)
 
 }
+\seealso{
+Other panel selection: 
+\code{\link{gl.check.panel}()}
+}
+\author{
+Author(s): Bernd Gruber. Custodian: Bernd Gruber -- Post to
+  \url{https://groups.google.com/d/forum/dartr}
+}
+\concept{panel selection}
