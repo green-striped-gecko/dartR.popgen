@@ -42,7 +42,8 @@ gl.run.stairway2(
 \item{x}{A genlight/dartR object containing SNP data [required].}
 
 \item{L}{the length of the sequence in base pairs (see details)
-[default NULL, number of loci x 69].}
+[default NULL, number of loci x 69; when the sfs is computed from x, only
+the loci without missing calls, the loci gl.sfs uses, are counted].}
 
 \item{mu}{the mutation rate per base pair per generation (see details) [required].}
 

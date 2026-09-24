@@ -29,6 +29,10 @@
   `L` is required unless `minbinsize = 0`; an unnamed `sfs` vector is
   accepted; missing binaries and EPOS failures stop with a clear message;
   `verbose = 0` is silent.
+* `gl.run.stairway2`: when `L` is not given and the SFS is computed from
+  `x`, the default `L` counts only the loci without missing calls (the loci
+  `gl.sfs` uses) x 69, instead of all loci x 69. **Results change for data
+  with missing calls when `L` is left at its default.**
 * `gl.run.stairway2` runs Stairway Plot 2 in a new subfolder of `tempdir()`
   and `cleanup = TRUE` removes only that subfolder. Previously it deleted
   the whole session `tempdir()`, including binaries downloaded there by
