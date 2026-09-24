@@ -152,3 +152,23 @@ test_that("cleanup, plot.file and parallel [approved 1, 4, 5]", {
   expect_equal(nrow(r$history), 233)
   expect_identical(class(future::plan()), plan_before) # [approved 5]
 })
+
+test_that("default L counts only the loci used in the sfs [addendum A1]", {
+  # SEVERN_ABOVE: 1000 loci, 237 with missing calls, which gl.sfs excludes
+  x <- gl.keep.pop(platypus.gl, pop.list = popNames(platypus.gl)[1],
+                   verbose = 0)
+  capture.output(
+    r <- gl.run.stairway2(x, mu = 1e-8, stairway2.path = sw_fake_dir(),
+                          run = FALSE, seed = 1, verbose = 0)
+  )
+  bp <- readLines(file.path(r$run.dir, "blueprint"))
+  expect_true(any(grepl(paste0("^L: ", 763 * 69, " "), bp)))
+  # a user sfs keeps nLoc(x) x 69
+  capture.output(
+    r2 <- gl.run.stairway2(x, mu = 1e-8, sfs = rep(1, 23),
+                           stairway2.path = sw_fake_dir(), run = FALSE,
+                           seed = 1, verbose = 0)
+  )
+  bp2 <- readLines(file.path(r2$run.dir, "blueprint"))
+  expect_true(any(grepl(paste0("^L: ", 1000 * 69, " "), bp2)))
+})

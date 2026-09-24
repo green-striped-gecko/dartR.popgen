@@ -37,7 +37,8 @@
 #' \code{java -cp stairway_plot_es Stairbuilder blueprint}.
 #' @param x A genlight/dartR object containing SNP data [required].
 #' @param L the length of the sequence in base pairs (see details)
-#' [default NULL, number of loci x 69].
+#' [default NULL, number of loci x 69; when the sfs is computed from x, only
+#' the loci without missing calls, the loci gl.sfs uses, are counted].
 #' @param mu the mutation rate per base pair per generation (see details) [required].
 #' @param stairway2.path the path to the folder that contains the Stairway
 #' Plot 2 folder \code{stairway_plot_es} (check the example) [required].
@@ -215,12 +216,21 @@ gl.run.stairway2 <-
     whether_folded <- "true"
     nseq <- 2*nInd(x)
 
-    if (is.null(sfs)) sfs <- gl.sfs(x, minbinsize=1, plot.out=FALSE, singlepop = TRUE, verbose = verbose)
+    # loci used for L: gl.sfs drops loci with missing calls, so when the sfs
+    # is computed here L counts only the loci scored in every individual
+    nloc_L <- nLoc(x)
+    if (is.null(sfs)) {
+      sfs <- gl.sfs(x, minbinsize=1, plot.out=FALSE, singlepop = TRUE, verbose = verbose)
+      nloc_L <- nLoc(x) - length(unique(unlist(NA.posi(x))))
+    }
 
     sfs <- paste(sfs,collapse = " ")
 
     #if total length of sequence is not specificed simply assume nLoc*69 (standard from dart)
-    if (is.null(L)) L = nLoc(x)*69
+    if (is.null(L)) {
+      L = nloc_L*69
+      if (verbose >= 3) cat(report("  L not specified, set to", nloc_L, "loci x 69 =", L, "\n"))
+    }
 
     if (is.null(seed)) seed = round(runif(1)*1e6)
 
