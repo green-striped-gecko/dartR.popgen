@@ -1,4 +1,4 @@
-# dartR.popgen (development version)
+# dartR.popgen 1.2.6
 
 ## Bug fixes
 
