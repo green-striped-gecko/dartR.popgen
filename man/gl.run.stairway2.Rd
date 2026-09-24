@@ -183,7 +183,8 @@ Liu, X., Fu, YX. Stairway Plot 2: demographic history inference with folded SNP 
 }
 \seealso{
 Other demographic history: 
-\code{\link{gl.run.epos}()}
+\code{\link{gl.run.epos}()},
+\code{\link{gl.sfs}()}
 }
 \author{
 Author(s): Bernd Gruber. Custodian: Bernd Gruber -- Post to

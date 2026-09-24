@@ -2,6 +2,22 @@
 
 ## Bug fixes
 
+* `gl.sfs` builds the spectrum only from loci scored in every individual and
+  reports how many loci with missing calls were excluded (verbose >= 1).
+  Previously such loci were counted against the full sample size, so they
+  fell into lower classes and a locus fixed in all called individuals
+  appeared polymorphic. A folded multi-population spectrum is now folded on
+  the minor allele of all populations combined (fastsimcoal2 joint MAF
+  spectrum); previously each population was folded on its own. On a
+  multi-population spectrum, `minbinsize` sets to zero the cells whose total
+  count is below it and keeps the full array; previously it removed the
+  first classes of every population, dropping polymorphisms private to one
+  population. **Spectra change for data with missing calls (and so do
+  `gl.run.stairway2` and `gl.run.epos` results built on them), for folded
+  multi-population spectra, and for multi-population spectra with
+  `minbinsize > 0`. SilicoDArT input now errors.** New `plot.theme`
+  argument; `plot.file` works with `plot.out = FALSE`; bars sit at their
+  class numbers.
 * `gl.run.epos` sends EPOS the SFS with its true class numbers. Previously
   `folded = FALSE` was run as a folded SFS of twice the sample size (no
   `-U`), `minbinsize = 2` relabelled doubletons as singletons, and

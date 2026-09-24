@@ -169,7 +169,8 @@ Lynch, Michael, Bernhard Haubold, Peter Pfaffelhuber, and Takahiro Maruki. 2019.
 }
 \seealso{
 Other demographic history: 
-\code{\link{gl.run.stairway2}()}
+\code{\link{gl.run.stairway2}()},
+\code{\link{gl.sfs}()}
 }
 \author{
 Author(s): Bernd Gruber. Custodian: Bernd Gruber -- Post to
