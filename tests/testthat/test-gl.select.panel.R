@@ -23,6 +23,22 @@ chk <- function(...) {
   )
   out
 }
+# Private-allele loci over all population pairs, computed independently
+# of gl.report.pa() (which needs networkD3/tibble/tidyr)
+all_pa <- function(x) {
+  q <- lapply(seppop(x), function(p) colMeans(as.matrix(p), na.rm = TRUE) / 2)
+  com <- utils::combn(length(q), 2)
+  unique(unlist(lapply(seq_len(ncol(com)), function(i) {
+    a <- q[[com[1, i]]]
+    b <- q[[com[2, i]]]
+    locNames(x)[which((b == 0 & a != 0) | (b == 1 & a != 1) |
+                      (a == 0 & b != 0) | (a == 1 & b != 1))]
+  })))
+}
+report_pa <- function(x) {
+  pa <- gl.report.pa(x, loc.names = TRUE, verbose = 0)$names_loci
+  unique(unlist(lapply(pa, function(z) c(z$pop1_pop2_pa, z$pop2_pop1_pa))))
+}
 maf <- function(g) {
   a <- gl.alf(g)[, 1]
   pmin(a, 1 - a)
@@ -56,11 +72,7 @@ test_that("bandicoot: dapc and pahigh selections (seeded snapshot)", {
   expect_equal(nLoc(d), 30)
   set.seed(1)
   p <- sel(b, method = "pahigh", nl = 30, verbose = 0, exact = FALSE)
-  pa <- gl.report.pa(b, loc.names = TRUE, verbose = 0)$names_loci
-  allpa <- unique(unlist(lapply(pa, function(z) {
-    c(z$pop1_pop2_pa, z$pop2_pop1_pa)
-  })))
-  expect_true(all(locNames(p) %in% allpa))
+  expect_true(all(locNames(p) %in% all_pa(b)))
   expect_equal(nLoc(p), 24)
 })
 
@@ -88,12 +100,8 @@ test_that("pahigh on possums.gl selects private-allele loci only", {
   x <- dartR.data::possums.gl
   set.seed(1)
   r <- sel(x, method = "pahigh", nl = 30, verbose = 0, exact = FALSE)
-  pa <- gl.report.pa(x, loc.names = TRUE, verbose = 0)$names_loci
-  allpa <- unique(unlist(lapply(pa, function(z) {
-    c(z$pop1_pop2_pa, z$pop2_pop1_pa)
-  })))
   expect_gt(nLoc(r), 0)
-  expect_true(all(locNames(r) %in% allpa))
+  expect_true(all(locNames(r) %in% all_pa(x)))
 })
 
 test_that("monopop selects loci monomorphic in some population", {
@@ -214,4 +222,13 @@ test_that("check.panel Ne (needs NeEstimator in NEEST_DIR)", {
   expect_equal(names(r), c("nes_orig", "nes_panel"))
   expect_equal(nrow(r), 3)
   expect_true(all(is.finite(r$nes_orig) | is.na(r$nes_orig)))
+})
+
+test_that("private-allele rule agrees with gl.report.pa()", {
+  skip_if_not_installed("networkD3")
+  skip_if_not_installed("tibble")
+  skip_if_not_installed("tidyr")
+  for (x in list(dartR.data::possums.gl, dartR.data::bandicoot.gl)) {
+    expect_setequal(all_pa(x), report_pa(x))
+  }
 })

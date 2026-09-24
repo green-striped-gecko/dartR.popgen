@@ -155,13 +155,23 @@ gl.select.panel<-
     }
 
     if (method=="pahigh"){
-      prxx <- gl.report.pa(x, loc.names = TRUE, verbose = 0)
-      qq <-prxx$names_loci
-      panxx <- lapply(qq, function(x) list(pa1=x$pop1_pop2_pa, pa2=x$pop2_pop1_pa))
-
       com <- t(combn(nPop(x), 2))
       pops <- seppop(x)
       nl2 <- ceiling(nl/(nrow(com)*2))
+
+      # Private-allele loci of population a against b, with the rule of
+      # gl.report.pa(): an allele present in a and absent from b. Computed
+      # here because gl.report.pa() needs networkD3, tibble and tidyr (for
+      # its plot) on every call.
+      pa_loci <- function(a, b) {
+        qa <- alf(pops[[a]])[, 2]
+        qb <- alf(pops[[b]])[, 2]
+        locNames(x)[which((qb == 0 & qa != 0) | (qb == 1 & qa != 1))]
+      }
+      panxx <- lapply(seq_len(nrow(com)), function(i) {
+        list(pa1 = pa_loci(com[i, 1], com[i, 2]),
+             pa2 = pa_loci(com[i, 2], com[i, 1]))
+      })
 
       # highest-frequency private alleles of population a against b
       top_pa <- function(pas, a, b) {
