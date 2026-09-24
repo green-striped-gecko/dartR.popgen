@@ -181,6 +181,10 @@ head(sw$history)
 \references{
 Liu, X., Fu, YX. Stairway Plot 2: demographic history inference with folded SNP frequency spectra. Genome Biol 21, 280 (2020). \doi{10.1186/s13059-020-02196-9}
 }
+\seealso{
+Other demographic history: 
+\code{\link{gl.run.epos}()}
+}
 \author{
 Author(s): Bernd Gruber. Custodian: Bernd Gruber -- Post to
 \url{https://groups.google.com/d/forum/dartr}
