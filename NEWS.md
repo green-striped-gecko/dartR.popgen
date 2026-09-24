@@ -2,6 +2,18 @@
 
 ## Bug fixes
 
+* `gl.find.loci.in.genes` selects a gene when its own row or any descendant
+  feature (mRNA, lnc_RNA, CDS, exon, followed through `Parent`) matches
+  `gene`, and treats pseudogenes as genes. Previously only gene rows and
+  CDS rows were searched, so genes whose matching text sits on a transcript
+  row were missed (platypus NCBI annotation: 33 of 38 loci found for
+  "receptor", 6 of 50 for "uncharacterized"). A missing `gff.file` now
+  errors; previously the function silently used any object called `gff` in
+  the workspace. `verbose` is honoured (`verbose = 0` is silent), loci
+  without a position and sequence names absent from the GFF are reported
+  at `verbose >= 1`, SilicoDArT data are accepted, and `save2tmp` saves
+  the locus-gene table. **The loci returned change for genes matched
+  through transcript rows and for pseudogenes.**
 * `gl.TajimasD`: `sim_pval` now tests D against a neutral null of unlinked
   SNPs, simulated in R (derived counts drawn with P(k) proportional to 1/k
   from 2N sequences); `rep` alone runs it, and ms/sample_stats are no longer
