@@ -2,6 +2,12 @@
 
 ## Bug fixes
 
+* `gl.ld.haplotype` stops with an error when every population is skipped
+  (fewer than `ind.limit` individuals, or fewer than 4 SNPs after
+  filtering), and warns when only some are. It previously reported this
+  only through the console and returned an empty table, so callers such as
+  DartRShiny showed a blank plot with no explanation.
+
 * `gl.select.panel`: with `exact = FALSE`, a method that selected no loci
   (`"pahigh"` or `"monopop"` on data with no private-allele or monomorphic
   loci) returned the whole data set, because `gl.keep.loc()` given no loci

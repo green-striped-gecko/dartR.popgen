@@ -55,7 +55,8 @@ loci. If a value > 1 is provided it will be interpreted as MAC (i.e. the
  (package snpStats) for details [default "R.squared"].}
 
 \item{ind.limit}{Minimum number of individuals that a population must have
-to be analysed. Populations with fewer individuals are skipped
+to be analysed. Populations with fewer individuals are skipped, with a
+warning; the function stops if every population is skipped
 [default 10].}
 
 \item{haplo_id}{Whether to identify haplotypes [default FALSE].}
