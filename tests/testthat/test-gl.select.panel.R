@@ -263,3 +263,15 @@ test_that("dapc copes with loci that have no calls in a population pair", {
   expect_gte(nLoc(r), 10)
   expect_true(all(locNames(r) %in% locNames(x)))
 })
+
+test_that("dapc works on file-backed (FBM) genlights", {
+  # adegenet's glPca cannot read FBM genotypes ("subscript out of bounds")
+  x <- dartR.data::platypus.gl
+  xf <- suppressWarnings(gl.gen2fbm(x, verbose = 0))
+  set.seed(1)
+  r <- sel(x, method = "dapc", nl = 10, verbose = 0)
+  set.seed(1)
+  rf <- sel(xf, method = "dapc", nl = 10, verbose = 0)
+  expect_equal(locNames(rf), locNames(r))
+  expect_equal(as.matrix(rf), as.matrix(r))
+})
