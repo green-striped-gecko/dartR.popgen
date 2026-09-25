@@ -19,7 +19,8 @@
 #' @param exact Logical. If TRUE, the panel has exactly \code{nl} loci:
 #'   surplus loci are dropped at random, and missing ones are added at random
 #'   from the remaining loci. If FALSE, the panel holds what the method
-#'   selected, which can be more or fewer than \code{nl} [default TRUE].
+#'   selected, which can be more or fewer than \code{nl}; the function stops
+#'   if the method selected no loci [default TRUE].
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 #'   brief progress messages; 3, progress and results summary; 5, full report
 #'   [default 2, unless specified using gl.set.verbosity].
@@ -57,7 +58,8 @@
 #' reproducible panel.
 #'
 #' All methods except "random", "hafall", "pic" and "picdart" need
-#' populations; "dapc" and "pahigh" need at least two.
+#' populations; "dapc" and "pahigh" need at least two. "dapc" leaves out,
+#' for each pair, the loci with no calls in that pair.
 #'
 #' @return A genlight object with the selected loci; individuals are in the
 #'   same order as in \code{x}.
@@ -142,6 +144,9 @@ gl.select.panel<-
       for (i in 1:nrow(com)){
         dummy <- pops[c(com[i,1],com[i,2])]
         dummy <-do.call(rbind,dummy)
+        # glPca (inside dapc) stops on loci with no calls in the pair
+        called <- colSums(!is.na(as.matrix(dummy))) > 0
+        dummy <- dummy[, called]
         dd <- dapc(dummy, n.pca=20, n.da=5)
         # rows of var.contr follow the locus order of dummy; their names do
         # not always equal locNames (e.g. "1" for locus "X1")
@@ -290,6 +295,14 @@ gl.select.panel<-
     }
 
     selloc <- selloc[!is.na(selloc)]
+
+    # gl.keep.loc() returns the whole object when given no loci
+    if (length(selloc) == 0 && !exact) {
+      stop(error(paste0("Method '", method, "' selected no loci (none ",
+                        "monomorphic in a population, or no private ",
+                        "alleles). Use exact = TRUE to fill the panel with ",
+                        "random loci, or another method.\n")))
+    }
 
     if (exact) {  #add/remove random loci in case exact is wanted
       if (length(selloc) > nl)

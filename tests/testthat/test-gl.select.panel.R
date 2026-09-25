@@ -232,3 +232,34 @@ test_that("private-allele rule agrees with gl.report.pa()", {
     expect_setequal(all_pa(x), report_pa(x))
   }
 })
+
+test_that("exact = FALSE stops when the method selects no loci", {
+  # the 175 possums.gl loci polymorphic in all 3 populations hold no
+  # monomorphic or private-allele loci; gl.keep.loc() given no loci
+  # returned the whole object
+  x <- dartR.data::possums.gl
+  x <- x[pop(x) %in% levels(pop(x))[1:3], ]
+  pop(x) <- droplevels(pop(x))
+  poly <- sapply(seppop(x), function(p) {
+    cm <- colMeans(as.matrix(p), na.rm = TRUE)
+    !is.na(cm) & cm > 0 & cm < 2
+  })
+  x <- x[, apply(poly, 1, all)]
+  for (m in c("pahigh", "monopop")) {
+    expect_error(sel(x, method = m, nl = 5, exact = FALSE, verbose = 0),
+                 "selected no loci", info = m)
+    set.seed(1)
+    expect_equal(nLoc(sel(x, method = m, nl = 5, verbose = 0)), 5, info = m)
+  }
+})
+
+test_that("dapc copes with loci that have no calls in a population pair", {
+  x <- dartR.data::platypus.gl
+  set.seed(1)
+  r <- sel(x, method = "dapc", nl = 10, verbose = 0)
+  expect_equal(nLoc(r), 10)
+  set.seed(1)
+  r <- sel(x, method = "dapc", nl = 10, exact = FALSE, verbose = 0)
+  expect_gte(nLoc(r), 10)
+  expect_true(all(locNames(r) %in% locNames(x)))
+})
