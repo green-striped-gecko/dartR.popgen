@@ -27,7 +27,8 @@ gl.nhybrids(
 )
 }
 \arguments{
-\item{gl}{Name of the genlight object containing the SNP data [required].}
+\item{gl}{Name of the genlight object containing the SNP data; SilicoDArT
+(presence/absence) data are not accepted [required].}
 
 \item{outpath}{Path where to save the output file [default tempdir()].}
 
