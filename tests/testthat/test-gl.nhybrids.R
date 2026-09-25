@@ -125,3 +125,15 @@ test_that("aa-PofZ.csv is aligned when NewHybrids omits the IndivName column (Ne
   skip_on_os("windows")
   expect_pofz_aligned(indiv_name_column = FALSE)
 })
+
+test_that("SilicoDArT data are rejected", {
+  # 0/1 presence/absence was recoded to 11/12 (homozygote/heterozygote)
+  out <- withr::local_tempdir()
+  expect_error(
+    utils::capture.output(gl.nhybrids(dartR.data::testset.gs,
+      nhyb.directory = NULL, outpath = out, verbose = 0
+    )),
+    "SNP"
+  )
+  expect_false(file.exists(file.path(out, "nhyb.txt")))
+})

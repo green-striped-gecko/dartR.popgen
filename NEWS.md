@@ -2,6 +2,11 @@
 
 ## Bug fixes
 
+* `gl.nhybrids` accepts SNP data only. SilicoDArT (presence/absence) data
+  were accepted and recoded as 0 -> 11 and 1 -> 12, so absence became a
+  homozygote and presence a heterozygote; on testset.gs NewHybrids then
+  called about 95% of individuals F1.
+
 * `gl.select.panel`: with `exact = FALSE`, a method that selected no loci
   (`"pahigh"` or `"monopop"` on data with no private-allele or monomorphic
   loci) returned the whole data set, because `gl.keep.loc()` given no loci

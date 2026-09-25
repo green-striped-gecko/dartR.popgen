@@ -42,7 +42,8 @@
 #' and homozygous alternate (SNP) can be produced by setting plot=TRUE (the
 #' default).
 #'
-#' @param gl Name of the genlight object containing the SNP data [required].
+#' @param gl Name of the genlight object containing the SNP data; SilicoDArT
+#' (presence/absence) data are not accepted [required].
 # @param outfile Name of the file that will be the input file for NewHybrids
 # [default nhyb.txt].
 #' @param outpath Path where to save the output file [default tempdir()].
@@ -132,7 +133,9 @@ gl.nhybrids <- function(gl,
   )
 
   # CHECK DATATYPE
-  datatype <- utils.check.datatype(gl, verbose = verbose)
+  # NewHybrids needs codominant genotypes; SilicoDArT 0/1 would be written
+  # as homozygote (11) / heterozygote (12)
+  datatype <- utils.check.datatype(gl, accept = "SNP", verbose = verbose)
 
   # FUNCTION SPECIFIC ERROR CHECKING
 
