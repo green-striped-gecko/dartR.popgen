@@ -7,6 +7,10 @@
   filtering), and warns when only some are. It previously reported this
   only through the console and returned an empty table, so callers such as
   DartRShiny showed a blank plot with no explanation.
+* `gl.nhybrids` accepts SNP data only. SilicoDArT (presence/absence) data
+  were accepted and recoded as 0 -> 11 and 1 -> 12, so absence became a
+  homozygote and presence a heterozygote; on testset.gs NewHybrids then
+  called about 95% of individuals F1.
 
 * `gl.select.panel`: with `exact = FALSE`, a method that selected no loci
   (`"pahigh"` or `"monopop"` on data with no private-allele or monomorphic
