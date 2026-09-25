@@ -2,6 +2,14 @@
 
 ## Bug fixes
 
+* `gl.select.panel`: with `exact = FALSE`, a method that selected no loci
+  (`"pahigh"` or `"monopop"` on data with no private-allele or monomorphic
+  loci) returned the whole data set, because `gl.keep.loc()` given no loci
+  returns its input. It now stops with an error. `method = "dapc"` no longer
+  stops in `glPca()` ("NAs detected in the vector of means") when a locus
+  has no calls in a population pair; those loci are left out of that pair's
+  DAPC (platypus.gl).
+
 * `gl.collapse` builds population groups as connected components. The old
   single pass could leave a population in two groups when similar
   populations formed a chain, and `gl.merge.pop()` then stopped ("not

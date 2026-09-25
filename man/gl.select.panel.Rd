@@ -19,7 +19,8 @@ Details) [default "random"].}
 \item{exact}{Logical. If TRUE, the panel has exactly \code{nl} loci:
 surplus loci are dropped at random, and missing ones are added at random
 from the remaining loci. If FALSE, the panel holds what the method
-selected, which can be more or fewer than \code{nl} [default TRUE].}
+selected, which can be more or fewer than \code{nl}; the function stops
+if the method selected no loci [default TRUE].}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 brief progress messages; 3, progress and results summary; 5, full report
@@ -68,7 +69,8 @@ R's random number generator; call \code{set.seed()} first for a
 reproducible panel.
 
 All methods except "random", "hafall", "pic" and "picdart" need
-populations; "dapc" and "pahigh" need at least two.
+populations; "dapc" and "pahigh" need at least two. "dapc" leaves out,
+for each pair, the loci with no calls in that pair.
 }
 \examples{
 # Select 50 loci randomly
