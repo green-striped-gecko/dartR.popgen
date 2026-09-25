@@ -2,6 +2,11 @@
 
 ## Bug fixes
 
+* `gl.ld.haplotype` stops with an error when every population is skipped
+  (fewer than `ind.limit` individuals, or fewer than 4 SNPs after
+  filtering), and warns when only some are. It previously reported this
+  only through the console and returned an empty table, so callers such as
+  DartRShiny showed a blank plot with no explanation.
 * `gl.nhybrids` accepts SNP data only. SilicoDArT (presence/absence) data
   were accepted and recoded as 0 -> 11 and 1 -> 12, so absence became a
   homozygote and presence a heterozygote; on testset.gs NewHybrids then

@@ -30,7 +30,8 @@
 #'   "D.prime", "R.squared", and "R". See \code{\link[snpStats]{ld}}
 #'    (package snpStats) for details [default "R.squared"].
 #' @param ind.limit Minimum number of individuals that a population must have
-#' to be analysed. Populations with fewer individuals are skipped
+#' to be analysed. Populations with fewer individuals are skipped, with a
+#' warning; the function stops if every population is skipped
 #' [default 10].
 #' @param haplo_id Whether to identify haplotypes [default FALSE].
 #' @param min_snps Minimum number of SNPs that a haplotype must contain to be
@@ -228,6 +229,10 @@ gl.ld.haplotype <- function(x,
 
   chr_list <- as.character(unique(x@chromosome))
 
+  # why each skipped population was skipped; reported after the loop so
+  # callers that only see conditions (e.g. DartRShiny) learn of it
+  skipped <- character(0)
+
   for (pop_n in seq_along(x_list)) {
     pop_ld <- x_list[[pop_n]]
     pop_label <- popNames(pop_ld)
@@ -240,6 +245,10 @@ gl.ld.haplotype <- function(x,
           "individuals.\n"
         ))
       }
+      skipped <- c(skipped, paste0(
+        pop_label, " (", nInd(pop_ld), " individuals, fewer than ind.limit = ",
+        ind.limit, ")"
+      ))
       next
     }
 
@@ -263,6 +272,9 @@ gl.ld.haplotype <- function(x,
           "because fewer than 4 SNPs remain after filtering.\n"
         ))
       }
+      skipped <- c(skipped, paste0(
+        pop_label, " (fewer than 4 SNPs after filtering)"
+      ))
       next
     }
 
@@ -750,6 +762,18 @@ gl.ld.haplotype <- function(x,
   }
 
   rownames(haplo_table) <- NULL
+
+  if (length(skipped) == length(x_list)) {
+    stop(error(
+      "  No population was analysed. Skipped:",
+      paste(skipped, collapse = "; "), "\n"
+    ))
+  }
+  if (length(skipped) > 0) {
+    warning(paste(
+      "Populations skipped:", paste(skipped, collapse = "; ")
+    ), call. = FALSE)
+  }
 
   if (verbose >= 3) {
     if (nrow(haplo_table) > 0) {

@@ -195,12 +195,50 @@ test_that("a population with exactly ind.limit individuals is analysed", {
   expect_false(any(grepl("Skipping population", out)))
   expect_true(any(grepl("Analysing chromosome", out)))
   expect_equal(nrow(res), 0L)
-  # one fewer individual is skipped, at verbose 1 too
-  out1 <- suppressWarnings(suppressMessages(capture.output(
+  # one fewer individual is skipped, at verbose 1 too; with no population
+  # left the function stops instead of returning an empty table
+  out1 <- character(0)
+  expect_error(
+    out1 <- capture.output(
+      gl.ld.haplotype(x[1:9, ], chrom_name = chr1, ind.limit = 10,
+                      plot.out = FALSE, plot.dir = pd, verbose = 1),
+      type = "output"
+    ),
+    "No population was analysed.*TENTERFIELD \\(9 individuals"
+  )
+  expect_error(
     gl.ld.haplotype(x[1:9, ], chrom_name = chr1, ind.limit = 10,
-                    plot.out = FALSE, plot.dir = pd, verbose = 1)
-  )))
-  expect_true(any(grepl("Skipping population TENTERFIELD", out1)))
+                    plot.out = FALSE, plot.dir = pd, verbose = 0),
+    "fewer than ind.limit = 10"
+  )
+})
+
+test_that("skipping some populations warns and analyses the rest", {
+  withr::local_options(dartR_wd = NULL)
+  pd <- withr::local_tempdir()
+  pdf(NULL); on.exit(dev.off(), add = TRUE)
+  x <- ld_fixture()
+  x2 <- x[1:5, ]
+  pop(x2) <- factor(rep("SMALL", 5))
+  x <- rbind(x, x2)
+  x$chromosome <- as.factor(x$other$loc.metrics$Chrom_Platypus_Chrom_NCBIv1)
+  x$position <- x$other$loc.metrics$ChromPos_Platypus_Chrom_NCBIv1
+  w <- NULL
+  out <- suppressMessages(capture.output(
+    res <- withCallingHandlers(
+      gl.ld.haplotype(x, chrom_name = chr1, ind.limit = 10,
+                      plot.out = FALSE, plot.dir = pd, verbose = 2),
+      warning = function(cnd) {
+        if (grepl("Populations skipped", conditionMessage(cnd))) {
+          w <<- conditionMessage(cnd)
+        }
+        invokeRestart("muffleWarning")
+      }
+    )
+  ))
+  expect_match(w, "SMALL \\(5 individuals")
+  expect_false(grepl("TENTERFIELD", w))
+  expect_true(any(grepl("Calculating pairwise LD in population TENTERFIELD", out)))
 })
 
 test_that("the all-chromosome default runs on the example and skips small chromosomes", {
