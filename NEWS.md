@@ -8,7 +8,9 @@
   returns its input. It now stops with an error. `method = "dapc"` no longer
   stops in `glPca()` ("NAs detected in the vector of means") when a locus
   has no calls in a population pair; those loci are left out of that pair's
-  DAPC (platypus.gl).
+  DAPC (platypus.gl). `method = "dapc"` also works on file-backed (FBM)
+  genlights, which adegenet cannot read ("subscript out of bounds"); the
+  population subsets are converted to in-memory genotypes for the DAPC.
 
 * `gl.collapse` builds population groups as connected components. The old
   single pass could leave a population in two groups when similar

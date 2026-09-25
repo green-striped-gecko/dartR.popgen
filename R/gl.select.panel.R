@@ -138,7 +138,9 @@ gl.select.panel<-
 
     if (method=="dapc"){
       com <- t(combn(nPop(x), 2))
-      pops <- seppop(x)
+      # adegenet (dapc, glPca) cannot read file-backed (FBM) genotypes
+      .fbm_or_null <- function(obj) tryCatch(methods::slot(obj, "fbm"), error = function(e) NULL)
+      pops <- seppop(if (is.null(.fbm_or_null(x))) x else gl.fbm2gen(x, verbose = 0))
       nl2 <- ceiling(nl/nrow(com))
 
       for (i in 1:nrow(com)){
