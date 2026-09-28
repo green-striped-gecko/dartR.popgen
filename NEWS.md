@@ -10,7 +10,11 @@
 * `gl.nhybrids` accepts SNP data only. SilicoDArT (presence/absence) data
   were accepted and recoded as 0 -> 11 and 1 -> 12, so absence became a
   homozygote and presence a heterozygote; on testset.gs NewHybrids then
-  called about 95% of individuals F1.
+  called about 95% of individuals F1. With both parental populations given,
+  it no longer stops when they share no fixed difference ("Subsetting
+  resulted in zero loci"; every parental pair in platypus.gl): it warns and
+  uses 200 random loci. Nor does it stop when no individual reaches `pprob`
+  for F1 ("no individuals listed to keep!"); the F1 plot is skipped.
 
 * `gl.select.panel`: with `exact = FALSE`, a method that selected no loci
   (`"pahigh"` or `"monopop"` on data with no private-allele or monomorphic

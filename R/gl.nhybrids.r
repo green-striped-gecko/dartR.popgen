@@ -8,7 +8,8 @@
 #' (or hard specified loc.limit) loci. In the absence of two identified
 #' parental populations, the script will select a random set 200 loci only
 #' (method='random') or the first 200 loci ranked on information content
-#' (method='AvgPIC').
+#' (method='AvgPIC'). If the two parental populations share no fixed
+#' difference, 200 loci are selected at random, with a warning.
 #'
 #' A fixed difference occurs when a SNP allele is present in all individuals
 #' of one population and absent in the other. There is provision for setting
@@ -276,7 +277,18 @@ gl.nhybrids <- function(gl,
     if (verbose >= 3) {
       cat(report("  No. of fixed loci identified:", nloci, "\n"))
     }
-    if (nloci > loc.limit) {
+    if (nloci == 0) {
+      # no fixed differences: fall back to loci selected at random, as when
+      # no parental population is given (the parents are still flagged)
+      if (verbose >= 1) {
+        cat(warn(
+          "  Warning: no loci with fixed differences between", p0, "and", p1,
+          "(threshold =", threshold, "); using", loc.limit,
+          "loci selected at random\n"
+        ))
+      }
+      gl2nhyb <- gl.subsample.loc(gl, loc.limit, replace = FALSE, verbose = 0)
+    } else if (nloci >= loc.limit) {
       if (verbose >= 3) {
         cat(
           report(
@@ -866,6 +878,15 @@ gl.nhybrids <- function(gl,
     F1.test <- read.csv(file = paste0(outpath,"/aa-PofZ.csv"))
     # Pull out results for F1 hybrids only, defined by posterior probability >= pprob
     F1.test <- F1.test[(F1.test$F1 >= pprob), ]
+    if (nrow(F1.test) == 0 && verbose >= 2) {
+      cat(report(
+        "  No individuals with F1 posterior probability >=", pprob,
+        "; F1 genotype plot not produced\n"
+      ))
+    }
+  }
+  if (flag == "bothpar" & plot == TRUE & !is.null(nhyb.directory) &&
+      nrow(F1.test) > 0) {
     # Use the id of the F1 hybrids to subset the genlight object containing the loci with fixed differences used in the analysis
     F1.only <-
       gl.keep.ind(

@@ -96,7 +96,8 @@ data, and creates an input file for the program NewHybrids using the top 200
 (or hard specified loc.limit) loci. In the absence of two identified
 parental populations, the script will select a random set 200 loci only
 (method='random') or the first 200 loci ranked on information content
-(method='AvgPIC').
+(method='AvgPIC'). If the two parental populations share no fixed
+difference, 200 loci are selected at random, with a warning.
 
 A fixed difference occurs when a SNP allele is present in all individuals
 of one population and absent in the other. There is provision for setting

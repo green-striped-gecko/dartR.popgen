@@ -137,3 +137,55 @@ test_that("SilicoDArT data are rejected", {
   )
   expect_false(file.exists(file.path(out, "nhyb.txt")))
 })
+
+test_that("parents with no fixed differences fall back to random loci", {
+  # every platypus.gl parental pair has no fixed difference at threshold 0;
+  # the fixed-loci subset then stopped with "Subsetting resulted in zero loci"
+  skip_on_os("windows")
+  gl <- dartR.data::platypus.gl
+  out <- withr::local_tempdir()
+  set.seed(42)
+  txt <- utils::capture.output(
+    res <- gl.nhybrids(gl,
+      p0 = "SEVERN_ABOVE", p1 = "TENTERFIELD",
+      nhyb.directory = NULL, outpath = out, verbose = 1
+    )
+  )
+  expect_true(any(grepl("no loci with fixed differences", txt)))
+  expect_equal(nLoc(res), 200)
+  expect_false(anyDuplicated(locNames(res)) > 0)
+  hdr <- readLines(file.path(out, "nhyb.txt"), n = 2)
+  expect_match(hdr[1], paste0("^NumIndivs\\s+", nInd(gl)))
+})
+
+test_that("no F1 above pprob skips the F1 plot instead of stopping", {
+  # fixed differences are planted between the parents, and the fake binary
+  # gives every individual F1 = 0, so no individual reaches pprob;
+  # gl.keep.ind() on no individuals stopped the run
+  skip_on_os("windows")
+  gl <- dartR.data::platypus.gl
+  m <- as.matrix(gl)
+  m[pop(gl) == "SEVERN_ABOVE", 1:60] <- 0
+  m[pop(gl) == "TENTERFIELD", 1:60] <- 2
+  gl@gen <- new("genlight", m, ploidy = 2)@gen
+  bin_dir <- file.path(tempdir(), "nhf1")
+  dir.create(bin_dir, showWarnings = FALSE)
+  withr::defer(unlink(bin_dir, recursive = TRUE))
+  skip_if(nchar(file.path(bin_dir, "nhyb.txt")) >= 100,
+          "temporary directory path too long for the NewHybrids path limit")
+  write_fake_newhybs(bin_dir, indiv_name_column = TRUE)
+  out <- withr::local_tempdir()
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off())
+  set.seed(42)
+  txt <- utils::capture.output(
+    res <- gl.nhybrids(gl,
+      p0 = "SEVERN_ABOVE", p1 = "TENTERFIELD",
+      nhyb.directory = bin_dir, outpath = out,
+      BurnIn = 50, sweeps = 50, verbose = 2
+    )
+  )
+  expect_true(all(locNames(gl)[1:60] %in% locNames(res)))
+  expect_true(file.exists(file.path(out, "aa-PofZ.csv")))
+  expect_true(any(grepl("No individuals with F1 posterior", txt)))
+})
