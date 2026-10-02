@@ -34,6 +34,7 @@ Imports: methods, adegenet (>= 2.0.0), utils, MASS, dplyr, patchwork, crayon, gg
          stringr, furrr, future, ggdendro, LEA, pillar, plyr, terra, purrr, ggpmisc, R.utils,
          ape, StAMPP
 Suggests: 
+  assignPOP,
   pegas,
   SIBER,
   expm,

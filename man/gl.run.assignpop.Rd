@@ -9,7 +9,7 @@ gl.run.assignpop(
   unknown.id = NULL,
   x.unknown = NULL,
   nmin = 10,
-  dir = getwd(),
+  dir = tempdir(),
   model = "svm",
   svm.kernel = "linear",
   svm.cost = 1,
@@ -38,11 +38,11 @@ warning. Applied only when unknowns are present [default 10].}
 
 \item{dir}{Directory where \code{assignPOP::assign.X()} writes its output
 files (including \code{AssignmentResult.txt}). Only used in split and
-two-object modes [default getwd()].}
+two-object modes [default tempdir()].}
 
 \item{model}{Classification model passed to \code{assignPOP::assign.X()}.
-One of \code{"svm"}, \code{"naiveBayes"}, \code{"randomForest"},
-\code{"tree"}, or \code{"knn"} [default "svm"].}
+One of \code{"svm"}, \code{"lda"}, \code{"naiveBayes"}, \code{"tree"},
+or \code{"randomForest"} [default "svm"].}
 
 \item{svm.kernel}{Kernel type for the SVM classifier, passed to
 \code{assignPOP::assign.X()}. One of \code{"linear"}, \code{"radial"},
@@ -60,7 +60,7 @@ automatically [default "kaiser-guttman"].}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 progress log; 3, progress and results summary; 5, full report
-[default NULL, unless specified using gl.set.verbosity].}
+[default 2, unless specified using gl.set.verbosity].}
 }
 \value{
 \strong{Single-object mode}: a named 3-element list identical in
@@ -85,9 +85,9 @@ structure to the output of \code{assignPOP::read.Structure()}:
 }
 }
 \description{
-Provides a seamless interface between dartRverse genlight objects and the
-\pkg{assignPOP} package, handling all data preparation and assignment steps
-internally.
+Interface between dartRverse genlight objects and the \pkg{assignPOP}
+package. The function prepares the data and, when unknowns are given, runs
+the assignment.
 
 \strong{Single-object mode} (\code{unknown.id = NULL}, \code{x.unknown =
 NULL}): \code{x} contains individuals with known population assignments.
@@ -134,20 +134,16 @@ dat <- gl.run.assignpop(possums.gl, verbose = 3)
 # assignPOP::assign.kfold(dat, k.fold = 5, dir = tempdir())
 
 # Split mode: unknown extracted by name, assignment run automatically
-# out <- gl.run.assignpop(gl, unknown.id = "AA011731", nmin = 10,
-#                          dir = tempdir(), verbose = 3)
+# out <- gl.run.assignpop(possums.gl, unknown.id = "1", nmin = 10,
+#                          verbose = 3)
 # out$results   # assignment result data frame
 # out$train     # reference data object
 # out$unknowns  # unknown data object
 }
 
 }
-\seealso{
-Other linker: 
-\code{\link{gl.run.klfdapc}()}
-}
 \author{
-Arthur Georges. Custodian: Arthur Georges -- Post to
+Author(s): Arthur Georges. Custodian: Arthur Georges -- Post to
 \url{https://groups.google.com/d/forum/dartr}
 }
 \concept{linker}

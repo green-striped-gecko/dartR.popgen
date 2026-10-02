@@ -2,8 +2,8 @@
 % Please edit documentation in R/gl.assign.on.genotype.r
 \name{gl.assign.on.genotype}
 \alias{gl.assign.on.genotype}
-\title{Use genotype to identify populations as possible source populations for an 
-individual of unknown provenance.}
+\title{Use genotype to identify populations as possible source populations
+for an individual of unknown provenance}
 \usage{
 gl.assign.on.genotype(
   x,
@@ -20,58 +20,92 @@ gl.assign.on.genotype(
 \item{unknown}{SpecimenID label (indName) of the focal individual whose
 provenance is unknown [required].}
 
-\item{nmin}{Minimum sample size for a target population to be included in the
-analysis [default 10].}
+\item{nmin}{Minimum sample size for a target population to be included in
+the analysis [default 10].}
 
-\item{n.best}{If given a value, dictates the best n=n.best populations to
-retain for consideration (or more if their are ties) based on AIC weight. If not
-specified, then the putative source populations identified as possibilities (AIC.wt >= aic.threshold)
-are retained. [default NULL].}
+\item{n.best}{If given a value, dictates the best n = n.best populations to
+retain for consideration (or more if there are ties) based on AIC weight.
+If not specified, then the putative source populations with
+AIC.wt >= aic.threshold are retained [default NULL].}
 
-\item{aic.threshold}{The critical value used to select populations for which their is considered
-some support as a putative source based on AIC weights [default 0.05]}
+\item{aic.threshold}{The critical value used to select populations for
+which there is some support as a putative source based on AIC weights
+[default 0.05].}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 progress log; 3, progress and results summary; 5, full report
- [default 2 or as specified using gl.set.verbosity].}
+[default 2, unless specified using gl.set.verbosity].}
 }
 \value{
 A genlight object containing the focal individual (assigned to
-population 'unknown') and putative source populations based on AIC weights
-If no such populations, the genlight object contains only data
-for the unknown individual with a warning.
+population "unknown") and the putative source populations based on AIC
+weights, with monomorphic loci removed. If no population qualifies, the
+genlight object contains only the unknown and a warning is given.
 }
 \description{
-This script identifies populations
-for which the unknown individual has a reasonable expectation of having been drawn
-from those populations given its genotype and the allele frequencies in the 
-putative source populations. The putative source populations that survive
-are retained and returned in a genlight object.
+Identifies populations from which the individual of unknown provenance
+could have been drawn, given its genotype and the allele frequencies in
+the putative source populations. The putative source populations that
+survive are retained and returned in a genlight object.
+}
+\details{
+For each putative source population, the function computes the
+log-likelihood of the unknown's multilocus genotype under Hardy-Weinberg
+equilibrium, treating loci as independent. Allele frequencies are
+estimated with the Rannala & Mountain (1997) prior, (x + 1/2) / (n + 1),
+where x is the count of the alternate allele and n the number of gene
+copies scored in the population. An allele absent from a population's
+sample therefore has a small non-zero frequency that depends on the sample
+size.
 
-The algorithm computes the log-likelihood of the focal genotype under Hardy-Weinberg (HWE), then computes
-a Z-score and one-tailed p-value by comparing the unknown individual’s log-likelihood to those from 
-individuals in each putative source population. Significant departures from expectation renders 
-a population unlikely to be the source for the focal unknown individual.
+All populations are scored on the same loci: loci scored as missing in the
+unknown, or with no genotype in one or more of the retained populations,
+are excluded. Otherwise a population with more missing loci would sum
+fewer log-likelihood terms and appear more likely.
 
-A suitable estimate of the expectation for the log likelihoods requires that the sample size is
-adequate, say >=10).
- 
-WARNING: If a putative population is not in Hardy-Weinberg equilibrium, as might occur if it
-includes F1 hybrids and backcrosses, then the standard deviation for the expectation will
-be inflated. This inflation may result in false identification of the population
-as a putative source for the focal unknown individual. For this reason, you may wish to 
-remove populations that contain individuals likely
-to be subject to contemporary hybridization or admixture.
+The log-likelihoods are converted to AIC values (-2 log-likelihood) and AIC
+weights. Because no parameters are fitted, the AIC weights equal the
+likelihoods normalised across populations, that is, the posterior
+probability of origin under equal prior probabilities. Populations with an
+AIC weight below aic.threshold are unlikely to be the source. The weights
+assume independent loci; with many linked loci they concentrate on the
+single best population more than the data justify.
+
+A suitable estimate of the allele frequencies requires an adequate sample
+size, say >= 10.
+
+A population named "unknowns" in the input is taken to hold other
+individuals of unknown provenance and is excluded from the reference
+populations.
+
+WARNING: If a putative population is not in Hardy-Weinberg equilibrium, as
+might occur if it includes F1 hybrids and backcrosses, the genotype
+likelihoods are misspecified. For this reason, you may wish to remove
+populations that contain individuals likely to be subject to contemporary
+hybridization or admixture.
 }
 \examples{
-# Test run with a focal individual from the Macleay River (EmmacMaclGeor)
-test <- gl.assign.on.genotype(testset.gl,unknown='UC_00146',nmin=10,verbose=3)
+# Focal individual from the Macleay River (EmmacMaclGeor)
+test <- gl.assign.on.genotype(testset.gl, unknown = "UC_00146",
+                              nmin = 10, verbose = 3)
 
 }
+\references{
+Rannala, B., & Mountain, J. L. (1997). Detecting immigration by using
+multilocus genotypes. Proceedings of the National Academy of Sciences,
+94(17), 9197-9201.
+}
 \seealso{
-\code{\link{gl.assign.pca}}, \code{\link{gl.assign.pa}}, \code{\link{gl.assign.mahalanobis}}
+\code{\link{gl.assign.pa}}, \code{\link{gl.assign.pca}},
+\code{\link{gl.assign.mahalanobis}}
+
+Other assignment: 
+\code{\link{gl.assign.mahalanobis}()},
+\code{\link{gl.assign.pa}()},
+\code{\link{gl.assign.pca}()}
 }
 \author{
-Script: Arthur Georges. Custodian: Arthur Georges -- Post to
-  \url{https://groups.google.com/d/forum/dartr}
+Author(s): Arthur Georges. Custodian: Arthur Georges -- Post to
+\url{https://groups.google.com/d/forum/dartr}
 }
+\concept{assignment}

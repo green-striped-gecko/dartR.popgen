@@ -1,5 +1,27 @@
 # dartR.popgen 1.2.6
 
+## New functions
+
+* Population assignment of an individual of unknown provenance (Arthur
+  Georges): `gl.assign.pa()` (private alleles), `gl.assign.on.genotype()`
+  (genotype likelihoods), `gl.assign.pca()` (2D PCA confidence ellipses),
+  `gl.assign.mahalanobis()` (Mahalanobis distance in the leading PCA
+  dimensions), and `gl.run.assignpop()` (interface to the assignPOP
+  package). Changes from the contributed versions, from review:
+  `gl.assign.pa()` counts private reference as well as alternate alleles and
+  no longer counts loci with no data in a population;
+  `gl.assign.on.genotype()` scores every population on the same loci, with
+  Rannala & Mountain (1997) allele frequencies, and accepts SNP data only;
+  `gl.assign.mahalanobis()` tests distances with Hotelling's F test for a new
+  observation, reports populations with a singular covariance matrix as not
+  tested instead of giving them negative distances, takes `unknown` as its
+  second argument, and counts only the leading broken-stick eigenvalues;
+  `gl.assign.pca()` and `gl.assign.mahalanobis()` return observed, not
+  imputed, genotypes; all four label the unknown "unknown";
+  `gl.run.assignpop()` writes to `tempdir()` by default. The contributed
+  `gl.run.klfdapc()` is not included: `KLFDAPC::predict.klfdapc()` assigns at
+  chance level, and KLFDAPC is not on CRAN.
+
 ## Bug fixes
 
 * `gl.ld.haplotype` stops with an error when every population is skipped
