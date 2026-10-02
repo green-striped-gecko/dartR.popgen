@@ -2,109 +2,119 @@
 % Please edit documentation in R/gl.assign.mahalanobis.r
 \name{gl.assign.mahalanobis}
 \alias{gl.assign.mahalanobis}
-\title{Calculate probabilities of assignment of an individual of unknown provenance 
-to population based on Mahalanobis Distance}
+\title{Calculate probabilities of assignment of an individual of unknown
+provenance to populations based on Mahalanobis distance}
 \usage{
 gl.assign.mahalanobis(
   x,
+  unknown,
   nmin = 10,
   dim.limit = NULL,
   plevel = 0.001,
   n.best = NULL,
-  unknown,
   verbose = NULL
 )
 }
 \arguments{
 \item{x}{Name of the input genlight object [required].}
 
-\item{nmin}{Minimum sample size for a target population to be included in the
-analysis [default 10].}
-
-\item{dim.limit}{Maximum number of dimensions to consider for the
-confidence ellipses [default nPop(x)-1]}
-
-\item{plevel}{Probability level for bounding ellipses
-[default 0.001].}
-
-\item{n.best}{If given a value, dictates the best n=n.best populations to
-retain for consideration (or more if their are ties). If not
-specified, then the putative source populations identified as possibilities
-by the PCA are retained. [default NULL].}
-
 \item{unknown}{Identity label of the focal individual whose provenance is
 unknown [required].}
 
+\item{nmin}{Minimum sample size for a target population to be included in
+the analysis [default 10].}
+
+\item{dim.limit}{Maximum number of dimensions to consider for the
+confidence envelope [default nPop(x) - 1].}
+
+\item{plevel}{Probability level below which a population is eliminated as
+a putative source [default 0.001].}
+
+\item{n.best}{If given a value, dictates the best n = n.best populations to
+retain for consideration (or more if there are ties). If not specified,
+the populations for which the probability is >= plevel are retained
+[default NULL].}
+
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 progress log; 3, progress and results summary; 5, full report
-[default 2 or as specified using gl.set.verbosity].}
+[default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-A data frame with the results of the assignment analysis.
+A genlight object containing the unknown individual (assigned to
+population "unknown") and the putative source populations, with their
+original (not imputed) genotypes. Loci scored as missing in the unknown and
+monomorphic loci are removed.
 }
 \description{
-This script assigns an individual of unknown provenance to one or more target
-populations based on the unknown individual's proximity to population 
-centroids; proximity is estimated using Mahalanobis Distance and a z score and
-probability of assignment is calculated.
-
-The following process is followed:
-\enumerate{
-\item An ordination is undertaken on the populations to again yield a
-series of orthogonal (independent) axes.
-\item A workable subset of dimensions is chosen, that specified as dim.limit, or
-the number of dimensions with substantive eigenvalues (Kaiser-Guttman criterion),
-whichever is the smaller.
-\item The Mahalobalis Distance is calculated for the unknown against each
-population and probability of membership of each population is calculated.
-The assignment probabilities are listed in support of a decision.
-}
+Assigns an individual of unknown provenance to one or more target
+populations based on the unknown individual's distance from each
+population centroid in a PCA, measured as a squared Mahalanobis distance
+and tested against the spread of the population.
 }
 \details{
+The following process is followed:
+\enumerate{
+\item Loci scored as missing in the unknown are removed, and remaining
+missing values are imputed (method "neighbour" of \code{gl.impute()}).
+\item A PCA is undertaken on the populations to yield a series of
+orthogonal axes.
+\item A workable subset of dimensions is chosen: dim.limit, or the number
+of leading eigenvalues larger than expected under the broken-stick model,
+whichever is the smaller (at least one).
+\item The squared Mahalanobis distance (D2) of the unknown from the
+centroid of each population is calculated in those dimensions, using the
+population's own mean and covariance matrix.
+\item D2 is tested with Hotelling's T-squared test for a new observation:
+with n individuals in the population and p dimensions,
+F = n (n - p) D2 / ((n + 1) p (n - 1)) follows an F distribution with p
+and n - p degrees of freedom. This test allows for the mean and covariance
+being estimated from a small sample; the chi-square approximation does not
+and rejects true source populations too often when n is small.
+}
+
 There are three considerations to assignment. First, consider only those
-populations for which the unknown has no private alleles. Private alleles are
-an indication that the unknown does not belong to a target population
-(provided that the sample size is adequate, say >=10). This can be evaluated
- with gl.assign.pa().
+populations for which the unknown has no excess of private alleles. This
+can be evaluated with \code{gl.assign.pa()}. Next, consider the PCA plot
+for the remaining populations and the position of the unknown in relation
+to their confidence ellipses, as produced by \code{gl.assign.pca()}. The
+third step (delivered by this function) considers the position of the
+unknown in relation to the confidence envelope in all selected dimensions
+of the ordination. The larger the probability, the greater the confidence
+in the assignment. If the unknown is an outlier with respect to a
+population, say at less than 0.001 probability, that population can be
+eliminated from further consideration.
 
-A next step is to consider the PCoA plot for populations remaining after step 1.
-The position of the unknown in relation to the
-confidence ellipses is plotted by this script as a basis for narrowing down
-the list of putative source populations. This can be evaluated with 
-gl.assign.pca().
+Warning: gl.assign.mahalanobis() treats each selected dimension equally,
+without regard to the percentage variation explained. If the unknown is an
+outlier in a lower dimension with an explanatory variance of, say, 0.1\%,
+the putative population will be eliminated. This is why the function only
+uses dimensions retained by the broken-stick criterion.
 
-The third step (delivered by this script) is to consider the assignment 
-probabilities based on the squared Generalised Linear Distance 
-(Mahalanobis distance) of the unknown from the centroid for each population, 
-then to consider the probability associated with its quantile using the 
-Chisquare approximation. In effect, this index takes into account position 
-of the unknown in relation to the confidence envelope in all selected 
-dimensions of the ordination. The larger the assignment probability, 
-the greater the confidence in the assignment. 
+Populations with no more individuals than selected dimensions, or with a
+singular covariance matrix (for example when imputation makes individuals
+identical), cannot be tested. They are reported and retained.
 
-If dim.limit is set to 2, to correspond with the dimensions used in
-gl.assign.pa(), then the output provides a ranking of the set
-of putative source populations selected after the PCoA selection step.
-
-If dim.limit is set to be > 2, then this script provides a basis for
-further narrowing the set of putative populations.If the unknown individual
-is an extreme outlier, say at less than 0.001 probability of population 
-membership (0.999 confidence envelope), then the associated population 
-can be eliminated from further consideration.
-
-Warning: gl.assign.mahalanobis() treats each specified dimension equally, without
-regard to the percentage variation explained after ordination. If the 
-unknown is an outlier in a lower dimension with an explanatory variance of,
-say, 0.1%, the putative population will be eliminated. This is why the script
-only uses substantive dimensions from the ordination.
-
-Each of these above approaches provides evidence, none are 100% definitive. 
+Each of these approaches provides evidence, none are 100\% definitive.
 They need to be interpreted cautiously.
+}
+\examples{
+\donttest{
+# Focal individual from the Macleay River (EmmacMaclGeor)
+test <- gl.assign.mahalanobis(testset.gl, unknown = "UC_00146", verbose = 3)
+}
 
-In deciding the assignment, the script considers an individual to be an
-outlier with respect to a particular population at alpha = 0.001 as default
+}
+\seealso{
+\code{\link{gl.assign.pa}}, \code{\link{gl.assign.on.genotype}},
+\code{\link{gl.assign.pca}}
+
+Other assignment: 
+\code{\link{gl.assign.on.genotype}()},
+\code{\link{gl.assign.pa}()},
+\code{\link{gl.assign.pca}()}
 }
 \author{
-Script: Arthur Georges. Custodian: Arthur Georges --
-Post to \url{https://groups.google.com/d/forum/dartr}
+Author(s): Arthur Georges. Custodian: Arthur Georges -- Post to
+\url{https://groups.google.com/d/forum/dartr}
 }
+\concept{assignment}

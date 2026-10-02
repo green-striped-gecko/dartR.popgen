@@ -3,9 +3,9 @@
 #' @family linker
 #'
 #' @description
-#' Provides a seamless interface between dartRverse genlight objects and the
-#' \pkg{assignPOP} package, handling all data preparation and assignment steps
-#' internally.
+#' Interface between dartRverse genlight objects and the \pkg{assignPOP}
+#' package. The function prepares the data and, when unknowns are given, runs
+#' the assignment.
 #'
 #' \strong{Single-object mode} (\code{unknown.id = NULL}, \code{x.unknown =
 #' NULL}): \code{x} contains individuals with known population assignments.
@@ -57,10 +57,10 @@
 #' warning. Applied only when unknowns are present [default 10].
 #' @param dir Directory where \code{assignPOP::assign.X()} writes its output
 #' files (including \code{AssignmentResult.txt}). Only used in split and
-#' two-object modes [default getwd()].
+#' two-object modes [default tempdir()].
 #' @param model Classification model passed to \code{assignPOP::assign.X()}.
-#' One of \code{"svm"}, \code{"naiveBayes"}, \code{"randomForest"},
-#' \code{"tree"}, or \code{"knn"} [default "svm"].
+#' One of \code{"svm"}, \code{"lda"}, \code{"naiveBayes"}, \code{"tree"},
+#' or \code{"randomForest"} [default "svm"].
 #' @param svm.kernel Kernel type for the SVM classifier, passed to
 #' \code{assignPOP::assign.X()}. One of \code{"linear"}, \code{"radial"},
 #' \code{"polynomial"}, or \code{"sigmoid"} [default "linear"].
@@ -73,9 +73,9 @@
 #' automatically [default "kaiser-guttman"].
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 #' progress log; 3, progress and results summary; 5, full report
-#' [default NULL, unless specified using gl.set.verbosity].
+#' [default 2, unless specified using gl.set.verbosity].
 #'
-#' @author Arthur Georges. Custodian: Arthur Georges -- Post to
+#' @author Author(s): Arthur Georges. Custodian: Arthur Georges -- Post to
 #' \url{https://groups.google.com/d/forum/dartr}
 #'
 #' @examples
@@ -88,8 +88,8 @@
 #' # assignPOP::assign.kfold(dat, k.fold = 5, dir = tempdir())
 #'
 #' # Split mode: unknown extracted by name, assignment run automatically
-#' # out <- gl.run.assignpop(gl, unknown.id = "AA011731", nmin = 10,
-#' #                          dir = tempdir(), verbose = 3)
+#' # out <- gl.run.assignpop(possums.gl, unknown.id = "1", nmin = 10,
+#' #                          verbose = 3)
 #' # out$results   # assignment result data frame
 #' # out$train     # reference data object
 #' # out$unknowns  # unknown data object
@@ -121,7 +121,7 @@ gl.run.assignpop <- function(x,
                              unknown.id = NULL,
                              x.unknown  = NULL,
                              nmin       = 10,
-                             dir        = getwd(),
+                             dir        = tempdir(),
                              model      = "svm",
                              svm.kernel = "linear",
                              svm.cost   = 1,
@@ -133,23 +133,32 @@ gl.run.assignpop <- function(x,
 
   verbose  <- gl.check.verbosity(verbose)
   funname  <- match.call()[[1]]
-  utils.flag.start(func = funname, build = "v.2023.3", verbose = verbose)
+  utils.flag.start(func = funname, verbose = verbose)
   datatype <- utils.check.datatype(x, accept = "SNP", verbose = verbose)
 
   # FUNCTION-SPECIFIC ERROR CHECKING -----------------------------------------
 
   if (!is.null(unknown.id) && !is.null(x.unknown)) {
-    stop(
-      "  Fatal Error: supply either unknown.id or x.unknown, not both.\n"
-    )
+    stop(error(
+      "Fatal Error: supply either unknown.id or x.unknown, not both.\n"
+    ))
+  }
+
+  # assignPOP is needed only to run the assignment
+  if ((!is.null(unknown.id) || !is.null(x.unknown)) &&
+      !requireNamespace("assignPOP", quietly = TRUE)) {
+    stop(error(
+      "Package assignPOP needed for this function to work. Please install",
+      "it.\n"
+    ))
   }
 
   if (is.null(pop(x))) {
     if (verbose >= 2) {
-      cat(
-        "  Population assignments not found in the genlight object.\n",
-        "  All individuals assigned to a single population: 'Pop1'.\n"
-      )
+      cat(warn(
+        "  Warning: Population assignments not found in the genlight",
+        "object. All individuals assigned to a single population: 'Pop1'.\n"
+      ))
     }
     pop(x) <- rep("Pop1", nInd(x))
   }
@@ -160,17 +169,17 @@ gl.run.assignpop <- function(x,
 
     missing_ids <- setdiff(unknown.id, indNames(x))
     if (length(missing_ids) > 0L) {
-      stop(
-        "  Fatal Error: the following unknown.id names were not found in x:\n",
-        "  ", paste(missing_ids, collapse = ", "), "\n"
-      )
+      stop(error(
+        "Fatal Error: the following unknown.id names were not found in x:",
+        paste(missing_ids, collapse = ", "), "\n"
+      ))
     }
 
     if (verbose >= 2) {
-      cat(
+      cat(report(
         "  Extracting", length(unknown.id),
         "unknown individual(s) from x:", paste(unknown.id, collapse = ", "), "\n"
-      )
+      ))
     }
 
     x.unknown <- x[indNames(x) %in% unknown.id, ]
@@ -187,28 +196,28 @@ gl.run.assignpop <- function(x,
 
     if (length(pop_drop) > 0L) {
       if (verbose >= 1) {
-        cat(
-          "  Dropping", length(pop_drop),
-          "reference population(s) with fewer than", nmin, "individuals:\n",
-          " ", paste(pop_drop, collapse = ", "), "\n"
-        )
+        cat(warn(
+          "  Warning: Dropping", length(pop_drop),
+          "reference population(s) with fewer than", nmin, "individuals:",
+          paste(pop_drop, collapse = ", "), "\n"
+        ))
       }
       x      <- x[pop(x) %in% pop_keep, ]
       pop(x) <- droplevels(pop(x))
     }
 
     if (nInd(x) == 0L) {
-      stop(
-        "  Fatal Error: no reference individuals remain after nmin filtering.\n",
-        "  Lower nmin or supply a larger reference dataset.\n"
-      )
+      stop(error(
+        "Fatal Error: no reference individuals remain after nmin filtering.",
+        "Lower nmin or supply a larger reference dataset.\n"
+      ))
     }
 
     if (verbose >= 2) {
-      cat(
+      cat(report(
         "  Reference set after nmin filtering:",
         nInd(x), "individuals,", nPop(x), "populations\n"
-      )
+      ))
     }
   }
 
@@ -221,26 +230,26 @@ gl.run.assignpop <- function(x,
     common_loci <- intersect(locNames(x), locNames(x.unknown))
 
     if (length(common_loci) == 0L) {
-      stop(
-        "  Fatal Error: no loci in common between reference and unknown sets.\n",
-        "  Ensure both derive from the same SNP set.\n"
-      )
+      stop(error(
+        "Fatal Error: no loci in common between reference and unknown sets.",
+        "Ensure both derive from the same SNP set.\n"
+      ))
     }
 
     n_dropped_x   <- nLoc(x)        - length(common_loci)
     n_dropped_unk <- nLoc(x.unknown) - length(common_loci)
 
     if (n_dropped_x > 0L && verbose >= 1) {
-      cat(
+      cat(warn(
         "  Warning:", n_dropped_x,
-        "reference loci not in unknown set — dropped.\n"
-      )
+        "reference loci not in unknown set, dropped.\n"
+      ))
     }
     if (n_dropped_unk > 0L && verbose >= 1) {
-      cat(
+      cat(warn(
         "  Warning:", n_dropped_unk,
-        "unknown loci not in reference set — dropped.\n"
-      )
+        "unknown loci not in reference set, dropped.\n"
+      ))
     }
 
     x         <- x[, locNames(x) %in% common_loci]
@@ -249,7 +258,8 @@ gl.run.assignpop <- function(x,
     x.unknown <- x.unknown[, match(common_loci, locNames(x.unknown))]
 
     if (verbose >= 2) {
-      cat("  Loci retained after alignment:", length(common_loci), "\n")
+      cat(report("  Loci retained after alignment:", length(common_loci),
+                 "\n"))
     }
   }
 
@@ -269,7 +279,7 @@ gl.run.assignpop <- function(x,
     }
 
     if (verbose >= 2) {
-      cat("  One-hot encoding allele frequencies for", label, "\n")
+      cat(report("  One-hot encoding allele frequencies for", label, "\n"))
     }
 
     lookup1 <- c(1.0, 0.5, 0.0)
@@ -301,13 +311,13 @@ gl.run.assignpop <- function(x,
   # BUILD DATA OBJECTS -------------------------------------------------------
 
   if (verbose >= 2) {
-    cat("  Building assignPOP data object for known individuals\n")
+    cat(report("  Building assignPOP data object for known individuals\n"))
   }
   train_obj <- .build_assignpop_obj(x, label = "knowns")
 
   if (!is.null(x.unknown)) {
     if (verbose >= 2) {
-      cat("  Building assignPOP data object for unknown individuals\n")
+      cat(report("  Building assignPOP data object for unknown individuals\n"))
     }
     unk_obj <- .build_assignpop_obj(x.unknown, pop_override = "Unknown",
                                     label = "unknowns")
@@ -337,7 +347,7 @@ gl.run.assignpop <- function(x,
     # Single-object mode: return data object for cross-validation
     out <- train_obj
 
-    if (verbose >= 1) {
+    if (verbose >= 3) {
       cat("\n  Next steps -- pass the returned object to assignPOP functions:\n")
       cat("\n    Optionally reduce loci by minor allele count:\n")
       cat("      dat <- assignPOP::reduce.allele(dat, min.mac = 5)\n")
@@ -355,37 +365,50 @@ gl.run.assignpop <- function(x,
   } else {
 
     # Two-dataset mode: run assign.X() internally
-    if (!requireNamespace("assignPOP", quietly = TRUE)) {
-      stop(
-        "  Package 'assignPOP' is required but not installed.\n",
-        "  Install it with: install.packages('assignPOP')\n"
-      )
-    }
-
     if (verbose >= 2) {
-      cat("\n  Running assignPOP::assign.X()...\n")
+      cat(report("  Running assignPOP::assign.X()\n"))
     }
 
     dir.create(dir, showWarnings = FALSE, recursive = TRUE)
     # assign.X() requires a trailing slash
     dir_slash <- paste0(gsub("/*$", "", dir), "/")
 
-    assignPOP::assign.X(
-      x1         = train_obj,
-      x2         = unk_obj,
-      dir        = dir_slash,
-      model      = model,
-      svm.kernel = svm.kernel,
-      svm.cost   = svm.cost,
-      ntree      = ntree,
-      pca.PCs    = pca.PCs,
-      skipQ      = TRUE      # suppress interactive prompts
-    )
+    # assign.X() calls dir.create(dir) itself and warns when the directory
+    # exists, which it always does here; muffle only that warning.
+    run_assign <- function() {
+      withCallingHandlers(
+        assignPOP::assign.X(
+          x1         = train_obj,
+          x2         = unk_obj,
+          dir        = dir_slash,
+          model      = model,
+          svm.kernel = svm.kernel,
+          svm.cost   = svm.cost,
+          ntree      = ntree,
+          pca.PCs    = pca.PCs,
+          skipQ      = TRUE      # suppress interactive prompts
+        ),
+        warning = function(w) {
+          if (grepl("already exists", conditionMessage(w), fixed = TRUE)) {
+            invokeRestart("muffleWarning")
+          }
+        }
+      )
+    }
+    # assign.X() prints its own progress; show it from verbose 2
+    if (verbose >= 2) {
+      run_assign()
+    } else {
+      utils::capture.output(run_assign())
+    }
 
     # Read results back and include in return value
     result_file <- file.path(dir, "AssignmentResult.txt")
+    # Read IDs as text so that names such as "001" survive
     results     <- read.table(result_file, header = TRUE, sep = " ",
-                              stringsAsFactors = FALSE, check.names = FALSE)
+                              stringsAsFactors = FALSE, check.names = FALSE,
+                              colClasses = c(Ind.ID = "character",
+                                             pred.pop = "character"))
 
     if (verbose >= 3) {
       cat("\n  --- Assignment results ---\n")
@@ -406,8 +429,9 @@ gl.run.assignpop <- function(x,
 
     out <- list(results = results, train = train_obj, unknowns = unk_obj)
 
-    if (verbose >= 1) {
-      cat("\n  Results written to:", file.path(dir, "AssignmentResult.txt"), "\n")
+    if (verbose >= 2) {
+      cat(report("\n  Results written to:",
+                 file.path(dir, "AssignmentResult.txt"), "\n"))
       cat("\n  To run cross-validation on the reference individuals:\n")
       cat("      assignPOP::assign.kfold(out$train, k.fold = 5, dir = tempdir())\n")
     }

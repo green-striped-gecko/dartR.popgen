@@ -31,26 +31,27 @@ unknown [default TRUE].}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 progress log; 3, progress and results summary; 5, full report
-[default 2 or as specified using gl.set.verbosity].}
+[default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-A genlight object containing only those populations that are
-putative source populations for the unknown individual.
+A genlight object containing the unknown individual (assigned to
+population "unknown") and the populations that are not eliminated, with
+their original (not imputed) genotypes. Loci scored as missing in the
+unknown are removed.
 }
 \description{
 Eliminates from consideration putative source populations for a specified
 individual of unknown provenance based on its position relative to the
 confidence ellipse of each putative source population in the top two
-dimensions of a PCA. The genotype space is ordinated to yield orthogonal
-axes and populations for which the unknown lies outside the specified
-confidence ellipse are set aside for further examination.
+dimensions of a PCA. Populations for which the unknown lies outside the
+specified confidence ellipse are eliminated.
 }
 \details{
 There are four approaches to population assignment of which this is one.
 \enumerate{
 \item Eliminate those populations from consideration where the genotype of
 the unknown is not consistent with their allelic profiles. This can be
-evaluated with \code{gl.assign.by.genotype()}.
+evaluated with \code{gl.assign.on.genotype()}.
 \item Eliminate those populations for which the unknown has substantial
 private alleles. Substantial numbers of private alleles are an indication
 that the unknown does not belong to a target population (provided that the
@@ -59,34 +60,54 @@ sample size is adequate, say >= 10). This can be evaluated with
 \item Consider the assignment probabilities using
 \code{gl.assign.mahalanobis()}. This approach calculates the squared
 Generalised Distance (Mahalanobis distance) of the unknown from the
-centroid of each remaining putative source population and calculates the
-probability of membership using the chi-squared distribution. This index
-takes into account the position of the unknown in relation to the
-confidence envelope in all selected dimensions of the ordination.
+centroid of each remaining putative source population and tests it
+against the population's spread. This index takes into account the
+position of the unknown in relation to the confidence envelope in all
+selected dimensions of the ordination.
 \item Consider the PCA plot for populations and the position of the unknown
 in relation to confidence ellipses as produced by \code{gl.assign.pca()}.
-Note that this plot considers only the top two dimensions of the ordination.
-This is justifiable because an unknown lying outside the confidence ellipse
-in two dimensions is \strong{unlikely} to lie within the confidence envelope
-incorporating deeper dimensions, provided a sufficiently stringent p-value
-is applied (e.g. the default of 0.001). It can be defensibly interpreted as
-lying outside the confidence envelope defined within the space of the
-informative dimensions. The reverse is not true: if the unknown lies inside
-the confidence ellipse in two dimensions, it may still lie outside the
-confidence envelope in deeper dimensions.
 }
 Each of these approaches is useful for decisions on which populations to
 eliminate as putative sources. They provide evidence for a decision on
-population assignment, but none are 100% definitive, and they need to be
+population assignment, but none are 100\% definitive, and they need to be
 interpreted cautiously.
+
+This function considers only the top two dimensions of the ordination. An
+unknown outside the ellipse in two dimensions has a two-dimensional squared
+Mahalanobis distance above the chi-square (2 df) critical value. Adding
+dimensions never reduces that distance, but the critical value also rises
+with the number of dimensions, so an unknown outside the ellipse in two
+dimensions may still lie inside the envelope in more dimensions.
+Conversely, an unknown inside the ellipse in two dimensions may lie outside
+the envelope in deeper dimensions. Use a stringent plevel (e.g. the
+default of 0.001).
+
+Loci scored as missing in the unknown are removed, and the remaining
+missing values are imputed (method "neighbour" of \code{gl.impute()})
+before the PCA. Populations whose covariance matrix in the two dimensions
+is singular, or that have fewer than three individuals, cannot be tested;
+they are reported and retained.
 }
 \examples{
-\dontrun{
-# Test run with a focal individual from the Macleay River
-test <- gl.assign.pca(testset.gl, unknown = 'UC_00146', verbose = 3)
+\donttest{
+if (requireNamespace("SIBER", quietly = TRUE)) {
+# Focal individual from the Macleay River (EmmacMaclGeor)
+test <- gl.assign.pca(testset.gl, unknown = "UC_00146", verbose = 3)
 }
+}
+
+}
+\seealso{
+\code{\link{gl.assign.pa}}, \code{\link{gl.assign.on.genotype}},
+\code{\link{gl.assign.mahalanobis}}
+
+Other assignment: 
+\code{\link{gl.assign.mahalanobis}()},
+\code{\link{gl.assign.on.genotype}()},
+\code{\link{gl.assign.pa}()}
 }
 \author{
-Script: Arthur Georges. Custodian: Arthur Georges -- Post to
+Author(s): Arthur Georges. Custodian: Arthur Georges -- Post to
 \url{https://groups.google.com/d/forum/dartr}
 }
+\concept{assignment}

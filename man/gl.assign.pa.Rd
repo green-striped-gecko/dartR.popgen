@@ -2,8 +2,8 @@
 % Please edit documentation in R/gl.assign.pa.r
 \name{gl.assign.pa}
 \alias{gl.assign.pa}
-\title{Use private alleles to identify populations as possible source populations for an 
-individual of unknown provenance.}
+\title{Use private alleles to identify populations as possible source
+populations for an individual of unknown provenance}
 \usage{
 gl.assign.pa(
   x,
@@ -20,60 +20,82 @@ gl.assign.pa(
 \item{unknown}{SpecimenID label (indName) of the focal individual whose
 provenance is unknown [required].}
 
-\item{nmin}{Minimum sample size for a target population to be included in the
-analysis [default 10].}
+\item{nmin}{Minimum sample size for a target population to be included in
+the analysis [default 10].}
 
-\item{n.best}{If given a value, dictates the best n=n.best populations to
-retain for consideration (or more if their are ties) based on private alleles. If not
-specified, then the putative source populations identified as significant (p < alpha)
-are retained. [default NULL].}
+\item{n.best}{If given a value, dictates the best n = n.best populations to
+retain for consideration (or more if there are ties) based on private
+alleles. If not specified, then the putative source populations for which
+the count is within expectation (p >= alpha) are retained [default NULL].}
 
-\item{alpha}{The critical value used to select populations for which the unknown individual
-has a count of private alleles within expectation [default 0.001]}
+\item{alpha}{The critical value used to select populations for which the
+unknown individual has a count of private alleles within expectation
+[default 0.01].}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 progress log; 3, progress and results summary; 5, full report
- [default 2 or as specified using gl.set.verbosity].}
+[default 2, unless specified using gl.set.verbosity].}
 }
 \value{
 A genlight object containing the focal individual (assigned to
-population 'unknown') and populations for which the focal individual is not
-distinctive. If no such populations, the genlight object contains only data
-for the unknown individual with a warning.
+population "unknown") and the putative source populations, with loci
+scored as missing in the unknown and monomorphic loci removed. If no
+population qualifies, the genlight object contains only the unknown and a
+warning is given.
 }
 \description{
-This script identifies as putative source populations,
-those for which the individual has an expected number of private alleles. The
+Identifies as putative source populations those for which the individual
+of unknown provenance has no more private alleles than expected. The
 putative source populations are retained and returned in a genlight object.
+}
+\details{
+A private allele of the unknown with respect to a population is an allele
+(reference or alternate) carried by the unknown at a locus where no member
+of that population carries it. Loci with no genotype in the population, and
+loci scored as missing in the unknown, are not counted.
 
-The algorithm calculates an expectation based on the number of private alleles each individual
-in the putative source population has in comparison with the other members of that population. 
-From the distribution of these values, an expectation
-is established as a mean and standard deviation. The private alleles possessed by the unknown
-individual in comparison with the putative source population is compared to this expectation.
-Significant departures from expectation renders a population unlikely to be the source 
-for the focal unknown individual.
+The expectation for each population is built from its own members: each
+member is compared with the remaining members of its population, and the
+counts of private alleles are log10(count + 1) transformed to approximate
+a normal distribution with a mean and standard deviation. The count for the
+unknown is compared with this expectation, and populations for which the
+unknown has significantly more private alleles (one-tailed, p < alpha) are
+unlikely to be its source. If every member of a population has the same
+count (standard deviation zero or undefined), the population is retained
+when the unknown's count does not exceed that common value.
 
-An excessive count of private alleles is an indication that the unknown does
-not belong to a target population (provided that the sample size is
-adequate, say >=10).
- 
-WARNING: If a putative population is not in Hardy-Weinberg equilibrium, as might occur if it
-includes F1 hybrids and backcrosses, then the standard deviation for the expectation will
-be inflated. This inflation may result in false identification of the population
-as a putative source for the focal unknown individual. For this reason, you may wish to 
-remove populations that contain individuals likely
-to be subject to contemporary hybridization or admixture.
+An excess of private alleles is evidence that the unknown does not belong
+to a population provided the sample size is adequate, say >= 10.
+
+A population named "unknowns" in the input is taken to hold other
+individuals of unknown provenance and is excluded from the reference
+populations.
+
+WARNING: If a putative population is not in Hardy-Weinberg equilibrium, as
+might occur if it includes F1 hybrids and backcrosses, then the standard
+deviation for the expectation will be inflated. This inflation may result
+in false identification of the population as a putative source for the
+focal unknown individual. For this reason, you may wish to remove
+populations that contain individuals likely to be subject to contemporary
+hybridization or admixture.
 }
 \examples{
-# Test run with a focal individual from the Macleay River (EmmacMaclGeor)
-test <- gl.assign.pa(testset.gl,unknown='UC_00146',nmin=10,verbose=3)
+# Focal individual from the Macleay River (EmmacMaclGeor)
+test <- gl.assign.pa(testset.gl, unknown = "UC_00146", nmin = 10,
+                     verbose = 3)
 
 }
 \seealso{
-\code{\link{gl.assign.pca}}
+\code{\link{gl.assign.on.genotype}},
+\code{\link{gl.assign.pca}}, \code{\link{gl.assign.mahalanobis}}
+
+Other assignment: 
+\code{\link{gl.assign.mahalanobis}()},
+\code{\link{gl.assign.on.genotype}()},
+\code{\link{gl.assign.pca}()}
 }
 \author{
-Script: Arthur Georges. Custodian: Arthur Georges -- Post to
-  \url{https://groups.google.com/d/forum/dartr}
+Author(s): Arthur Georges. Custodian: Arthur Georges -- Post to
+\url{https://groups.google.com/d/forum/dartr}
 }
+\concept{assignment}
