@@ -11,17 +11,23 @@
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 #' progress log; 3, progress and results summary; 5, full report
 #' [default 2 or as specified using gl.set.verbosity].
+#' @details The frequency column is the percentage of the alternative allele
+#' (or of presence), rounded to 2 decimals; use sum and nobs for exact
+#' values.
 #' @return A matrix with allele (SNP data) or presence/absence frequencies
 #' (Tag P/A data) broken down by population and locus
 #' @export
 #' @importFrom plyr rbind.fill
-#' @author Custodian: Arthur Georges (Post to
-#' \url{https://groups.google.com/d/forum/dartr})
+#' @author Author(s): Arthur Georges. Custodian: Arthur Georges -- Post to
+#' \url{https://groups.google.com/d/forum/dartr}
 #' @examples
 #' m <-  utils.get.allele.freq(testset.gl)
 
 utils.get.allele.freq <- function(x,
-                            verbose = 2) {
+                            verbose = NULL) {
+  
+  # SET VERBOSITY
+  verbose <- gl.check.verbosity(verbose)
   
   # FLAG SCRIPT START
   funname <- match.call()[[1]]
@@ -35,7 +41,8 @@ utils.get.allele.freq <- function(x,
   # SCRIPT SPECIFIC ERROR CHECKING
   
   # Checking for and removing monomorphic loci
-  if (!(x@other$loc.metrics.flags$monomorphs == TRUE)) {
+  # genlight objects not built by dartR may have no flags
+  if (!isTRUE(x@other$loc.metrics.flags$monomorphs)) {
     if (verbose >= 1) {
       cat(warn(
         "Warning: Monomorphic loci retained, used in calculations\n"
@@ -50,7 +57,7 @@ utils.get.allele.freq <- function(x,
     if (verbose >= 2) {
       cat(
         report(
-          "Starting gl.percent.freq: Calculating Tag P/A frequencies for populations\n"
+          "  Calculating Tag P/A frequencies for populations\n"
         )
       )
     }
@@ -61,10 +68,10 @@ utils.get.allele.freq <- function(x,
     })
     
   } else {
-    if (verbose >= 1) {
+    if (verbose >= 2) {
       cat(
         report(
-          "Starting gl.percent.freq: Calculating allele frequencies for populations\n"
+          "  Calculating allele frequencies for populations\n"
         )
       )
     }

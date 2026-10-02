@@ -2,7 +2,7 @@
 % Please edit documentation in R/gl.check.panel.r
 \name{gl.check.panel}
 \alias{gl.check.panel}
-\title{Check a snp panel for a specified parameter}
+\title{Check how well a SNP panel reproduces a population parameter}
 \usage{
 gl.check.panel(
   x,
@@ -16,37 +16,62 @@ gl.check.panel(
 )
 }
 \arguments{
-\item{x}{A 'dartR or genlight' object containing the SNP panel genomic data.}
+\item{x}{A genlight object with the SNP panel [required].}
 
-\item{xorig}{A 'dartR or genlight' object containing the original genomic data for comparison.}
+\item{xorig}{A genlight object with the full SNP data; it must hold the
+same individuals (by name) and populations as \code{x} [required].}
 
-\item{parameter}{A character string specifying the parameter to check. Options include: Fst, He, Ho, Ne, Nall, Fis.}
+\item{parameter}{The parameter to check: "Fst" (pairwise, from
+gl.fst.pop), "He", "Ho", "Fis" (from gl.report.heterozygosity), "Na"
+(mean corrected allelic richness, from gl.report.allelerich; "Nall" is
+accepted as an alias) or "Ne" (from gl.LDNe, lowest allele frequency
+0.05) [default "Fst"].}
 
-\item{neest.path}{Path to neestimator (see gl.LDNe)}
+\item{neest.path}{Path to the folder with the NeEstimator executable (see
+gl.LDNe); needed only for "Ne" [default NULL].}
 
-\item{plot.out}{Logical. If `TRUE`, generates plots summarizing selected loci.}
+\item{plot.out}{Logical. If TRUE, the plot is printed [default TRUE].}
 
-\item{plot.file}{A character string specifying the file name for saving plots. If `NULL`, plots are not saved.}
+\item{plot.file}{Name for the RDS binary file to save the plot (base name
+only, exclude extension). If NULL, the plot is not saved [default NULL].}
 
-\item{plot.dir}{A character string specifying the directory to save plots. Defaults to the working directory.}
+\item{plot.dir}{Directory in which to save the plot [default = tempdir(),
+unless specified using gl.set.wd].}
 
-\item{verbose}{Integer level of verbosity for reporting progress and information.}
+\item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
+brief progress messages; 3, progress and results summary; 5, full report
+[default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-A plot and the result of the linear regression
+A data frame with two columns, the parameter from the full data
+  and from the panel, one row per population (per population pair for
+  Fst).
 }
 \description{
-This function checks a panel how good it is to recreate the specified parameter of conservation concern (Ne, Fst, Ho etc.)
+This function checks how well a panel of loci (for example from
+\code{\link{gl.select.panel}}) reproduces a parameter of conservation
+concern (Fst, He, Ho, Fis, allelic richness or Ne) estimated from the full
+data, by computing the parameter per population (per population pair for
+Fst) in both data sets and plotting panel against full data with a linear
+regression.
 }
 \details{
-The function applies various methods to select loci based on the input 'dartR or genlight' object.
-Each method has specific criteria for selecting loci:
+Each point in the plot is one population (one population pair for Fst);
+the line is a least-squares fit with its equation and R2. Populations for
+which the parameter cannot be estimated (NA, or infinite Ne) are dropped.
 }
 \examples{
-# Example usage:
-
-# Select 20 loci randomly
+# Select 50 loci randomly
 selected <- gl.select.panel(possums.gl, method = "random", nl = 50)
-gl.check.panel(selected, possums.gl, parameter="Fst")
+gl.check.panel(selected, possums.gl, parameter = "Fst")
 
 }
+\seealso{
+Other panel selection: 
+\code{\link{gl.select.panel}()}
+}
+\author{
+Author(s): Bernd Gruber. Custodian: Bernd Gruber -- Post to
+  \url{https://groups.google.com/d/forum/dartr}
+}
+\concept{panel selection}

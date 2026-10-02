@@ -37,7 +37,8 @@
 #' removed). To run for MAF 0 and MAF 0.05 at the same time specify: critical =
 #' c(0,0.05) [default 0].
 #' @param singleton.rm Whether to remove singleton alleles [default TRUE].
-#' @param mating Formula for Random mating='random' or monogamy= 'monogamy'
+#' @param mating Mating system assumed by the estimator: 'random' or
+#' 'monogamy'. The abbreviation 'mono' is also accepted
 #' [default 'random'].
 #' @param pairing 'all' [default] if all possible loci should be paired, or 'separate'
 #'    if only loci on different chromosomes should be used.
@@ -45,24 +46,36 @@
 #'    This is ignored if \code{pairing} is set to 'separate'.
 #'    Options are 'nChromosomes', for eq 1a, or 'genomeLength' for eq 1b. 
 #'    NULL if none should be applied [default NULL]. 
-#' @param Waples.correction.value The number of chromosomes or the genome length 
-#'    in cM. See Waples et al 2016 for details.
+#' @param Waples.correction.value A single positive number: the number of
+#'    chromosomes for 'nChromosomes', or the genome length in cM for
+#'    'genomeLength'. Required when \code{Waples.correction} is set. See
+#'    Waples et al 2016 for details [default NULL].
 #' @param naive Whether the naive (uncorrected for samples size - see 
 #'    eq 7 and eq 8 in Waples 2006) should also be reported. This is mostly 
 #'    to diagnose the source of Inf estimate.
 #' @param plot.out Specify if plot is to be produced [default TRUE].
 #' @param plot_theme User specified theme [default theme_dartR()].
-#' @param plot_colors_pop  population colors with as many colors as there are populations in the dataset
-#' [default discrete_palette].
-#' @param plot.dir Directory in which to save files [default = working directory]
-#' @param plot.file Name for the RDS binary file to save (base name only, exclude extension) [default NULL]
-#' temporary directory (tempdir) [default FALSE].
+#' @param plot_colors_pop Either a vector with at least one colour per
+#' population, or a palette function taking the number of populations
+#' [default gl.select.colors(x)].
+#' @param plot.dir Directory in which to save the RDS files
+#' [default tempdir(), mandated by CRAN; see gl.check.wd].
+#' @param plot.file Name for the RDS binary files to save (base name only,
+#' exclude extension). The plot is saved under this name and the table under
+#' the same name with the suffix '_tab'. Nothing is saved when NULL
+#' [default NULL].
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
-#' progress log; 3, progress and results summary; 5, full report
+#' brief progress messages; 3, progress and results summary; 5, full report
 #' [default 2, unless specified using gl.set.verbosity].
-#' @return Dataframe with the results as table
-#' @author Custodian: Bernd Gruber (Post to
-#' \url{https://groups.google.com/d/forum/dartr})
+#' @return Invisibly, a named list with one data frame per population. Each
+#' data frame holds one row per statistic (lowest allele frequency used,
+#' harmonic mean sample size, independent comparisons, overall r^2, expected
+#' r^2, estimated Ne and its parametric and jackknife confidence limits) and
+#' one column per allele frequency threshold. Five rows are added when
+#' \code{Waples.correction} is set and one when \code{naive} is TRUE. The
+#' full NeEstimator output is written to \code{file.path(outpath, outfile)}.
+#' @author Author(s): Bernd Gruber. Custodian: Bernd Gruber -- Post to
+#' \url{https://groups.google.com/d/forum/dartr}
 #' @importFrom stats weighted.mean
 #' @examples
 #' \dontrun{
@@ -70,18 +83,19 @@
 #' pops <- possums.gl[1:60, 1:100]
 #' nes <- gl.LDNe(pops,
 #'   outfile = "popsLD.txt", outpath = tempdir(),
-#'   neest.path = "./path_to Ne-21",
+#'   neest.path = "./path_to_Ne2-1",
 #'   critical = c(0, 0.05), singleton.rm = TRUE, mating = "random"
 #' )
 #' nes
 #'
 #' # Using only pairs of loci on different chromosomes
-#' # make up some chromosome location
+#' # make up some chromosome locations
 #' pops@chromosome <- as.factor(sample(1:10, size = nLoc(pops), replace = TRUE))
 #' nessep <- gl.LDNe(pops,
-#'               outfile = "popsLD.txt", outpath = "./TestNe", pairing="separate",
-#'               neest.path = "./path_to Ne-21",
-#'               critical = c(0, 0.05), singleton.rm = TRUE, mating = "random"
+#'   outfile = "popsLD.txt", outpath = tempdir(), pairing = "separate",
+#'   neest.path = "./path_to_Ne2-1",
+#'   critical = c(0, 0.05), singleton.rm = TRUE, mating = "random"
+#' )
 #' nessep
 #' }
 #' @export
@@ -113,7 +127,6 @@ gl.LDNe <- function(x,
   funname <- match.call()[[1]]
   utils.flag.start(
     func = funname,
-    build = "Jody",
     verbose = verbose
   )
 
@@ -124,29 +137,47 @@ gl.LDNe <- function(x,
 
   # works only with SNP data
   if (datatype != "SNP") {
-    message(error(
-      "  Only SNPs (diploid data can be transformed into genepop format!\n"
+    stop(error(
+      "  Only SNP (diploid) data can be transformed into genepop format!\n"
     ))
   }
-  
-  # Correct arg options?
-  if(!pairing %in% c("all", "separate")) {
-    message(error(
-      "  'pairing' can only be either 'all' or 'separate'!\n"
-    ))
+
+  # Correct arg options? An invalid value used to be reported with a message
+  # and the run continued, failing later or returning a silently wrong table.
+  if (!is.character(pairing) || length(pairing) != 1) {
+    stop(error("  'pairing' can only be either 'all' or 'separate'!\n"))
   }
-  
-  if(pairing == "separate") Waples.correction <- NULL
-  
-  if(!is.null(Waples.correction)) {
-    if(!Waples.correction %in% c('nChromosomes', 'genomeLength'))
-    message(error(
-      "  'Waples.correction' can only be either 'nChromosomes' or 'genomeLength'!\n"
-    ))
-    if(!(is.numeric(Waples.correction.value) & length(Waples.correction.value == 1)))
-      message(error(
-        "  'Waples.correction.value' should be a numeric vector of length == 1!\n"
+  pairing <- match.arg(pairing, c("all", "separate"))
+
+  # 'mono' is accepted as an abbreviation of the documented 'monogamy'
+  if (identical(mating, "mono")) {
+    mating <- "monogamy"
+  }
+  if (!is.character(mating) || length(mating) != 1) {
+    stop(error("  'mating' can only be either 'random' or 'monogamy'!\n"))
+  }
+  mating <- match.arg(mating, c("random", "monogamy"))
+
+  if (pairing == "separate") Waples.correction <- NULL
+
+  if (!is.null(Waples.correction)) {
+    if (!is.character(Waples.correction) || length(Waples.correction) != 1 ||
+        !Waples.correction %in% c("nChromosomes", "genomeLength")) {
+      stop(error(
+        "  'Waples.correction' can only be either 'nChromosomes' or",
+        "'genomeLength', or NULL for no correction.\n"
       ))
+    }
+    if (!is.numeric(Waples.correction.value) ||
+        length(Waples.correction.value) != 1 ||
+        is.na(Waples.correction.value) ||
+        Waples.correction.value <= 0) {
+      stop(error(
+        "  'Waples.correction.value' should be a single positive number: the",
+        "number of chromosomes for 'nChromosomes', or the genome length in cM",
+        "for 'genomeLength'.\n"
+      ))
+    }
   }
 
   # DO THE JOB
@@ -187,7 +218,22 @@ gl.LDNe <- function(x,
   "Lowest Allele Frequency Used" <- "CI high Parametric" <- "CI low Parametric" <- "Estimated Ne^" <- NULL
   rsq_sample <- Samp.Size <- pc.rsq_drift <- Mean_rsq <- Mean_rsq <- Samp.Size <- pc.rsq_drift <- rsq_sample <- NULL
 
-  xx <- gl2genepop(x, outfile = "dummy.gen", outpath = tempdir())
+  # Each call runs in its own directory under tempdir(). NeEstimator reads and
+  # writes files with fixed names, so concurrent calls - forked parallel runs
+  # share the parent's tempdir() - would otherwise overwrite each other's
+  # input and output files.
+  run.dir <- tempfile("LDNe_")
+  dir.create(run.dir)
+  on.exit(unlink(run.dir, recursive = TRUE), add = TRUE)
+
+  # resolve outpath before the working directory changes, so that a relative
+  # path such as '.' means the caller's working directory, as documented
+  outpath <- normalizePath(outpath, winslash = "/", mustWork = FALSE)
+
+  xx <- gl2genepop(x,
+    outfile = "dummy.gen", outpath = run.dir,
+    verbose = if (verbose >= 3) verbose else 0
+  )
 
   if (singleton.rm == TRUE) {
     critical[length(critical) + 1] <- 1
@@ -204,15 +250,10 @@ gl.LDNe <- function(x,
   info[7] <- length(critical)
   info[8] <- paste(critical, collapse = " ")
 
-  mm <- pmatch(mating, c("random", "mono")) - 1
-  if (mm == 0 | mm == 1) {
-    info[9] <- mm
-  } else {
-    cat(error("  Mating is not either 'random' or 'monogamy'. Please check\n"))
-    stop()
-  }
+  # NeEstimator expects 0 for random mating and 1 for monogamy
+  info[9] <- ifelse(mating == "random", 0, 1)
 
-  con <- file(file.path(tempdir(), "infodummy"), "w")
+  con <- file(file.path(run.dir, "infodummy"), "w")
   writeLines(info, con)
   close(con)
   
@@ -224,7 +265,7 @@ gl.LDNe <- function(x,
       setPairs <- "2 ChrMap"
       write.table(
       data.frame(x@chromosome, locNames(x)), 
-      file = file.path(tempdir(), "ChrMap"), 
+      file = file.path(run.dir, "ChrMap"), 
       row.names = FALSE, col.names = FALSE, quote = FALSE)
     }
   }
@@ -241,49 +282,56 @@ gl.LDNe <- function(x,
   option[9] <- 0 # No file with missing data summary
   option[10] <- setPairs  # 0: no pairing restriction; 1: loci within same chrs; 2: loci on separate Chrs
   
-  con <- file(file.path(tempdir(), "option"), "w")
+  con <- file(file.path(run.dir, "option"), "w")
   writeLines(option, con)
   close(con)
 
-  if (Sys.info()["sysname"] == "Windows") {
+  sysname <- unname(Sys.info()["sysname"])
+  if (sysname == "Windows") {
     prog <- "Ne2-1.exe"
     cmd <- "Ne2-1.exe i:infodummy o:option"
-  }
-
-  if (Sys.info()["sysname"] == "Linux") {
+  } else if (sysname == "Linux") {
     prog <- "Ne2-1L"
     cmd <- "./Ne2-1L i:infodummy o:option"
-  }
-
-  if (Sys.info()["sysname"] == "Darwin") {
+  } else if (sysname == "Darwin") {
     prog <- "Ne2-1M"
     cmd <- "./Ne2-1M i:infodummy o:option"
+  } else {
+    stop(error(
+      "  gl.LDNe does not know which NeEstimator executable to use on",
+      sysname, ". The supported systems are Windows, Linux and Darwin",
+      "(macOS).\n"
+    ))
   }
 
   # check if file program can be found
-  if (file.exists(file.path(neest.path, prog))) {
-    file.copy(file.path(neest.path, prog),
-      to = tempdir(),
-      overwrite = TRUE
-    )
-  } else {
-    cat(
-      error(
-        "  Cannot find",
-        prog,
-        "in the specified folder given by neest.path:",
-        neest.path,
-        "\n"
-      )
-    )
-    stop()
+  if (!file.exists(file.path(neest.path, prog))) {
+    stop(error(
+      "  Cannot find",
+      prog,
+      "in the specified folder given by neest.path:",
+      neest.path,
+      "\n"
+    ))
   }
+  file.copy(file.path(neest.path, prog),
+    to = run.dir,
+    overwrite = TRUE
+  )
 
-  # change into tempdir (run it there)
+  # change into the run directory (run it there)
   old.path <- getwd()
-  setwd(tempdir())
-  on.exit(setwd(old.path))
-  system(cmd)
+  setwd(run.dir)
+  on.exit(setwd(old.path), add = TRUE, after = FALSE)
+  status <- system(cmd, ignore.stdout = verbose < 3)
+  # a failed run must not be read from a file left by something else
+  if (status != 0 || !file.exists(outfile)) {
+    stop(error(
+      "  NeEstimator (", prog, ") did not produce its output file",
+      outfile, "and exited with status", status,
+      ". Run with verbose = 3 to see its messages.\n"
+    ))
+  }
   res <- read.delim(outfile)
   res <-
     unlist(lapply(res[, 1], function(x) {
@@ -321,10 +369,14 @@ gl.LDNe <- function(x,
 
   ind_threshold <- which(table(pop(x)) < 3)
 
+  # NeEstimator prints no jackknife line for such a population, so a
+  # placeholder is inserted at its position. append() is used because
+  # CI[1:(r - 1)] with r == 1 is c(1, 0), which selects the first element of
+  # the next population instead of selecting nothing.
   if (length(ind_threshold) > 0) {
     for (r in unname(ind_threshold)) {
-      CI_low_JackKnife <- c(CI_low_JackKnife[1:(r - 1)], NA, CI_low_JackKnife[r:length(CI_low_JackKnife)])
-      CI_high_JackKnife <- c(CI_high_JackKnife[1:(r - 1)], NA, CI_high_JackKnife[r:length(CI_high_JackKnife)])
+      CI_low_JackKnife <- append(CI_low_JackKnife, NA, after = r - 1)
+      CI_high_JackKnife <- append(CI_high_JackKnife, NA, after = r - 1)
     }
   }
 
@@ -383,8 +435,14 @@ gl.LDNe <- function(x,
 
   names(pop_list) <- pops
 
-  file.copy(outfile, file.path(outpath, outfile))
+  saved <- file.copy(outfile, file.path(outpath, outfile), overwrite = TRUE)
   setwd(old.path)
+  if (!saved && verbose >= 1) {
+    cat(warn(
+      "  Warning: could not copy the NeEstimator output to",
+      file.path(outpath, outfile), "\n"
+    ))
+  }
   
   # Apply correction if relevant
   cr.est <- function(pop, crtn, fr) {
@@ -418,7 +476,7 @@ gl.LDNe <- function(x,
   
   # Naive Ne estimates
   if(naive) {
-    nNe <- naiveNe(tmp = tempdir(), matingsys = mating)
+    nNe <- naiveNe(tmp = run.dir, matingsys = mating)
     pop_list <- lapply(seq_along(pop_list), function(i, fr=freq, nPops=length(pop_list)){
     nValuesPop <- length(nNe) / nPops  
     v <- nNe[((i - 1)*nValuesPop + 1):(i*nValuesPop)]
@@ -430,11 +488,30 @@ gl.LDNe <- function(x,
     updated <- rbind(pop_list[[i]], cbind(tmpdf2, tmpdf))
       return(updated)
     })
+    # lapply over seq_along drops the names, which callers index by
+    names(pop_list) <- pops
   }
   
-  # PLOTS
-  if (plot.out) {
+  # PLOTS. The plot is built whenever it is shown or saved: plot.file alone
+  # used to reach utils.plot.save() with no plot object in scope.
+  build.plot <- plot.out || !is.null(plot.file)
+
+  if (build.plot) {
     # printing plots and reports assigning colors to populations
+
+    # accept a palette function as well as a vector, and take one colour per
+    # population; anything longer used to fail on the assignment below
+    if (is.function(plot_colors_pop)) {
+      plot_colors_pop <- plot_colors_pop(length(pops))
+    }
+    if (length(plot_colors_pop) < length(pops)) {
+      stop(error(
+        "  plot_colors_pop must supply at least one colour per population:",
+        length(pops), "populations,", length(plot_colors_pop),
+        "colours given.\n"
+      ))
+    }
+    plot_colors_pop <- plot_colors_pop[seq_len(length(pops))]
 
     pop_list_plot <- lapply(pop_list, function(x) {
       stats::setNames(data.frame(t(x[, -1])), x[, 1])
@@ -515,8 +592,9 @@ gl.LDNe <- function(x,
     print(p3)
   }
 
-  
-  print(pop_list, row.names = FALSE)
+  if (verbose >= 2) {
+    print(pop_list, row.names = FALSE)
+  }
 
   # Optionally save the plot ---------------------
 

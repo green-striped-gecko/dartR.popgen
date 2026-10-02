@@ -2,6 +2,7 @@
 
 export(gl.LDNe)
 export(gl.TajimasD)
+export(gl.amova)
 export(gl.assign.mahalanobis)
 export(gl.assign.on.genotype)
 export(gl.assign.pa)

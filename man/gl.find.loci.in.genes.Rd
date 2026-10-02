@@ -7,52 +7,75 @@
 gl.find.loci.in.genes(x, gff.file, gene, save2tmp = FALSE, verbose = NULL)
 }
 \arguments{
-\item{x}{Name of the genlight object containing SNP data [required].}
+\item{x}{Name of the genlight object containing SNP or SilicoDArT data,
+with per-locus x$chromosome and x$position [required].}
 
-\item{gff.file}{Path to a GFF3 file (plain or with a companion .gz)
-[required].}
+\item{gff.file}{Path to a GFF3 file, plain or gzip-compressed. A path
+without the .gz extension is also accepted when only the .gz file
+exists [required].}
 
-\item{gene}{Character pattern to detect target genes. Interpreted as a
-regular expression, case-insensitive matching is recommended via `(?i)`
-[required].}
+\item{gene}{Regular expression identifying the target genes, e.g.
+"(?i)major histocompatibility|\\bMHC\\b" [required].}
 
-\item{save2tmp}{Logical: save intermediate tables to tempdir for
-retrieval with gl.list.reports and gl.print.reports [default FALSE].}
+\item{save2tmp}{Logical: save the table of loci and the genes they fall
+in to tempdir() (retrievable with gl.list.reports and
+gl.print.reports) [default FALSE].}
 
-\item{verbose}{Verbosity: 0=silent/fatal; 1=begin/end; 2=progress;
-3=progress+summary; 5=full report [default 2 or as set by
-`gl.set.verbosity()`].}
+\item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
+brief progress messages; 3, progress and results summary; 5, full report
+[default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-A character vector of locus names overlapping the matching gene
-  intervals (in genomic coordinates).
+A character vector of the names of the loci that fall inside the
+  matching genes, in genome order.
 }
 \description{
 Given a genlight object with mapped loci (chromosome and position) and a
-gene annotation file (GFF, plain or gz), this function returns the locus
-names whose genomic positions overlap features of type "gene" whose
-attributes match a user-supplied pattern (e.g., "MHC",
-"major histocompatibility").
+gene annotation file (GFF3, plain or gzip-compressed), this function
+returns the names of the loci that fall inside genes whose annotation
+matches a pattern (e.g. "MHC", "major histocompatibility").
 }
 \details{
-The function parses the GFF "attributes" column to extract common keys
-(e.g., `Name`, `gene`, `product`) and flags any "gene" features whose
-attributes match the supplied `gene` pattern. It then uses interval
-overlap to identify input loci that fall inside those genes.
+The pattern is tested against the whole attributes column of every GFF
+row. A gene or pseudogene is selected when its own row matches, or when
+any of its descendant features matches (mRNA, lnc_RNA, CDS, exon and so
+on, followed up through their Parent attribute, or linked by the gene=
+key). NCBI and Ensembl GFF3 files put the product description on these
+child rows, not on the gene row.
 
-Required fields in `x` for overlap are per-locus chromosome and base
-position, accessible as `x$chromosome` and `x$position`, and locus names
-via `locNames(x)`.
+Because the whole attribute string is searched, a short pattern can match
+more than intended: "TAP" also matches WTAP, METAP1 or STAP1, and "ID"
+matches every feature. Use word boundaries (e.g. "\\bTAP1\\b") and
+"(?i)" for case-insensitive matching.
+
+Loci are placed by x$chromosome and x$position, which must be the
+sequence name used in the first column of the GFF and a position in
+genome coordinates. dartR sets x$position to the SNP position within the
+tag when the data are read, so replace it with the genome position first
+(e.g. the ChromPos locus metric plus SnpPosition). Loci without a
+position, and sequence names absent from the GFF, are reported at
+verbose >= 1.
+
+To learn which gene each locus falls in, pass the result to
+\code{\link{gl.find.genes.for.loci}}.
 }
 \examples{
-\dontrun{
-# Regex for case-insensitive MHC:
-mhc_loci <- gl.find.loci.in.genes(
-  x         = testset.gl,
-  gff.file  = "species.gff3",
-  gene      = "(?i)major histocompatibility|\\\\bMHC\\\\b"
-)
-}
+# A small GFF3 with one MHC gene and one other gene on one sequence
+gff <- tempfile(fileext = ".gff")
+writeLines(c(
+  "##gff-version 3",
+  paste("chr1", "src", "gene", 100, 200, ".", "+", ".",
+        "ID=gene-A;Name=A", sep = "\t"),
+  paste("chr1", "src", "mRNA", 100, 200, ".", "+", ".",
+        "ID=rna-A;Parent=gene-A;product=MHC class I antigen", sep = "\t"),
+  paste("chr1", "src", "gene", 500, 800, ".", "-", ".",
+        "ID=gene-B;Name=B;description=kinase", sep = "\t")
+), gff)
+x <- testset.gl
+x@chromosome <- factor(c("chr1", "chr1", rep(NA, nLoc(x) - 2)))
+x@position <- c(150L, 600L, rep(NA_integer_, nLoc(x) - 2))
+gl.find.loci.in.genes(x, gff.file = gff,
+                      gene = "(?i)major histocompatibility|\\\\bMHC\\\\b")
 
 }
 \seealso{
@@ -60,7 +83,7 @@ Other annotation and mapping helpers:
 \code{\link{gl.find.genes.for.loci}()}
 }
 \author{
-Luis Mijangos (post to
-  \url{https://groups.google.com/d/forum/dartr})
+Author(s): Luis Mijangos. Custodian: Luis Mijangos -- Post to
+ \url{https://groups.google.com/d/forum/dartr}
 }
 \concept{annotation and mapping helpers}

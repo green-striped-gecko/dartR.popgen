@@ -37,9 +37,14 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
+      # dartR.popgen on dev is developed against the dev branches of its
+      # dartRverse dependencies, not their CRAN releases
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck
+          extra-packages: |
+            any::rcmdcheck
+            github::green-striped-gecko/dartR.base@dev
+            github::green-striped-gecko/dartR.data@dev
           needs: check
 
       - uses: r-lib/actions/check-r-package@v2

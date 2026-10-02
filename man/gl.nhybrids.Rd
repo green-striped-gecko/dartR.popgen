@@ -27,7 +27,8 @@ gl.nhybrids(
 )
 }
 \arguments{
-\item{gl}{Name of the genlight object containing the SNP data [required].}
+\item{gl}{Name of the genlight object containing the SNP data; SilicoDArT
+(presence/absence) data are not accepted [required].}
 
 \item{outpath}{Path where to save the output file [default tempdir()].}
 
@@ -40,8 +41,8 @@ gl.nhybrids(
 \item{threshold}{Sets the level at which a gene frequency difference is
 considered to be fixed [default 0].}
 
-\item{method}{Specifies the method (random) to select 200 loci for
-NewHybrids [default random]. Previous AvgPic does not work anymore!}
+\item{method}{Currently has no effect: loci are always selected at
+random. Retained for back-compatibility [default random].}
 
 \item{plot}{If TRUE, a plot of the frequency of homozygous reference,
 heterozygotes and homozygous alternate (SNP) is produced for the F1
@@ -57,7 +58,9 @@ individuals
 [default 0.95, used only if plot=TRUE].}
 
 \item{nhyb.directory}{Directory that holds the NewHybrids executable file
-e.g. C:/NewHybsPC [default NULL].}
+e.g. C:/NewHybsPC. Keep this path short: the NewHybrids executable crashes
+when the path to its input file (nhyb.directory/nhyb.txt) is 100 or more
+characters long [default NULL].}
 
 \item{BurnIn}{Number of sweeps to use in the burn in [default 10000].}
 
@@ -81,8 +84,10 @@ progress log; 3, progress and results summary; 5, full report
 [default 2 or as specified using gl.set.verbosity].}
 }
 \value{
-The reduced genlight object, if parentals are provided; output of
- NewHybrids is saved to the working directory.
+The reduced genlight object (the loci passed to NewHybrids), not
+ the assignments. The posterior probabilities are written to aa-PofZ.csv in
+ outpath, with columns id, pop, P0, P1, F1, F2, F1xP0 and F1xP1, together
+ with the other NewHybrids output files.
 }
 \description{
 This function compares two sets of parental populations to identify loci that
@@ -91,7 +96,8 @@ data, and creates an input file for the program NewHybrids using the top 200
 (or hard specified loc.limit) loci. In the absence of two identified
 parental populations, the script will select a random set 200 loci only
 (method='random') or the first 200 loci ranked on information content
-(method='AvgPIC').
+(method='AvgPIC'). If the two parental populations share no fixed
+difference, 200 loci are selected at random, with a warning.
 
 A fixed difference occurs when a SNP allele is present in all individuals
 of one population and absent in the other. There is provision for setting
@@ -142,6 +148,6 @@ Anderson, E.C. and Thompson, E.A.(2002). A model-based method for identifying
 species hybrids using multilocus genetic data. Genetics. 160:1217-1229.
 }
 \author{
-Custodian: Arthur Georges -- Post to
+Author(s): Arthur Georges. Custodian: Arthur Georges -- Post to
  \url{https://groups.google.com/d/forum/dartr}
 }

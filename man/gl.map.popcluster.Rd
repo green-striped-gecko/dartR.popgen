@@ -13,20 +13,25 @@ gl.map.popcluster(
   scaley = 1,
   movepops = NULL,
   pop.labels = TRUE,
-  pop.labels.cex = 12
+  pop.labels.cex = 12,
+  plot.out = TRUE,
+  verbose = NULL
 )
 }
 \arguments{
 \item{x}{Name of the genlight object containing the coordinates in the
-\code{\@other$latlon} slot to calculate the population centers [required]}
+\code{\@other$latlon} slot (columns named lon and lat) to calculate the
+population centres [required].}
 
-\item{qmat}{Q-matrix from a gl.plot.popcluster [required]
-[from \code{\link{gl.run.popcluster}} and \code{\link{gl.plot.popcluster}}]
- [required].}
+\item{qmat}{Q-matrix returned by \code{\link{gl.plot.popcluster}}
+[required].}
 
-\item{color_clusters}{A color palette for clusters (K) or a list with}
+\item{color_clusters}{A colour palette function (for example
+\code{rainbow}), which is called with the number of clusters, or a vector
+with at least as many colours as clusters [default NULL, which uses
+gl.select.colors()].}
 
-\item{provider}{Provider    passed to leaflet. Check \link[leaflet]{providers}
+\item{provider}{Provider passed to leaflet. Check \link[leaflet]{providers}
 for a list of possible backgrounds [default "Esri.NatGeoWorldMap"].}
 
 \item{scalex}{Scaling factor to determine the size of the bars in x direction
@@ -35,68 +40,84 @@ for a list of possible backgrounds [default "Esri.NatGeoWorldMap"].}
 \item{scaley}{Scaling factor to determine the size of the bars in y direction
 [default 1].}
 
-\item{movepops}{A two-dimensional data frame that allows to move the center of
-the barplots manually in case they overlap. Often if populations are
-horizontally close to each other. This needs to be a data.frame of the
-dimensions [rows=number of populations, columns = 2 (lon/lat)]. For each
-population you have to specify the x and y (lon and lat) units you want to
-move the center of the plot, (see example for details) [default NULL].}
+\item{movepops}{A data frame with two columns, lon and lat, that moves the
+centre of the barplots manually in case they overlap. Rows are matched to
+populations by row name when the row names are population names;
+otherwise there must be one row per population of x, in the order of
+levels(pop(x)) (see example) [default NULL].}
 
-\item{pop.labels}{Switch for population labels below the parplots
+\item{pop.labels}{Switch for population labels below the barplots
 [default TRUE].}
 
 \item{pop.labels.cex}{Size of population labels [default 12].}
+
+\item{plot.out}{Specify if the map is to be printed [default TRUE].}
+
+\item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
+brief progress messages; 3, progress and results summary; 5, full report
+[default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-An interactive map that shows the PopCluster plots broken down by
-population.
-
-returns the map and a list of the qmat split into sorted matrices per
- population. This can be used to create your own map.
+A list with the map (element map) and the Q matrix split into
+ tables per population, in the order the bars are drawn (element Q_name,
+ with the population in column Pop_name).
 }
 \description{
-This function takes the output of gl.plot.popcluster (the Q matrix) and maps the
-Q-matrix across using the population centers from the genlight object that
-was used to run the PopCluster analysis via (\code{\link{gl.run.popcluster}})
-and plots the typical PopCluster bar plots on a spatial map, providing a
-barplot for each subpopulation. Therefore it requires coordinates from a
- genlight object. This kind of plots should support the interpretation of the
-  spatial PopCluster of a population, but in principle is not different from
-  (\code{\link{gl.plot.popcluster}})
+This function takes the Q matrix of a PopCluster run (as returned by
+\code{\link{gl.plot.popcluster}}) and maps it using the population centres
+from the genlight object that was used to run PopCluster via
+\code{\link{gl.run.popcluster}}. It plots the typical structure bar plots
+on a spatial map, providing a barplot for each subpopulation. Therefore it
+requires coordinates from a genlight object. This kind of plot should
+support the interpretation of the spatial structure of a population, but
+in principle is not different from \code{\link{gl.plot.popcluster}}.
 }
 \details{
-Creates a mapped version of PopCluster plots. For possible background maps
+The map is drawn by \code{\link{gl.map.snmf}} (and so by
+\code{\link{gl.map.structure}}), which places each population's bars at
+its own centre; see there for details. For possible background maps
 check as specified via the provider:
 \url{http://leaflet-extras.github.io/leaflet-providers/preview/index.html}.
 You may need to adjust scalex and scaley values [default 1], as the size
 depends on the scale of the map and the position of the populations.
 }
 \examples{
-# examples need popcluster to be installed on the system
 \dontrun{
-m <- gl.run.popcluster(x=bandicoot.gl, popcluster.path="/User/PopCluster/Bin/",
-output.path="/User/Documents/Output/",
-minK=1, maxK=3, 
-rep=10, PopData=1, location=1)
-Q <- gl.plot.popcluster(pop_cluster_result=m, plot.K = 3, ind_name=T)
+m <- gl.run.popcluster(x = bandicoot.gl,
+  popcluster.path = "/User/PopCluster/Bin/", minK = 1, maxK = 3, rep = 2)
+Q <- gl.plot.popcluster(pop_cluster_result = m, plot.K = 3, ind_name = TRUE)
 gl.map.popcluster(x = bandicoot.gl, qmat = Q)
-# move population 4 (out of 5) 0.5 degrees to the right and populations 1
-# 0.3 degree to the north of the map.
-mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
-gl.map.popcluster(bandicoot.gl, qmat=Q, movepops=mp)
+# move population 4 (out of 5) 0.5 degrees to the right and population 1
+# 0.3 degrees to the south of the map.
+mp <- data.frame(lon = c(0, 0, 0, 0.5, 0), lat = c(-0.3, 0, 0, 0, 0))
+gl.map.popcluster(bandicoot.gl, qmat = Q, movepops = mp)
 }
 }
 \references{
 \itemize{
-\item Wang, J. (2022). Fast and accurate population admixture inference 
-from genotype data from a few microsatellites to millions of SNPs. Heredity, 129(2), 79-92.
-
+\item Wang, J. (2022). Fast and accurate population admixture inference
+from genotype data from a few microsatellites to millions of SNPs.
+Heredity, 129(2), 79-92.
 }
 }
 \seealso{
-\code{\link{gl.run.popcluster}},
-\code{\link{gl.plot.popcluster}}
+\code{\link{gl.run.popcluster}}, \code{\link{gl.plot.popcluster}}
+
+Other population structure: 
+\code{\link{gl.evanno}()},
+\code{\link{gl.map.snmf}()},
+\code{\link{gl.map.structure}()},
+\code{\link{gl.plot.faststructure}()},
+\code{\link{gl.plot.popcluster}()},
+\code{\link{gl.plot.snmf}()},
+\code{\link{gl.plot.structure}()},
+\code{\link{gl.read.structure}()},
+\code{\link{gl.run.faststructure}()},
+\code{\link{gl.run.popcluster}()},
+\code{\link{gl.run.snmf}()}
 }
 \author{
-Ching Ching Lau (Post to \url{https://groups.google.com/d/forum/dartr})
+Author(s): Ching Ching Lau. Custodian: Ching Ching Lau -- Post to
+ \url{https://groups.google.com/d/forum/dartr}
 }
+\concept{population structure}

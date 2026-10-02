@@ -68,11 +68,17 @@ WC_FST_Diploids_2Alleles <- function(Sample_Mat) {
 #' list popNames should have the same length as the number of rows in SNPmat.
 #' @return Returns a data frame in the form needed for the main OutFLANK
 #' function.
+#' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
+#'   brief progress messages; 3, progress and results summary; 5, full report
+#'   [default 2, unless specified using gl.set.verbosity].
 #' @export
 
 utils.outflank.MakeDiploidFSTMat <- function(SNPmat,
                                              locusNames,
-                                             popNames) {
+                                             popNames,
+                                             verbose = NULL) {
+  verbose <- gl.check.verbosity(verbose)
+
   # SNPmat is a matrix with individuals in rows and snps in columns 0, 1,
   # or 2 represent the number of copies of the focal allele, and 9
   # is for missing data locusNames is a character vector of names of each
@@ -83,30 +89,30 @@ utils.outflank.MakeDiploidFSTMat <- function(SNPmat,
   popname <- unlist(popNames)
 
   ### Check that SNPmat has appropriate values (0, 1, 2, or 9, only)
-  snplevs <- levels(as.factor(unlist(SNPmat)))
-  ls <- paste(snplevs, collapse = "")
-  if (ls != "012" & ls != "0129") {
-    print(error("Error: Your snp matrix does not have 0,1, and 2"))
+  snplevs <- unique(as.vector(SNPmat))
+  if (!all(snplevs %in% c(0, 1, 2, 9))) {
+    stop(error("SNPmat must contain only 0, 1, 2 (copies of the focal allele)",
+               "and 9 (missing).\n"))
   }
 
   ### Checking that locusNames and popNames have the same lengths as the
   # columns and rows of SNPmat
   if (dim(SNPmat)[1] != length(popname)) {
-    print(error("Error: your population names do not match your SNP matrix"))
+    stop(error("Population names do not match the rows of the SNP matrix.\n"))
   }
 
   if (dim(SNPmat)[2] != length(locusname)) {
-    print(error("Error:  your locus names do not match your SNP matrix"))
+    stop(error("Locus names do not match the columns of the SNP matrix.\n"))
   }
 
-  writeLines(report("Calculating FSTs, may take a few minutes..."))
+  if (verbose >= 3) cat(report("  Calculating FSTs, may take a few minutes...\n"))
 
   nloci <- length(locusname)
   FSTmat <- matrix(NA, nrow = nloci, ncol = 8)
   for (i in 1:nloci) {
     FSTmat[i, ] <- unlist(getFSTs_diploids(popname, SNPmat[, i]))
-    if (i %% 10000 == 0) {
-      print(paste(i, "done of", nloci))
+    if (i %% 10000 == 0 && verbose >= 3) {
+      cat(report("  ", i, "done of", nloci, "\n"))
     }
   }
   outTemp <- as.data.frame(FSTmat)

@@ -36,6 +36,10 @@ used together with \code{unknown.id} [default NULL].}
 for it to be retained. Populations with fewer individuals are dropped with a
 warning. Applied only when unknowns are present [default 10].}
 
+\item{dir}{Directory where \code{assignPOP::assign.X()} writes its output
+files (including \code{AssignmentResult.txt}). Only used in split and
+two-object modes [default getwd()].}
+
 \item{model}{Classification model passed to \code{assignPOP::assign.X()}.
 One of \code{"svm"}, \code{"naiveBayes"}, \code{"randomForest"},
 \code{"tree"}, or \code{"knn"} [default "svm"].}
@@ -57,10 +61,6 @@ automatically [default "kaiser-guttman"].}
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 progress log; 3, progress and results summary; 5, full report
 [default NULL, unless specified using gl.set.verbosity].}
-
-\item{outpath}{Directory where \code{assignPOP::assign.X()} writes its output
-files (including \code{AssignmentResult.txt}). Only used in split and
-two-object modes [default getwd()].}
 }
 \value{
 \strong{Single-object mode}: a named 3-element list identical in

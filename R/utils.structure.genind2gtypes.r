@@ -130,7 +130,7 @@ utils.structure.genind2gtypes <-
           }
         }
         rownames(schemes) <- NULL
-        schemes <- dplyr::select(schemes, .data$id, dplyr::everything())
+        schemes <- dplyr::select(schemes, "id", dplyr::everything())
 
         # check that ids in schemes can be found
         if (length(intersect(schemes$id, rownames(gen.data))) == 0) {
@@ -193,7 +193,9 @@ utils.structure.genind2gtypes <-
         gen.data
       ) %>%
         as.data.frame(stringsAsFactors = FALSE) %>%
-        tidyr::gather("locus", "allele", -.data$id, -.data$stratum) %>%
+        tidyr::pivot_longer(-c("id", "stratum"),
+          names_to = "locus", values_to = "allele"
+        ) %>%
         dplyr::mutate(locus = locus.names.lookup[as.character(.data$locus)])
 
       data.table::setDT(gen.data, key = c("id", "stratum", "locus"))

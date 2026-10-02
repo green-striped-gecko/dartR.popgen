@@ -7,7 +7,7 @@
 gl.find.genes.for.loci(
   x,
   gff.file,
-  loci,
+  loci = NULL,
   include_types = c("gene", "pseudogene"),
   fallback_to_mrna = TRUE,
   save2tmp = FALSE,
@@ -18,14 +18,15 @@ gl.find.genes.for.loci(
 \item{x}{A SNP genlight object with mapped loci. Must contain per-locus
 x$chromosome and x$position. [required]}
 
-\item{gff.file}{Path to a GFF3 file (either plain or with a .gz alongside).
-[required]}
+\item{gff.file}{Path to a GFF3 file, plain or gzip-compressed. A path
+without the .gz extension is also accepted when only the .gz file
+exists. [required]}
 
-\item{loci}{Character vector of locus names to map. Must match locNames(x).
-[required]}
+\item{loci}{Character vector of locus names to map, matching locNames(x).
+[default NULL, all loci with a chromosome and position]}
 
 \item{include_types}{Character vector of GFF types to treat as "gene"
-features. Defaults to c("gene","pseudogene").}
+features. [default c("gene","pseudogene")]}
 
 \item{fallback_to_mrna}{Logical. If no rows match include_types, use
 transcript features c("mRNA","transcript") as proxies. [default TRUE]}
@@ -33,15 +34,20 @@ transcript features c("mRNA","transcript") as proxies. [default TRUE]}
 \item{save2tmp}{Logical: save the result table to tempdir() (retrievable
 with gl.list.reports / gl.print.reports). [default FALSE]}
 
-\item{verbose}{Verbosity: 0-5 (see gl.set.verbosity()). [default from
-gl.check.verbosity()]}
+\item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
+brief progress messages; 3, progress and results summary; 5, full report
+[default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-A data.table with one row per input locus and columns:
+A data.table with one row per locus that has a chromosome and
+  position, and columns:
   locus, chrom, pos, gene_start, gene_end, gene_type, gene_id, gene_name,
-  gene_symbol, gene_product, gene_attributes, distance_bp, nearest_side.
+  gene_symbol, gene_product, gene_attributes, distance_bp, nearest_side,
+  gene_strand, relative_position.
   `distance_bp` is the absolute distance in bp; `nearest_side` is "inside",
-  "left" (locus < gene_start), or "right" (locus > gene_end) in coordinate space.
+  "left" (locus < gene_start) or "right" (locus > gene_end) in coordinate
+  space; `relative_position` is "inside", "upstream" or "downstream" with
+  respect to the gene strand (NA when the strand is unknown).
 }
 \description{
 Given a SNP genlight object and a GFF3 annotation file, find the closest gene
@@ -49,27 +55,49 @@ Given a SNP genlight object and a GFF3 annotation file, find the closest gene
 gene interval, that gene is considered the closest with distance 0.
 }
 \details{
-The function parses common keys in the GFF attributes column (e.g., ID,
-Name, gene, product, Parent) to provide informative gene labels.
+The function parses common keys in the GFF attributes column (ID, Name,
+gene, product, Parent, gene_symbol) to provide informative gene labels.
+When a gene feature carries no product attribute, the product of its
+child features (mRNA, then CDS or exon) is used, which is where NCBI and
+Ensembl GFF3 files place it.
+
 Closeness is measured on the same sequence (chromosome/contig) as:
-- 0 if the locus is within [gene_start, gene_end]
-- otherwise, the minimum bp distance to the interval edges
+\itemize{
+\item 0 if the locus is within [gene_start, gene_end]
+\item otherwise, the minimum bp distance to the interval edges
+}
 
 If multiple genes are exactly equally close, a deterministic tie-break is
-applied: closest to gene midpoint, then shorter gene length, then lexicographic gene_id.
+applied: closest to gene midpoint, then shorter gene length, then
+lexicographic gene_id. A locus on a sequence that has no gene feature is
+returned with NA in the gene columns.
+
+The sequence names in x$chromosome must match the first column of the
+GFF. Loci without a position, and sequence names absent from the GFF,
+are reported at verbose >= 1.
 }
 \examples{
-\dontrun{
-res <- gl.find.genes.for.loci(
-  x = testset.gl,
-  gff.file = "species.gff3",
-  loci = c("locus_12","locus_51","locus_89")
-)
-}
+# A small GFF3 with two genes on one sequence
+gff <- tempfile(fileext = ".gff")
+writeLines(c(
+  "##gff-version 3",
+  paste("chr1", "src", "gene", 100, 200, ".", "+", ".",
+        "ID=gene-A;Name=A", sep = "\t"),
+  paste("chr1", "src", "gene", 500, 800, ".", "-", ".",
+        "ID=gene-B;Name=B", sep = "\t")
+), gff)
+x <- testset.gl
+x@chromosome <- factor(c("chr1", "chr1", rep(NA, nLoc(x) - 2)))
+x@position <- c(150L, 300L, rep(NA_integer_, nLoc(x) - 2))
+gl.find.genes.for.loci(x, gff.file = gff, loci = locNames(x)[1:2])
 
 }
 \seealso{
 Other annotation and mapping helpers: 
 \code{\link{gl.find.loci.in.genes}()}
+}
+\author{
+Author(s): Luis Mijangos. Custodian: Luis Mijangos -- Post to
+ \url{https://groups.google.com/d/forum/dartr}
 }
 \concept{annotation and mapping helpers}
