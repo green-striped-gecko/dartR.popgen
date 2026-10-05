@@ -28,8 +28,12 @@
 #' returned with NA in the gene columns.
 #'
 #' The sequence names in x$chromosome must match the first column of the
-#' GFF. Loci without a position, and sequence names absent from the GFF,
-#' are reported at verbose >= 1.
+#' GFF. A name of the form <accession>_<description>, as DArT reports
+#' reference sequences (e.g. NC_041728.1_chromosome_1), is matched to the GFF
+#' sequence it starts with (NC_041728.1), and the chrom column then holds the
+#' GFF name. Loci without a chromosome name or a position, and sequence names
+#' absent from the GFF, are reported at verbose >= 1. GFF3 percent-encoding in
+#' gene names, symbols and products is decoded (e.g. \%2C to a comma).
 #'
 #' @param x A SNP genlight object with mapped loci. Must contain per-locus
 #'   x$chromosome and x$position. [required]
@@ -181,6 +185,18 @@ gl.find.genes.for.loci <- function(x,
   gff_dt[, Parent    := extract_attr(attributes, "Parent")]
   gff_dt[, gene_sym  := extract_attr(attributes, "gene_symbol")]
 
+  # GFF3 percent-encodes reserved characters in attribute values ("%2C" for a
+  # comma); decode the labels that are reported. ID and Parent stay as they
+  # are, since they only link features within the file.
+  pct_decode <- function(v) {
+    i <- which(!is.na(v) & grepl("%[0-9A-Fa-f]{2}", v))
+    v[i] <- vapply(v[i], utils::URLdecode, character(1), USE.NAMES = FALSE)
+    v
+  }
+  gff_dt[, Name     := pct_decode(Name)]
+  gff_dt[, product  := pct_decode(product)]
+  gff_dt[, gene_sym := pct_decode(gene_sym)]
+
   # CHOOSE GENE FEATURES -------------------------------------------------------
   gene_feats <- gff_dt[type %in% include_types]
 
@@ -236,8 +252,11 @@ gl.find.genes.for.loci <- function(x,
     pos   = as.integer(x$position)[loci_idx],
     locus = loci
   )
+  # Tags that did not align carry an empty chromosome name, not NA
+  loci_dt[chrom == "", chrom := NA_character_]
   no_position <- loci_dt[is.na(chrom) | is.na(start), locus]
   loci_dt <- loci_dt[!is.na(chrom) & !is.na(start)]
+  loci_dt[, chrom := utils.match.seqid(chrom, unique(gene_iv$gene_seqid), verbose)]
   data.table::setkey(loci_dt, chrom, start, end)
 
   if (length(no_position) && verbose >= 1) {

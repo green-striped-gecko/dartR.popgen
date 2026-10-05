@@ -166,3 +166,63 @@ test_that("unknown locus names warn and are skipped", {
   )
   expect_equal(nrow(res), 1)
 })
+
+test_that("DArT names '<accession>_<description>' match the GFF accession", {
+  # DArT reports a reference sequence as, for example,
+  # NC_041728.1_chromosome_1 where the GFF names it NC_041728.1. Before the
+  # fix no locus matched and every gene column was NA.
+  gff <- write_test_gff()
+  x <- make_test_gl()
+  chrom <- as.character(x@chromosome)
+  chrom[chrom == "chr1"] <- "chr1_chromosome_1"
+  chrom[4] <- "chr10_chromosome_10"  # must not match chr1
+  x@chromosome <- factor(chrom)
+  res <- as.data.frame(gl.find.genes.for.loci(x, gff.file = gff,
+                                              loci = locNames(x)[1:4],
+                                              verbose = 0))
+  res <- res[match(locNames(x)[1:4], res$locus), ]
+  # the same genes as with the GFF names (first test): A, A, B
+  expect_equal(res$gene_id[1:3], c("gene-A", "gene-A", "gene-B"))
+  expect_equal(res$chrom[1:3], rep("chr1", 3))
+  expect_true(is.na(res$gene_id[4]))
+  expect_output(
+    gl.find.genes.for.loci(x, gff.file = gff, loci = locNames(x)[1:4],
+                           verbose = 2),
+    "matched to the GFF sequence they start with"
+  )
+})
+
+test_that("loci with a blank chromosome name count as unmapped", {
+  # Tags that did not align have an empty chromosome name, not NA; the
+  # warning about sequence names absent from the GFF used to cite it as
+  # "(e.g. )".
+  gff <- write_test_gff()
+  x <- make_test_gl()
+  chrom <- as.character(x@chromosome)
+  chrom[5] <- ""
+  x@chromosome <- factor(chrom)
+  out <- capture.output(
+    res <- gl.find.genes.for.loci(x, gff.file = gff,
+                                  loci = locNames(x)[c(1, 5)], verbose = 1)
+  )
+  expect_true(any(grepl("1 of 2 requested loci have no chromosome or position",
+                        out)))
+  expect_false(any(grepl("(e.g. )", out, fixed = TRUE)))
+  expect_equal(nrow(res), 1)
+})
+
+test_that("percent-encoded GFF3 attribute values are decoded", {
+  gff <- withr::local_tempfile(fileext = ".gff")
+  writeLines(c(
+    "##gff-version 3",
+    gff_line("chr1", "src", "gene", 100, 200, ".", "+", ".",
+             "ID=gene-A;Name=PHC3"),
+    gff_line("chr1", "src", "mRNA", 100, 200, ".", "+", ".",
+             "ID=rna-A;Parent=gene-A;product=polyhomeotic homolog 3%2C transcript variant X1")
+  ), gff)
+  x <- make_test_gl()
+  res <- gl.find.genes.for.loci(x, gff.file = gff, loci = locNames(x)[1],
+                                verbose = 0)
+  expect_equal(res$gene_product,
+               "polyhomeotic homolog 3, transcript variant X1")
+})

@@ -24,6 +24,18 @@
 
 ## Bug fixes
 
+* `gl.find.genes.for.loci` and `gl.find.loci.in.genes` match DArT sequence
+  names of the form `<accession>_<description>` (e.g.
+  `NC_041728.1_chromosome_1`) to the GFF sequence they start with
+  (`NC_041728.1`). Previously no name matched, so every gene column was NA
+  and no locus was found (platypus.gl with the NCBI mOrnAna1 chromosome 1
+  annotation: 0 of 79 loci mapped, now 79, 41 inside a gene). Loci with an
+  empty chromosome name (tags that did not align) are reported as unmapped
+  rather than as a sequence absent from the GFF, whose warning read
+  "(e.g. )"; `gl.find.genes.for.loci` no longer returns them as rows with NA
+  genes. `gl.find.genes.for.loci` also decodes GFF3 percent-encoding in gene
+  names, symbols and products ("homolog 3%2C transcript variant X1").
+
 * `gl.ld.haplotype` stops with an error when every population is skipped
   (fewer than `ind.limit` individuals, or fewer than 4 SNPs after
   filtering), and warns when only some are. It previously reported this

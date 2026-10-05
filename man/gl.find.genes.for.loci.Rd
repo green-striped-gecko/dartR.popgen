@@ -73,8 +73,12 @@ lexicographic gene_id. A locus on a sequence that has no gene feature is
 returned with NA in the gene columns.
 
 The sequence names in x$chromosome must match the first column of the
-GFF. Loci without a position, and sequence names absent from the GFF,
-are reported at verbose >= 1.
+GFF. A name of the form <accession>_<description>, as DArT reports
+reference sequences (e.g. NC_041728.1_chromosome_1), is matched to the GFF
+sequence it starts with (NC_041728.1), and the chrom column then holds the
+GFF name. Loci without a chromosome name or a position, and sequence names
+absent from the GFF, are reported at verbose >= 1. GFF3 percent-encoding in
+gene names, symbols and products is decoded (e.g. \%2C to a comma).
 }
 \examples{
 # A small GFF3 with two genes on one sequence

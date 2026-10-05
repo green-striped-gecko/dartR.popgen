@@ -207,3 +207,31 @@ test_that("gzip GFF works both as a direct path and as a companion file", {
     locNames(x)[5]
   )
 })
+
+test_that("DArT names '<accession>_<description>' match the GFF accession", {
+  # DArT reports a reference sequence as, for example,
+  # NC_041728.1_chromosome_1 where the GFF names it NC_041728.1. Before the
+  # fix no locus matched and the result was empty.
+  gff <- write_test_gff()
+  x <- make_test_gl()
+  chrom <- as.character(x@chromosome)
+  chrom[chrom == "chr1"] <- "chr1_chromosome_1"
+  chrom[chrom == "chr2"] <- "chr20_chromosome_20"  # must not match chr2
+  x@chromosome <- factor(chrom)
+  res <- gl.find.loci.in.genes(x, gff.file = gff, gene = pat_mhc, verbose = 0)
+  expect_setequal(res, locNames(x)[c(1, 2, 7)])
+})
+
+test_that("loci with a blank chromosome name count as unmapped", {
+  gff <- write_test_gff()
+  x <- make_test_gl()
+  chrom <- as.character(x@chromosome)
+  chrom[3] <- ""
+  x@chromosome <- factor(chrom)
+  out <- capture.output(
+    gl.find.loci.in.genes(x, gff.file = gff, gene = "TAP", verbose = 1)
+  )
+  expect_true(any(grepl(paste0(nLoc(x) - 5, " of ", nLoc(x),
+                               " loci have no chromosome or position"), out)))
+  expect_false(any(grepl("(e.g. )", out, fixed = TRUE)))
+})

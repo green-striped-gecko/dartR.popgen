@@ -52,9 +52,11 @@ Loci are placed by x$chromosome and x$position, which must be the
 sequence name used in the first column of the GFF and a position in
 genome coordinates. dartR sets x$position to the SNP position within the
 tag when the data are read, so replace it with the genome position first
-(e.g. the ChromPos locus metric plus SnpPosition). Loci without a
-position, and sequence names absent from the GFF, are reported at
-verbose >= 1.
+(e.g. the ChromPos locus metric plus SnpPosition). A sequence name of the
+form <accession>_<description>, as DArT reports reference sequences (e.g.
+NC_041728.1_chromosome_1), is matched to the GFF sequence it starts with
+(NC_041728.1). Loci without a chromosome name or a position, and sequence
+names absent from the GFF, are reported at verbose >= 1.
 
 To learn which gene each locus falls in, pass the result to
 \code{\link{gl.find.genes.for.loci}}.
