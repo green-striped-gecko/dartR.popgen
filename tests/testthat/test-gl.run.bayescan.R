@@ -74,7 +74,7 @@ test_that("results have one row per locus, mapped to the right loci", {
   skip_if(is.null(bs_dir()), "BAYESCAN_DIR not set")
   x <- bs_genlight()
   r <- bs_run(x)
-  expect_named(r, c("results", "fst.pop", "trace", "plot"))
+  expect_named(r, c("results", "fst.pop", "trace", "plot", "trace.plot"))
   expect_equal(nrow(r$results), nLoc(x))
   expect_equal(r$results$locus, locNames(x))
   # the monomorphic locus is not tested
@@ -92,6 +92,33 @@ test_that("results have one row per locus, mapped to the right loci", {
   expect_equal(r$fst.pop$population, c("A", "B"))
   expect_equal(colnames(r$trace), c("logL", "A", "B"))
   expect_s3_class(r$plot, "ggplot")
+})
+
+test_that("the trace plot has one panel per traced parameter", {
+  skip_if(is.null(bs_dir()), "BAYESCAN_DIR not set")
+  r <- bs_run(bs_genlight(), plot.file = "bs_trace_test",
+              plot.dir = tempdir())
+  expect_s3_class(r$trace.plot, "ggplot")
+  d <- r$trace.plot$data
+  expect_equal(nrow(d), 3 * nrow(r$trace))
+  expect_equal(nlevels(d$parameter), 3)
+  # the values of each panel are the columns of the trace, in order
+  expect_equal(d$value[d$parameter == levels(d$parameter)[2]], r$trace$A)
+  # iterations run from the end of the burn-in in steps of thin
+  it <- unique(d$iteration)
+  expect_true(all(diff(it) == 5) && it[1] > 2000)
+  expect_true(file.exists(file.path(tempdir(), "bs_trace_test_trace.RDS")))
+  expect_true("ess" %in% names(r$fst.pop))
+})
+
+test_that("the effective sample sizes match coda", {
+  skip_if(is.null(bs_dir()), "BAYESCAN_DIR not set")
+  skip_if_not_installed("coda")
+  r <- bs_run(bs_genlight())
+  ess <- coda::effectiveSize(coda::mcmc(as.matrix(r$trace)))
+  expect_equal(r$fst.pop$ess, unname(ess[-1]))
+  expect_match(levels(r$trace.plot$data$parameter)[1],
+               paste0("^Log-likelihood \\(ESS ", round(ess[1]), "\\)$"))
 })
 
 test_that("the results are the _fst.txt file BayeScan wrote", {

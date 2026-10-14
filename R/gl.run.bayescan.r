@@ -42,9 +42,18 @@
 #'
 #' BayeScan has no option to set the random seed, so results vary slightly
 #' between runs. Check that the chain has converged before using the
-#' results, e.g. with \code{coda::effectiveSize(coda::mcmc(res$trace))} or
-#' \code{coda::geweke.diag()}; if it has not, increase \code{burnin} and
-#' \code{n.iter}. Runs on tens of thousands of loci take hours.
+#' results. In the trace plot, each parameter should vary around a stable
+#' level, with no trend and no long excursions. When the package coda is
+#' installed, the effective sample size (ESS: the number of independent
+#' draws the autocorrelated trace is worth) of each parameter is shown in
+#' the panel titles and given for each population in \code{fst.pop}, and
+#' the function warns when the ESS of the Fst of a population is below 200.
+#' The log-likelihood usually has a much lower ESS than the population Fst
+#' (137 against more than 3000 on the BayeScan example data with the default
+#' settings). The trace covers the log-likelihood and the Fst of each
+#' population, not the alpha of each locus. If the chain has not converged,
+#' increase \code{burnin} and \code{n.iter}. Runs on tens of thousands of
+#' loci take hours.
 #'
 #' The input file and all BayeScan output files are written to
 #' \code{outpath}, with names starting with \code{outfile}: the input file
@@ -80,21 +89,23 @@
 #'   BayeScan [default "bayescan"].
 #' @param outpath Path where to save the input and output files of BayeScan
 #'   [default global working directory or if not specified, tempdir()].
-#' @param plot.display Specify if the plot of Fst against log10(q-value) is
-#'   to be displayed in the graphics window [default TRUE].
+#' @param plot.display Specify if the plot of Fst against log10(q-value) and
+#'   the plot of the MCMC trace are to be displayed in the graphics window
+#'   [default TRUE].
 #' @param plot.theme User specified theme [default theme_dartR()].
 #' @param plot.colors Vector with three colour names for neutral loci,
 #'   loci under diversifying selection and loci under balancing selection
 #'   [default c("grey60", "deeppink", "dodgerblue")].
 #' @param plot.dir Directory to save the plot RDS files [default as
 #'   specified by the global working directory or tempdir()].
-#' @param plot.file Filename (minus extension) for the RDS plot file
-#'   [Required for plot save].
+#' @param plot.file Filename (minus extension) for the RDS plot file; the
+#'   trace plot is saved with "_trace" added to the name [Required for plot
+#'   save].
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 #'   brief progress messages; 3, progress and results summary; 5, full
 #'   report [default 2, unless specified using gl.set.verbosity].
 #'
-#' @return A list with four elements:
+#' @return A list with five elements:
 #' \itemize{
 #' \item results: a data frame with one row per input locus, in input
 #'   order: locus (locus name), prob (posterior probability of the model with
@@ -103,11 +114,17 @@
 #'   effect), fst (Fst of the locus averaged over populations) and selection
 #'   (neutral, diversifying or balancing). Loci not tested are NA.
 #' \item fst.pop: a data frame with the posterior mean and the 2.5\% and
-#'   97.5\% quantiles of the Fst of each population.
+#'   97.5\% quantiles of the Fst of each population, and the effective
+#'   sample size of its trace (ess; NA when the package coda is not
+#'   installed).
 #' \item trace: a data frame with the MCMC trace of the log-likelihood
 #'   (logL) and of the Fst of each population, one row per kept iteration.
 #' \item plot: a ggplot of Fst against log10(q-value), with a dashed line at
 #'   \code{q.threshold}. q-values below 0.0001 are drawn at 0.0001.
+#' \item trace.plot: a ggplot of the MCMC trace, one panel for the
+#'   log-likelihood and one for the Fst of each population, against the
+#'   iteration; the panel titles give the effective sample size when the
+#'   package coda is installed.
 #' }
 #'
 #' @author Author(s): Luis Mijangos. Custodian: Luis Mijangos -- Post to
@@ -336,6 +353,7 @@ gl.run.bayescan <- function(x,
   # MCMC trace; the first column of each row is the iteration, which
   # read.table takes as row names because the header is one name short
   trace <- read.table(out.files[2], header = TRUE)
+  iter <- as.numeric(rownames(trace))
   rownames(trace) <- NULL
   colnames(trace) <- c("logL", pop.names)
   fst.trace <- trace[, pop.names, drop = FALSE]
@@ -347,6 +365,23 @@ gl.run.bayescan <- function(x,
     row.names = NULL
   )
 
+  # Effective sample size of each parameter in the trace
+  ess <- rep(NA_real_, ncol(trace))
+  if (requireNamespace("coda", quietly = TRUE)) {
+    ess <- unname(coda::effectiveSize(coda::mcmc(as.matrix(trace))))
+  } else if (verbose >= 2) {
+    cat(warn("  Warning: install the package coda to get the effective",
+             "sample size of the MCMC trace\n"))
+  }
+  fst.pop$ess <- ess[-1]
+  low.ess <- which(fst.pop$ess < 200)
+  if (length(low.ess) > 0 && verbose >= 2) {
+    cat(warn("  Warning: the effective sample size of the Fst of",
+             paste(fst.pop$population[low.ess], collapse = ", "),
+             "is below 200. Check the trace plot; if the chain has not",
+             "converged, increase burnin and n.iter\n"))
+  }
+
   if (verbose >= 3) {
     n.sel <- table(res$selection)
     cat(report("  Loci tested:", length(tested), "of", nLoc(x), "\n"))
@@ -355,6 +390,10 @@ gl.run.bayescan <- function(x,
                n.sel[["balancing"]], "\n"))
     cat(report("  Posterior mean Fst per population:\n"))
     print(fst.pop, row.names = FALSE)
+    if (!is.na(ess[1])) {
+      cat(report("  Effective sample size of the log-likelihood:",
+                 round(ess[1]), "\n"))
+    }
   }
 
   # PLOT
@@ -373,12 +412,32 @@ gl.run.bayescan <- function(x,
     labs(x = "log10(q-value)", y = "Fst", colour = "Selection") +
     plot.theme
 
+  # Trace plot: one panel per parameter, titled with its effective sample
+  # size when coda is installed
+  iteration <- value <- NULL
+  panel <- c("Log-likelihood", paste("Fst", pop.names))
+  if (!is.na(ess[1])) panel <- paste0(panel, " (ESS ", round(ess), ")")
+  tdat <- data.frame(
+    iteration = rep(iter, ncol(trace)),
+    parameter = factor(rep(panel, each = nrow(trace)), levels = panel),
+    value = unlist(trace, use.names = FALSE)
+  )
+  p2 <- ggplot(tdat, aes(x = iteration, y = value)) +
+    geom_line(colour = "grey30", linewidth = 0.3) +
+    facet_wrap(~parameter, scales = "free_y") +
+    labs(x = "Iteration", y = NULL) +
+    plot.theme
+
   # PRINTING OUTPUTS
   if (plot.display) {
     print(p1)
+    print(p2)
   }
   if (!is.null(plot.file)) {
     tmp <- utils.plot.save(p1, dir = plot.dir, file = plot.file,
+                           verbose = verbose)
+    tmp <- utils.plot.save(p2, dir = plot.dir,
+                           file = paste0(plot.file, "_trace"),
                            verbose = verbose)
   }
   if (verbose >= 2) {
@@ -391,5 +450,6 @@ gl.run.bayescan <- function(x,
   }
 
   # RETURN
-  return(list(results = res, fst.pop = fst.pop, trace = trace, plot = p1))
+  return(list(results = res, fst.pop = fst.pop, trace = trace, plot = p1,
+              trace.plot = p2))
 }

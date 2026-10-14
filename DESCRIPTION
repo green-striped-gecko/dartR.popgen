@@ -35,6 +35,7 @@ Imports: methods, adegenet (>= 2.0.0), utils, MASS, dplyr, patchwork, crayon, gg
          ape, StAMPP
 Suggests: 
   assignPOP,
+  coda,
   pegas,
   SIBER,
   expm,

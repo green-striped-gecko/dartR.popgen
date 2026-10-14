@@ -7,7 +7,10 @@
   that are monomorphic or have no calls, and returns one row per input locus
   with its posterior probability, q-value, alpha, Fst and classification as
   neutral, diversifying or balancing, together with the posterior Fst of each
-  population, the MCMC trace and a plot of Fst against log10(q-value).
+  population, the MCMC trace, a plot of Fst against log10(q-value) and a
+  plot of the MCMC trace. When the package coda is installed, it gives the
+  effective sample size of each traced parameter and warns when that of a
+  population Fst is below 200.
 
 * Population assignment of an individual of unknown provenance (Arthur
   Georges): `gl.assign.pa()` (private alleles), `gl.assign.on.genotype()`
