@@ -64,8 +64,9 @@ BayeScan [default "bayescan"].}
 \item{outpath}{Path where to save the input and output files of BayeScan
 [default global working directory or if not specified, tempdir()].}
 
-\item{plot.display}{Specify if the plot of Fst against log10(q-value) is
-to be displayed in the graphics window [default TRUE].}
+\item{plot.display}{Specify if the plot of Fst against log10(q-value) and
+the plot of the MCMC trace are to be displayed in the graphics window
+[default TRUE].}
 
 \item{plot.theme}{User specified theme [default theme_dartR()].}
 
@@ -76,15 +77,16 @@ loci under diversifying selection and loci under balancing selection
 \item{plot.dir}{Directory to save the plot RDS files [default as
 specified by the global working directory or tempdir()].}
 
-\item{plot.file}{Filename (minus extension) for the RDS plot file
-[Required for plot save].}
+\item{plot.file}{Filename (minus extension) for the RDS plot file; the
+trace plot is saved with "_trace" added to the name [Required for plot
+save].}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 brief progress messages; 3, progress and results summary; 5, full
 report [default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-A list with four elements:
+A list with five elements:
 \itemize{
 \item results: a data frame with one row per input locus, in input
   order: locus (locus name), prob (posterior probability of the model with
@@ -93,11 +95,17 @@ A list with four elements:
   effect), fst (Fst of the locus averaged over populations) and selection
   (neutral, diversifying or balancing). Loci not tested are NA.
 \item fst.pop: a data frame with the posterior mean and the 2.5\% and
-  97.5\% quantiles of the Fst of each population.
+  97.5\% quantiles of the Fst of each population, and the effective
+  sample size of its trace (ess; NA when the package coda is not
+  installed).
 \item trace: a data frame with the MCMC trace of the log-likelihood
   (logL) and of the Fst of each population, one row per kept iteration.
 \item plot: a ggplot of Fst against log10(q-value), with a dashed line at
   \code{q.threshold}. q-values below 0.0001 are drawn at 0.0001.
+\item trace.plot: a ggplot of the MCMC trace, one panel for the
+  log-likelihood and one for the Fst of each population, against the
+  iteration; the panel titles give the effective sample size when the
+  package coda is installed.
 }
 }
 \description{
@@ -138,9 +146,18 @@ locus is passed to BayeScan as a sample of zero gene copies.
 
 BayeScan has no option to set the random seed, so results vary slightly
 between runs. Check that the chain has converged before using the
-results, e.g. with \code{coda::effectiveSize(coda::mcmc(res$trace))} or
-\code{coda::geweke.diag()}; if it has not, increase \code{burnin} and
-\code{n.iter}. Runs on tens of thousands of loci take hours.
+results. In the trace plot, each parameter should vary around a stable
+level, with no trend and no long excursions. When the package coda is
+installed, the effective sample size (ESS: the number of independent
+draws the autocorrelated trace is worth) of each parameter is shown in
+the panel titles and given for each population in \code{fst.pop}, and
+the function warns when the ESS of the Fst of a population is below 200.
+The log-likelihood usually has a much lower ESS than the population Fst
+(137 against more than 3000 on the BayeScan example data with the default
+settings). The trace covers the log-likelihood and the Fst of each
+population, not the alpha of each locus. If the chain has not converged,
+increase \code{burnin} and \code{n.iter}. Runs on tens of thousands of
+loci take hours.
 
 The input file and all BayeScan output files are written to
 \code{outpath}, with names starting with \code{outfile}: the input file
