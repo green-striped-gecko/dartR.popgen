@@ -103,6 +103,9 @@ Github repository: Whitlock & Lotterhos:
 \seealso{
 \code{\link{utils.outflank}}, \code{\link{utils.outflank.plotter}},
  \code{\link{utils.outflank.MakeDiploidFSTMat}}
+
+Other selection: 
+\code{\link{gl.run.bayescan}()}
 }
 \author{
 Author(s): Bernd Gruber; OutFLANK code by Whitlock and Lotterhos.

@@ -2,6 +2,13 @@
 
 ## New functions
 
+* `gl.run.bayescan()` runs BayeScan (Foll & Gaggiotti 2008) to identify Fst
+  outlier loci. It writes the input file with `gl2bayescan()`, skips loci
+  that are monomorphic or have no calls, and returns one row per input locus
+  with its posterior probability, q-value, alpha, Fst and classification as
+  neutral, diversifying or balancing, together with the posterior Fst of each
+  population, the MCMC trace and a plot of Fst against log10(q-value).
+
 * Population assignment of an individual of unknown provenance (Arthur
   Georges): `gl.assign.pa()` (private alleles), `gl.assign.on.genotype()`
   (genotype likelihoods), `gl.assign.pca()` (2D PCA confidence ellipses),
