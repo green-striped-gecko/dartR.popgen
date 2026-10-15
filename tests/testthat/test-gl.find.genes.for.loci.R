@@ -216,13 +216,44 @@ test_that("percent-encoded GFF3 attribute values are decoded", {
   writeLines(c(
     "##gff-version 3",
     gff_line("chr1", "src", "gene", 100, 200, ".", "+", ".",
-             "ID=gene-A;Name=PHC3"),
+             "ID=gene-A;Name=RAB3C"),
     gff_line("chr1", "src", "mRNA", 100, 200, ".", "+", ".",
-             "ID=rna-A;Parent=gene-A;product=polyhomeotic homolog 3%2C transcript variant X1")
+             "ID=rna-A;Parent=gene-A;product=RAB3C%2C member RAS oncogene family")
   ), gff)
   x <- make_test_gl()
   res <- gl.find.genes.for.loci(x, gff.file = gff, loci = locNames(x)[1],
                                 verbose = 0)
+  expect_equal(res$gene_product, "RAB3C, member RAS oncogene family")
+})
+
+test_that("a product borrowed from a transcript loses its transcript variant label", {
+  # NCBI GFF3 names each mRNA "<gene description>, transcript variant X1",
+  # and the gene row has no product. The label belongs to one transcript, not
+  # to the gene, so it is removed from the borrowed product. A product on
+  # the gene row itself is reported as written.
+  gff <- withr::local_tempfile(fileext = ".gff")
+  writeLines(c(
+    "##gff-version 3",
+    gff_line("chr1", "src", "gene", 100, 200, ".", "+", ".",
+             "ID=gene-A;Name=PHC3"),
+    gff_line("chr1", "src", "mRNA", 100, 200, ".", "+", ".",
+             "ID=rna-A1;Parent=gene-A;product=polyhomeotic homolog 3%2C transcript variant X1"),
+    gff_line("chr1", "src", "mRNA", 100, 180, ".", "+", ".",
+             "ID=rna-A2;Parent=gene-A;product=polyhomeotic homolog 3%2C transcript variant X2"),
+    gff_line("chr1", "src", "gene", 500, 800, ".", "-", ".",
+             "ID=gene-B;Name=B"),
+    gff_line("chr1", "src", "mRNA", 500, 800, ".", "-", ".",
+             "ID=rna-B;Parent=gene-B;product=phosphatase B%2C transcript variant 2"),
+    gff_line("chr1", "src", "gene", 1500, 1600, ".", "+", ".",
+             "ID=gene-C;Name=C;product=own product C%2C transcript variant X1")
+  ), gff)
+  x <- make_test_gl()
+  res <- as.data.frame(gl.find.genes.for.loci(x, gff.file = gff,
+                                              loci = locNames(x)[c(1, 3, 4)],
+                                              verbose = 0))
+  res <- res[match(locNames(x)[c(1, 3, 4)], res$locus), ]
+  expect_equal(res$gene_name, c("PHC3", "B", "C"))
   expect_equal(res$gene_product,
-               "polyhomeotic homolog 3, transcript variant X1")
+               c("polyhomeotic homolog 3", "phosphatase B",
+                 "own product C, transcript variant X1"))
 })

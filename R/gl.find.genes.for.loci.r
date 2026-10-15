@@ -14,7 +14,9 @@
 #' gene, product, Parent, gene_symbol) to provide informative gene labels.
 #' When a gene feature carries no product attribute, the product of its
 #' child features (mRNA, then CDS or exon) is used, which is where NCBI and
-#' Ensembl GFF3 files place it.
+#' Ensembl GFF3 files place it. A trailing ", transcript variant ..." label
+#' is removed from such a product, because it names one transcript rather
+#' than the gene.
 #'
 #' Closeness is measured on the same sequence (chromosome/contig) as:
 #' \itemize{
@@ -213,7 +215,9 @@ gl.find.genes.for.loci <- function(x,
   # PRODUCT FROM CHILD FEATURES ------------------------------------------------
   # NCBI and Ensembl GFF3 put 'product' on mRNA, CDS or exon rows, not on the
   # gene row. Walk one or two Parent levels up from every row with a product
-  # and give each gene the first product found among its descendants.
+  # and give each gene the first product found among its descendants. NCBI
+  # ends each mRNA product with ", transcript variant X1"; that label names
+  # one transcript, not the gene, so it is dropped from borrowed products.
   if (any(is.na(gene_feats$product))) {
     parent_of <- gff_dt[!is.na(ID) & !is.na(Parent), list(ID, Parent)]
     parent_of <- parent_of[!duplicated(ID)]
@@ -222,6 +226,7 @@ gl.find.genes.for.loci <- function(x,
                                       parent_of$Parent[match(Parent, parent_of$ID)])]
     with_prod <- with_prod[!is.na(parent_gene) & parent_gene %in% gene_feats$ID]
     with_prod <- with_prod[!duplicated(parent_gene)]
+    with_prod[, product := sub(",\\s*transcript variant [^,]+$", "", product)]
     gene_feats[is.na(product),
                product := with_prod$product[match(ID, with_prod$parent_gene)]]
   }

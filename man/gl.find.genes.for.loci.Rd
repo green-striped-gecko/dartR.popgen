@@ -59,7 +59,9 @@ The function parses common keys in the GFF attributes column (ID, Name,
 gene, product, Parent, gene_symbol) to provide informative gene labels.
 When a gene feature carries no product attribute, the product of its
 child features (mRNA, then CDS or exon) is used, which is where NCBI and
-Ensembl GFF3 files place it.
+Ensembl GFF3 files place it. A trailing ", transcript variant ..." label
+is removed from such a product, because it names one transcript rather
+than the gene.
 
 Closeness is measured on the same sequence (chromosome/contig) as:
 \itemize{

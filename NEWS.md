@@ -46,6 +46,13 @@
   genes. `gl.find.genes.for.loci` also decodes GFF3 percent-encoding in gene
   names, symbols and products ("homolog 3%2C transcript variant X1").
 
+* `gl.find.genes.for.loci`: when a gene's product is taken from its first
+  mRNA, the trailing ", transcript variant X1" is removed, since it names
+  one transcript, not the gene ("polyhomeotic homolog 3, transcript variant
+  X1" is now "polyhomeotic homolog 3"). A product on the gene row itself is
+  unchanged. On platypus.gl with the NCBI mOrnAna1 chromosome 1 annotation,
+  23 of 82 products change; genes and distances are identical.
+
 * `gl.ld.haplotype` stops with an error when every population is skipped
   (fewer than `ind.limit` individuals, or fewer than 4 SNPs after
   filtering), and warns when only some are. It previously reported this
