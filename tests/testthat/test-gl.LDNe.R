@@ -222,3 +222,48 @@ test_that("missing executable and SilicoDArT input stop with a readable message"
                           plot.out = FALSE, verbose = 0),
                "Only SNP")
 })
+
+test_that("bar colours and axis labels follow the population of each bar", {
+  # before: the bars were drawn in alphabetical order but coloured and
+  # labelled in the order NeEstimator reports (levels(pop(x))), and names
+  # given to plot_colors_pop were ignored; the SEVERN_ABOVE bar was labelled
+  # "SEVERN_BELOW | 15"
+  skip_if(neest_dir() == "", "NeEstimator binary not available (set NEEST_DIR)")
+  x <- platypus.gl[, 1:300]
+  pop(x) <- factor(as.character(pop(x)),
+                   levels = c("SEVERN_BELOW", "TENTERFIELD", "SEVERN_ABOVE"))
+  bars <- function(cols) {
+    dir <- withr::local_tempdir()
+    res <- quiet_ldne(x, neest.path = neest_dir(), plot.out = FALSE,
+                      plot_colors_pop = cols, plot.file = "ldne",
+                      plot.dir = dir, verbose = 0)
+    b <- ggplot2::ggplot_build(readRDS(file.path(dir, "ldne.RDS")))
+    sx <- b$layout$panel_params[[1]]$x
+    d <- b$data[[1]]
+    # dodged bars sit around the integer position of their population
+    at <- round(d$x)
+    list(res = res,
+         bars = data.frame(pop = sx$get_limits()[at], fill = d$fill,
+                           label = sx$get_labels()[at], ne = d$y))
+  }
+  named <- c(TENTERFIELD = "green", SEVERN_ABOVE = "red",
+             SEVERN_BELOW = "blue")
+  unnamed <- c("red", "blue", "green")
+  expected <- list(named, setNames(unnamed, levels(pop(x))))
+  for (i in 1:2) {
+    out <- bars(list(named, unnamed)[[i]])
+    bb <- out$bars
+    expect_equal(bb$fill, unname(expected[[i]][bb$pop]))
+    for (p in unique(bb$pop)) {
+      tab <- out$res[[p]]
+      stat <- function(st) as.numeric(unlist(tab[tab$Statistic == st, -1]))
+      # the label names the population and its harmonic mean sample size
+      expect_equal(unique(bb$label[bb$pop == p]),
+                   paste(p, round(mean(stat("Harmonic Mean Sample Size"))),
+                         sep = " | "))
+      # the bars drawn there are that population's estimates
+      ne <- stat("Estimated Ne^")
+      expect_equal(sort(bb$ne[bb$pop == p]), sort(ne[is.finite(ne)]))
+    }
+  }
+})

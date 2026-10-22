@@ -511,7 +511,14 @@ gl.LDNe <- function(x,
         "colours given.\n"
       ))
     }
-    plot_colors_pop <- plot_colors_pop[seq_len(length(pops))]
+    # key colours by population name: names given by the user are kept when
+    # they cover every population, otherwise colours follow pops, the order
+    # NeEstimator reports
+    if (!all(pops %in% names(plot_colors_pop))) {
+      plot_colors_pop <- stats::setNames(
+        plot_colors_pop[seq_len(length(pops))], pops)
+    }
+    plot_colors_pop <- plot_colors_pop[pops]
 
     pop_list_plot <- lapply(pop_list, function(x) {
       stats::setNames(data.frame(t(x[, -1])), x[, 1])
@@ -526,7 +533,7 @@ gl.LDNe <- function(x,
     pop_list_plot <- as.data.frame(rbindlist(pop_list_plot))
     pop_list_plot$pop <- factor(pop_list_plot$pop)#,levels= pop_list_plot$pop)
     pop_list_plot[pop_list_plot == Inf] <- NA
-    pop_list_plot$color <- rep(plot_colors_pop, each = sum(!duplicated(freq)))
+    pop_list_plot$color <- plot_colors_pop[as.character(pop_list_plot$pop)]
     pop_list_plot$`CI low Parametric` <-
       as.numeric(pop_list_plot$`CI low Parametric`)
     pop_list_plot$`CI high Parametric` <-
@@ -544,18 +551,20 @@ gl.LDNe <- function(x,
         y = `Estimated Ne^`
       )) +
       geom_bar(
+        aes(fill = pop),
         position = "dodge2",
         stat = "identity",
-        color = "black",
-        fill = pop_list_plot$color
+        color = "black"
       ) +
-      scale_x_discrete(labels = paste(unique(pop_list_plot$pop),
+      scale_fill_manual(values = plot_colors_pop) +
+      # bars sort alphabetically; labels are matched to them by name
+      scale_x_discrete(labels = stats::setNames(paste(pops,
         round(
           pop_size,
           0
         ),
         sep = " | "
-      )) +
+      ), pops)) +
       geom_errorbar(
         aes(
           ymin = `CI low Parametric`,

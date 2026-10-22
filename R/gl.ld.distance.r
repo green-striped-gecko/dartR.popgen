@@ -141,6 +141,18 @@ gl.ld.distance <- function(ld.report,
     stop(error(paste0("'pop.colors' has ", length(pop.colors),
                       " colors but there are ", npops, " populations.\n")))
   }
+  # key colours by population name: names given by the user are kept when
+  # they cover every population, otherwise colours follow the order of the
+  # populations in ld.report (levels(pop(x)) in gl.report.ld.map)
+  if (is.factor(ld.report$pop)) {
+    pop_order <- levels(droplevels(ld.report$pop))
+  } else {
+    pop_order <- unique(as.character(ld.report$pop[!is.na(ld.report$pop)]))
+  }
+  if (!all(pop_order %in% names(pop.colors))) {
+    pop.colors <- stats::setNames(pop.colors[seq_len(npops)], pop_order)
+  }
+  pop.colors <- pop.colors[pop_order]
 
   distance <- ld.stat <- NULL
   p3 <-

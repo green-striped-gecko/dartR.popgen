@@ -114,3 +114,26 @@ test_that("plot.file saves a ggplot; the threshold line is in the legend", {
   expect_equal(ggplot2::get_guide_data(p, "linetype")$.label,
                "R.squared = 0.2 (unlinked threshold)")
 })
+
+test_that("population colours follow the populations of ld.report", {
+  # before: unnamed colours went to the populations in alphabetical order,
+  # not in the order of ld.report (levels(pop(x)) in gl.report.ld.map)
+  ld <- make_ld_report()
+  ld <- rbind(ld, transform(ld[ld$pop == "A", ], pop = "C"))
+  ld <- ld[order(match(ld$pop, c("C", "A", "B"))), ]
+  legend_cols <- function(report, cols) {
+    dir <- withr::local_tempdir()
+    run_quiet(report, ld.resolution = 1000, pop.colors = cols,
+              plot.file = "ldd", plot.dir = dir, verbose = 0)
+    g <- ggplot2::get_guide_data(readRDS(file.path(dir, "ldd.RDS")),
+                                 "colour")
+    setNames(g$colour, g$.label)[c("A", "B", "C")]
+  }
+  expected <- c(A = "blue", B = "green", C = "red")
+  expect_equal(legend_cols(ld, c("red", "blue", "green")), expected)
+  expect_equal(legend_cols(ld, c(B = "green", C = "red", A = "blue")),
+               expected)
+  # a factor pop column keeps its levels order
+  ld$pop <- factor(ld$pop, levels = c("C", "A", "B"))
+  expect_equal(legend_cols(ld, c("red", "blue", "green")), expected)
+})
