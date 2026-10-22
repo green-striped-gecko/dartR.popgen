@@ -203,9 +203,10 @@ gl.plot.snmf <- function(snmf.result,
       names(pop_cols_all) <- all_pops
     } else {
       pop_cols_all <- plot.colors.pop
-      # if (is.null(names(pop_cols_all))) {
+      # names given by the user are kept when they cover every population
+      if (!all(levels(pop(x)) %in% names(pop_cols_all))) {
         names(pop_cols_all) <- levels(pop(x))[seq_along(pop_cols_all)]
-      # }
+      }
     }
     
     # subset/reorder to only pops present in the tree

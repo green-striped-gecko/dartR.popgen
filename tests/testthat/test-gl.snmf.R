@@ -198,3 +198,30 @@ test_that("map: movepops by name; extra pops in x ignored [approved 1]", {
                                                     verbose = 0)))
   expect_length(out, 0)
 })
+
+test_that("plot: den = TRUE colours each population by the name it was given", {
+  # before: names given to plot.colors.pop were overwritten by
+  # levels(pop(x)) in order, so named colours landed on the wrong populations
+  s <- sn_run()
+  x <- s$x
+  # appearance, level and alphabetical order all differ
+  pop(x) <- factor(as.character(pop(x)),
+                   levels = c("EmmacBurdMist", "EmmacBurnBara",
+                              "EmmacBrisWive"))
+  tip_cols <- function(cols) {
+    dir <- withr::local_tempdir()
+    sn_quiet(gl.plot.snmf(s$r, plot.K = 3, den = TRUE, x = x,
+                          plot.colors.pop = cols, plot.out = FALSE,
+                          plot.file = "sn", plot.dir = dir, verbose = 0))
+    p <- readRDS(file.path(dir, "sn.RDS"))
+    g <- ggplot2::get_guide_data(p[[2]], "colour")
+    setNames(g$colour, g$.label)[sort(popNames(x))]
+  }
+  named <- c(EmmacBrisWive = "green", EmmacBurdMist = "red",
+             EmmacBurnBara = "blue")
+  expect_equal(tip_cols(named), named[sort(names(named))])
+  # unnamed colours follow levels(pop(x))
+  expect_equal(tip_cols(c("red", "blue", "green")),
+               c(EmmacBrisWive = "green", EmmacBurdMist = "red",
+                 EmmacBurnBara = "blue"))
+})

@@ -34,6 +34,20 @@
 
 ## Bug fixes
 
+* Population colours land on the right populations. `gl.LDNe` drew its
+  bars in alphabetical order but coloured and labelled them in the order
+  NeEstimator reports (`levels(pop(x))`), so when the levels were not
+  alphabetical both the colours and the axis labels were on the wrong bars
+  (platypus.gl with levels SEVERN_BELOW, TENTERFIELD, SEVERN_ABOVE: the
+  SEVERN_ABOVE bar was labelled "SEVERN_BELOW | 16"); names given to
+  `plot_colors_pop` were ignored. `gl.ld.distance` gave unnamed
+  `pop.colors` to the populations in alphabetical order instead of the
+  order of `ld.report`. `gl.plot.snmf(den = TRUE)` overwrote the names
+  given to `plot.colors.pop`. In all three, named colours that cover every
+  population are now matched by name; otherwise colour i goes to the i-th
+  population in the order the function reports. Bar and legend order are
+  unchanged.
+
 * `gl.find.genes.for.loci` and `gl.find.loci.in.genes` match DArT sequence
   names of the form `<accession>_<description>` (e.g.
   `NC_041728.1_chromosome_1`) to the GFF sequence they start with
