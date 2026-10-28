@@ -90,7 +90,8 @@ they are reported and retained.
 }
 \examples{
 \donttest{
-if (requireNamespace("SIBER", quietly = TRUE)) {
+if (requireNamespace("SIBER", quietly = TRUE) &&
+    requireNamespace("directlabels", quietly = TRUE)) {
 # Focal individual from the Macleay River (EmmacMaclGeor)
 test <- gl.assign.pca(testset.gl, unknown = "UC_00146", verbose = 3)
 }
