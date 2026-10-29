@@ -69,12 +69,17 @@ nall.cum (cumulative alleles), prop.cum (cumulative proportion of all
 alleles) and needed (TRUE if the individual is among those needed to reach
 \code{percent}).
 \item \code{summary} data.frame with one row per population: n.ind
-(individuals in x), and the number of individuals needed to reach
-\code{percent} as mean_n, median_n, sd, min_n and max_n across runs, plus
-prop (share of the total needed). For 'optimal' mean, median, min and max
-are identical and sd is NA.
+(individuals in x), n.start (runs that started with an individual from
+this population), the number of individuals needed to reach
+\code{percent} as mean_n, median_n, sd, min_n and max_n across runs,
+prop (share of the total needed), mean_n.excl.start (mean number needed
+without the starting individual) and p.runs (share of runs in which the
+population is needed, without the starting individual). For 'optimal'
+mean, median, min and max are identical, sd is NA and nothing is excluded.
 \item \code{by.run} matrix with one row per run and one column per
 population: number of individuals needed to reach \code{percent}.
+\item \code{by.run.excl.start} as \code{by.run}, but without the starting
+individual of each run (identical to \code{by.run} for 'optimal').
 \item \code{n.needed} vector with the total number of individuals needed
 in each run.
 \item \code{plot} the ggplot (patchwork) object.
@@ -128,9 +133,23 @@ that crosses the threshold.
 The upper panel shows the cumulative proportion of alleles captured as
 individuals are added (one curve per run for 'random' and 'all', with the
 median in bold). The dashed line marks \code{percent}. The lower panel
-shows the number of individuals needed from each population: bars for
-'optimal' (with the population size shown in light grey behind), and
-boxplots across runs for 'random' and 'all'.
+shows the individuals needed from each population. For 'optimal' these are
+bars, with the population size shown in light grey behind. For 'random' and
+'all' each bar shows the share of runs in which a population adds 0, 1, 2,
+... individuals (classes are grouped when counts are large); the colored
+part of a bar is the share of runs in which the population is needed at
+all. Black diamonds show the share of runs that started with an individual
+from that population.
+
+\strong{Starting individual}
+
+With 'random' and 'all' the first individual is set by the run, not chosen
+by the method, and it always counts as needed. When few individuals are
+needed this can make up a large part of the count and favors populations
+with many individuals. The plot, \code{by.run.excl.start} and the summary
+columns mean_n.excl.start and p.runs therefore leave the starting
+individual out. With 'optimal' the first individual is chosen by the
+method and is kept.
 
 If a plot.file is given, the ggplot arising from this function is saved as
 an "RDS" binary file using saveRDS(); it can be reloaded with readRDS(). If

@@ -76,9 +76,23 @@
 #' The upper panel shows the cumulative proportion of alleles captured as
 #' individuals are added (one curve per run for 'random' and 'all', with the
 #' median in bold). The dashed line marks \code{percent}. The lower panel
-#' shows the number of individuals needed from each population: bars for
-#' 'optimal' (with the population size shown in light grey behind), and
-#' boxplots across runs for 'random' and 'all'.
+#' shows the individuals needed from each population. For 'optimal' these are
+#' bars, with the population size shown in light grey behind. For 'random' and
+#' 'all' each bar shows the share of runs in which a population adds 0, 1, 2,
+#' ... individuals (classes are grouped when counts are large); the colored
+#' part of a bar is the share of runs in which the population is needed at
+#' all. Black diamonds show the share of runs that started with an individual
+#' from that population.
+#'
+#' \strong{Starting individual}
+#'
+#' With 'random' and 'all' the first individual is set by the run, not chosen
+#' by the method, and it always counts as needed. When few individuals are
+#' needed this can make up a large part of the count and favors populations
+#' with many individuals. The plot, \code{by.run.excl.start} and the summary
+#' columns mean_n.excl.start and p.runs therefore leave the starting
+#' individual out. With 'optimal' the first individual is chosen by the
+#' method and is kept.
 #'
 #' If a plot.file is given, the ggplot arising from this function is saved as
 #' an "RDS" binary file using saveRDS(); it can be reloaded with readRDS(). If
@@ -94,12 +108,17 @@
 #' alleles) and needed (TRUE if the individual is among those needed to reach
 #' \code{percent}).
 #' \item \code{summary} data.frame with one row per population: n.ind
-#' (individuals in x), and the number of individuals needed to reach
-#' \code{percent} as mean_n, median_n, sd, min_n and max_n across runs, plus
-#' prop (share of the total needed). For 'optimal' mean, median, min and max
-#' are identical and sd is NA.
+#' (individuals in x), n.start (runs that started with an individual from
+#' this population), the number of individuals needed to reach
+#' \code{percent} as mean_n, median_n, sd, min_n and max_n across runs,
+#' prop (share of the total needed), mean_n.excl.start (mean number needed
+#' without the starting individual) and p.runs (share of runs in which the
+#' population is needed, without the starting individual). For 'optimal'
+#' mean, median, min and max are identical, sd is NA and nothing is excluded.
 #' \item \code{by.run} matrix with one row per run and one column per
 #' population: number of individuals needed to reach \code{percent}.
+#' \item \code{by.run.excl.start} as \code{by.run}, but without the starting
+#' individual of each run (identical to \code{by.run} for 'optimal').
 #' \item \code{n.needed} vector with the total number of individuals needed
 #' in each run.
 #' \item \code{plot} the ggplot (patchwork) object.
@@ -249,6 +268,54 @@ gl.opt.ind.all <- function(x,
     cat(warn("  Warning: data contain missing values. Missing genotypes add no alleles, consider filtering for call rate first.\n"))
   }
   
+  # Greedy allele-capture order for one run.
+  # xx: genotype matrix (individuals x loci, coded 0/1/2/NA).
+  # start: row index of the first individual, or NA to start with the
+  #        individual carrying the most alleles.
+  # Defined inside the function and detached from it (baseenv) so parallel
+  # workers need no package and receive only the genotype matrix.
+  opt.ind.order <- function(xx, start = NA) {
+    n <- nrow(xx)
+    orderind <- integer(0)
+    nalltot <- numeric(0)
+    
+    for (i in seq_len(n)) {
+      # alleles still to be captured: 1 for homozygotes, 2 for heterozygotes
+      # (same as rowSums((xx %% 2) + 1, na.rm = TRUE), but %% is very slow on
+      # matrices with many NAs)
+      nall_ind <- rowSums(!is.na(xx)) + rowSums(xx == 1, na.rm = TRUE)
+      if (i == 1 && !is.na(start)) {
+        nextind <- as.integer(start)
+      } else {
+        best <- which(nall_ind == max(nall_ind))
+        nextind <- if (length(best) > 1) best[sample.int(length(best), 1)] else best
+      }
+      if (i > 1 && nall_ind[nextind] == 0) break
+      
+      g <- xx[nextind, ]
+      xx[nextind, ] <- NA
+      # heterozygote: both alleles captured, locus done
+      xx[, which(g == 1)] <- NA
+      # homozygote: same genotype adds nothing; heterozygotes now carry only
+      # the other allele (recoded as the other homozygote)
+      hom <- which(g == 0 | g == 2)
+      if (length(hom) > 0) {
+        sub <- xx[, hom, drop = FALSE]
+        gm <- matrix(g[hom], nrow = n, ncol = length(hom), byrow = TRUE)
+        sub[which(sub == gm)] <- NA
+        het <- which(sub == 1)
+        sub[het] <- 2 - gm[het]
+        xx[, hom] <- sub
+      }
+      
+      orderind <- c(orderind, nextind)
+      nalltot <- c(nalltot, nall_ind[nextind])
+      if (all(is.na(xx))) break
+    }
+    list(orderind = orderind, nalltot = nalltot)
+  }
+  environment(opt.ind.order) <- baseenv()
+  
   # DO THE JOB
   
   xx <- as.matrix(x)
@@ -270,7 +337,7 @@ gl.opt.ind.all <- function(x,
   }
   
   if (nruns == 1) {
-    runs <- list(utils.opt.ind.order(xx, start = starts[1]))
+    runs <- list(opt.ind.order(xx, start = starts[1]))
   } else {
     # keep the user's plan and restore it on exit
     oplan <- future::plan()
@@ -280,17 +347,13 @@ gl.opt.ind.all <- function(x,
     } else {
       future::plan(future::sequential)
     }
-    # Pass the helper to the workers as an argument and detach it (and the
-    # wrapper) from the package namespace and this function's frame. Workers
-    # then need neither dartR.popgen (important with devtools::load_all() or
-    # an older installed version) nor a copy of the genlight object.
-    ord.fun <- utils.opt.ind.order
-    environment(ord.fun) <- baseenv()
+    # The worker and helper are detached from this function's frame, so the
+    # genlight object is not copied to each worker and no package is needed.
     worker <- function(s, f, m) f(m, start = s)
     environment(worker) <- baseenv()
     runs <- furrr::future_map(starts,
                               worker,
-                              f = ord.fun,
+                              f = opt.ind.order,
                               m = xx,
                               .options = furrr::furrr_options(seed = TRUE,
                                                               packages = character(0)))
@@ -328,14 +391,29 @@ gl.opt.ind.all <- function(x,
   n.needed <- rowSums(by.run)
   names(n.needed) <- rownames(by.run)
   
+  # For 'random' and 'all' the first individual is set by the run, not by
+  # the method, so it is excluded from the per-population counts below.
+  # For 'optimal' the first individual is chosen by the method and kept.
+  excl.start <- nruns > 1
+  by.run.excl <- do.call(rbind, lapply(tabs, function(d) {
+    keep <- d$needed & (!excl.start | d$order > 1)
+    table(factor(d$pop[keep], levels = popNames(x)))
+  }))
+  by.run.excl <- matrix(by.run.excl, nrow = nruns, dimnames = dimnames(by.run))
+  start.pop <- table(factor(pops[sapply(runs, function(r) r$orderind[1])],
+                            levels = popNames(x)))
+  
   summ <- data.frame(pop = popNames(x),
                      n.ind = as.integer(table(pops)),
+                     n.start = as.integer(start.pop),
                      mean_n = round(colMeans(by.run), 2),
                      median_n = apply(by.run, 2, stats::median),
                      sd = if (nruns > 1) round(apply(by.run, 2, stats::sd), 2) else NA_real_,
                      min_n = apply(by.run, 2, min),
                      max_n = apply(by.run, 2, max),
                      prop = round(colMeans(by.run) / sum(colMeans(by.run)), 3),
+                     mean_n.excl.start = round(colMeans(by.run.excl), 2),
+                     p.runs = round(colMeans(by.run.excl > 0), 3),
                      row.names = NULL,
                      stringsAsFactors = FALSE)
   
@@ -402,19 +480,54 @@ gl.opt.ind.all <- function(x,
                              "-", max(n.needed), ") of ", nInd(x))) +
       plot.theme
     
-    dfbox <- data.frame(pop = factor(rep(popNames(x), each = nruns),
-                                     levels = popNames(x)),
-                        n = as.vector(by.run))
-    p2 <- ggplot(dfbox, aes(x = pop, y = n, fill = pop)) +
-      geom_boxplot(color = plot.colors[1], outlier.shape = NA) +
-      geom_jitter(width = 0.15, height = 0.1, size = 0.8, alpha = 0.4) +
-      scale_fill_manual(values = plot.colors.pop, drop = FALSE) +
-      labs(x = "Population", y = "Individuals needed",
+    # share of runs in which each population adds 0, 1, 2, ... individuals
+    # (starting individual excluded). Classes follow the observed range:
+    # single values if the range is narrow, otherwise about six groups.
+    nvec <- as.vector(by.run.excl)
+    minn <- min(nvec)
+    maxn <- max(nvec)
+    if (maxn - minn <= 6) {
+      lows <- minn:maxn
+      highs <- lows
+    } else {
+      w <- ceiling((maxn - minn + 1) / 6)
+      lows <- seq(minn, maxn, by = w)
+      highs <- pmin(lows + w - 1, maxn)
+    }
+    labs.n <- ifelse(lows == highs, lows, paste0(lows, "-", highs))
+    ncls <- findInterval(nvec, lows)
+    dfstack <- data.frame(pop = factor(rep(popNames(x), each = nruns),
+                                       levels = popNames(x)),
+                          n = factor(labs.n[ncls], levels = labs.n))
+    dfstack <- as.data.frame(table(pop = dfstack$pop, n = dfstack$n))
+    dfstack$share <- dfstack$Freq / nruns
+    # grey for 0 (population not needed), blues for the other classes
+    if (lows[1] == 0 && highs[1] == 0) {
+      fill.cols <- c("grey90",
+                     grDevices::colorRampPalette(c("#6BAED6", "#08306B"))(length(labs.n) - 1))
+    } else {
+      fill.cols <- grDevices::colorRampPalette(c("#6BAED6", "#08306B"))(length(labs.n))
+    }
+    fill.cols <- fill.cols[seq_along(labs.n)]
+    names(fill.cols) <- labs.n
+    dfstart <- data.frame(pop = factor(popNames(x), levels = popNames(x)),
+                          share = as.numeric(start.pop) / nruns)
+    
+    share <- NULL # for R CMD check
+    p2 <- ggplot(dfstack, aes(x = pop, y = share,
+                              fill = factor(n, levels = labs.n))) +
+      geom_col(color = "white", linewidth = 0.2) +
+      geom_point(data = dfstart, aes(x = pop, y = share, shape = "Runs started here"),
+                 inherit.aes = FALSE, size = 2.5, color = "black") +
+      scale_fill_manual(values = fill.cols, breaks = labs.n,
+                        name = "Individuals\nadded") +
+      scale_shape_manual(values = c("Runs started here" = 18), name = NULL) +
+      scale_y_continuous(limits = c(0, 1), labels = function(v) paste0(v * 100, "%")) +
+      labs(x = "Population", y = "Share of runs",
            subtitle = paste0("Individuals needed per population to retain ",
-                             percent * 100, "% of alleles")) +
+                             percent * 100, "% of alleles (starting individual excluded)")) +
       plot.theme +
-      theme(legend.position = "none",
-            axis.text.x = element_text(angle = 45, hjust = 1))
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
   }
   
   p3 <- (p1 / p2) + plot_layout(heights = c(3, 2))
@@ -434,6 +547,7 @@ gl.opt.ind.all <- function(x,
   out <- list(table = tab,
               summary = summ,
               by.run = by.run,
+              by.run.excl.start = by.run.excl,
               n.needed = n.needed,
               plot = p3,
               settings = list(first = first,
@@ -456,49 +570,4 @@ gl.opt.ind.all <- function(x,
     return(invisible(out))
   }
   return(out)
-}
-
-# Internal helper: greedy allele-capture order for one run.
-# xx: genotype matrix (individuals x loci, coded 0/1/2/NA).
-# start: row index of the first individual, or NA to start with the
-#        individual carrying the most alleles.
-# Kept outside gl.opt.ind.all so that parallel workers only receive the
-# matrix, not the genlight object.
-utils.opt.ind.order <- function(xx, start = NA) {
-  n <- nrow(xx)
-  orderind <- integer(0)
-  nalltot <- numeric(0)
-  
-  for (i in seq_len(n)) {
-    # alleles still to be captured: 1 for homozygotes, 2 for heterozygotes
-    nall_ind <- rowSums((xx %% 2) + 1, na.rm = TRUE)
-    if (i == 1 && !is.na(start)) {
-      nextind <- as.integer(start)
-    } else {
-      best <- which(nall_ind == max(nall_ind))
-      nextind <- if (length(best) > 1) best[sample.int(length(best), 1)] else best
-    }
-    if (i > 1 && nall_ind[nextind] == 0) break
-    
-    g <- xx[nextind, ]
-    xx[nextind, ] <- NA
-    # heterozygote: both alleles captured, locus done
-    xx[, which(g == 1)] <- NA
-    # homozygote: same genotype adds nothing; heterozygotes now carry only
-    # the other allele (recoded as the other homozygote)
-    hom <- which(g == 0 | g == 2)
-    if (length(hom) > 0) {
-      sub <- xx[, hom, drop = FALSE]
-      gm <- matrix(g[hom], nrow = n, ncol = length(hom), byrow = TRUE)
-      sub[which(sub == gm)] <- NA
-      het <- which(sub == 1)
-      sub[het] <- 2 - gm[het]
-      xx[, hom] <- sub
-    }
-    
-    orderind <- c(orderind, nextind)
-    nalltot <- c(nalltot, nall_ind[nextind])
-    if (all(is.na(xx))) break
-  }
-  list(orderind = orderind, nalltot = nalltot)
-}
+} 
