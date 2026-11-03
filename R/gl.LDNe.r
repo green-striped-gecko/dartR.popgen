@@ -41,7 +41,8 @@
 #' 'monogamy'. The abbreviation 'mono' is also accepted
 #' [default 'random'].
 #' @param pairing 'all' [default] if all possible loci should be paired, or 'separate'
-#'    if only loci on different chromosomes should be used.
+#'    if only loci on different chromosomes should be used. The chromosome of
+#'    each locus is read from \code{x@chromosome}.
 #' @param Waples.correction The type of Waples et al 2016 correction to apply. 
 #'    This is ignored if \code{pairing} is set to 'separate'.
 #'    Options are 'nChromosomes', for eq 1a, or 'genomeLength' for eq 1b. 
@@ -158,7 +159,15 @@ gl.LDNe <- function(x,
   }
   mating <- match.arg(mating, c("random", "monogamy"))
 
-  if (pairing == "separate") Waples.correction <- NULL
+  if (pairing == "separate") {
+    Waples.correction <- NULL
+    if (length(x@chromosome) != nLoc(x) || all(is.na(x@chromosome))) {
+      stop(error(
+        "  pairing = 'separate' needs the chromosome of each locus in",
+        "x@chromosome, which is empty.\n"
+      ))
+    }
+  }
 
   if (!is.null(Waples.correction)) {
     if (!is.character(Waples.correction) || length(Waples.correction) != 1 ||
@@ -263,8 +272,12 @@ gl.LDNe <- function(x,
   } else {
     if(pairing == "separate") {
       setPairs <- "2 ChrMap"
+      # NeEstimator keeps only the first few characters of a chromosome name,
+      # so assembly names such as HiC_scaffold_1 and HiC_scaffold_17 became
+      # one chromosome, and long names could crash it. Each chromosome is
+      # written as a short integer code instead.
       write.table(
-      data.frame(x@chromosome, locNames(x)), 
+      data.frame(as.integer(factor(x@chromosome)), locNames(x)),
       file = file.path(run.dir, "ChrMap"), 
       row.names = FALSE, col.names = FALSE, quote = FALSE)
     }
@@ -289,13 +302,13 @@ gl.LDNe <- function(x,
   sysname <- unname(Sys.info()["sysname"])
   if (sysname == "Windows") {
     prog <- "Ne2-1.exe"
-    cmd <- "Ne2-1.exe i:infodummy o:option"
+    prog.cmd <- "Ne2-1.exe"
   } else if (sysname == "Linux") {
     prog <- "Ne2-1L"
-    cmd <- "./Ne2-1L i:infodummy o:option"
+    prog.cmd <- "./Ne2-1L"
   } else if (sysname == "Darwin") {
     prog <- "Ne2-1M"
-    cmd <- "./Ne2-1M i:infodummy o:option"
+    prog.cmd <- "./Ne2-1M"
   } else {
     stop(error(
       "  gl.LDNe does not know which NeEstimator executable to use on",
@@ -323,13 +336,25 @@ gl.LDNe <- function(x,
   old.path <- getwd()
   setwd(run.dir)
   on.exit(setwd(old.path), add = TRUE, after = FALSE)
-  status <- system(cmd, ignore.stdout = verbose < 3)
+  # NeEstimator's messages go to a log, shown at verbose 3 and quoted in the
+  # error if the run fails
+  logfile <- "NeEstimator.log"
+  status <- system2(prog.cmd, c("i:infodummy", "o:option"),
+                    stdout = logfile, stderr = logfile)
+  ne.log <- if (file.exists(logfile)) {
+    readLines(logfile, warn = FALSE)
+  } else {
+    character(0)
+  }
+  if (verbose >= 3 && length(ne.log) > 0) {
+    cat(report(paste0("  ", ne.log, "\n", collapse = "")))
+  }
   # a failed run must not be read from a file left by something else
   if (status != 0 || !file.exists(outfile)) {
     stop(error(
       "  NeEstimator (", prog, ") did not produce its output file",
-      outfile, "and exited with status", status,
-      ". Run with verbose = 3 to see its messages.\n"
+      outfile, "and exited with status", status, ". Its last messages:\n",
+      paste0("  ", utils::tail(ne.log, 10), "\n", collapse = "")
     ))
   }
   res <- read.delim(outfile)

@@ -54,7 +54,8 @@ c(0,0.05) [default 0].}
 [default 'random'].}
 
 \item{pairing}{'all' [default] if all possible loci should be paired, or 'separate'
-if only loci on different chromosomes should be used.}
+if only loci on different chromosomes should be used. The chromosome of
+each locus is read from \code{x@chromosome}.}
 
 \item{Waples.correction}{The type of Waples et al 2016 correction to apply. 
 This is ignored if \code{pairing} is set to 'separate'.
