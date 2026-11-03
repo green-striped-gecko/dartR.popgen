@@ -135,6 +135,26 @@ test_that("pairing = 'separate' restricts comparisons and an unknown value is re
                "'arg' should be one of")
 })
 
+test_that("pairing = 'separate' gives the same result with long chromosome names", {
+  # before: NeEstimator keeps only the first characters of each name in the
+  # chromosome map, so HiC_scaffold_1 ... HiC_scaffold_10 were read as one
+  # chromosome, or the run crashed (reported by Peter Unmack, 2026-11-03)
+  skip_if(neest_dir() == "", "NeEstimator binary not available (set NEEST_DIR)")
+  pops <- possums.gl[1:60, 1:100]
+  set.seed(1)
+  chr <- sample(1:10, size = nLoc(pops), replace = TRUE)
+  run <- function(labels) {
+    pops@chromosome <- labels
+    quiet_ldne(pops, neest.path = neest_dir(), critical = c(0, 0.05),
+               pairing = "separate", plot.out = FALSE, verbose = 0)
+  }
+  short <- run(as.factor(chr))
+  long <- run(as.factor(paste0("HiC_scaffold_", chr)))
+  expect_equal(long, short)
+  expect_equal(as.numeric(long$A[3, -1]), c(2986, 3526, 3363))
+  expect_error(run(NULL), "needs the chromosome of each locus")
+})
+
 test_that("a population of two individuals keeps its own missing jackknife CIs wherever it sorts", {
   skip_if(neest_dir() == "", "NeEstimator binary not available (set NEEST_DIR)")
   # small population first: the defect this replaces gave A the values of B
