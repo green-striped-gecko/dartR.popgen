@@ -164,13 +164,17 @@ generation. For correlation-based parameters, the chosen
 \code{corr.method} is used at every generation.
 }
 \examples{
-panel <- gl.select.panel(possums.gl, method = "random", nl = 50)
+\donttest{
+# Short demonstration on four populations; use more replicates in real analyses
+x <- gl.keep.pop(possums.gl, pop.list = levels(pop(possums.gl))[1:4], verbose = 0)
+panel <- gl.select.panel(x, method = "random", nl = 20)
 
-# check at generations 5, 10, 20 — n_gen extended automatically to 20
-fut <- gl.check.future.panel(panel, possums.gl,
+# check at generations 2 and 4; n_gen is extended automatically to 4
+fut <- gl.check.future.panel(panel, x,
                               parameter = c("Fst", "He"),
-                              n_gen  = 10,
-                              replicates  = 5,
-                              n_check = c(5, 10, 20))
+                              n_gen  = 2,
+                              replicates  = 2,
+                              n_check = c(2, 4))
+}
 
 }

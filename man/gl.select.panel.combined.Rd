@@ -182,19 +182,24 @@ automatically to match \code{n_iter}.
 \deqn{\text{composite} = \frac{\sum_p w_p \cdot \text{performance}_p}{\sum_p w_p}}
 }
 \examples{
-# Basic run
-panel <- gl.select.panel.combined(possums.gl, nl = 50,
-                                   parameter = c("Fst", "He"))
+\donttest{
+# Short demonstration on four populations; use n_iter of 100 or more in real analyses
+x <- gl.keep.pop(possums.gl, pop.list = levels(pop(possums.gl))[1:4], verbose = 0)
+panel <- gl.select.panel.combined(x, nl = 20,
+                                   parameter = c("Fst", "He"),
+                                   n_iter = 3, plot.every = 3)
 
 # With restart-from-best
-panel <- gl.select.panel.combined(possums.gl, nl = 50,
+panel <- gl.select.panel.combined(x, nl = 20,
                                    parameter    = c("Fst", "He", "Fis"),
                                    weights      = c(2, 1, 1),
-                                   n_iter       = 200,
+                                   n_iter       = 3,
+                                   plot.every   = 3,
                                    restart_tol  = 0.1)
 
 panel@other$sa_best_performance
 panel@other$sa_stop_reason
+}
 
 }
 \references{

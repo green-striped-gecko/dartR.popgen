@@ -208,9 +208,13 @@
 #' \emph{Journal of Dairy Science}, 91(11), 4414--4423.
 #'
 #' @examples
-#' panel <- gl.select.panel(possums.gl, method = "random", nl = 50)
-#' res   <- gl.check.panel(panel, possums.gl, parameter = "all-Ne")
+#' \donttest{
+#' # Short demonstration on four populations
+#' x <- gl.keep.pop(possums.gl, pop.list = levels(pop(possums.gl))[1:4], verbose = 0)
+#' panel <- gl.select.panel(x, method = "random", nl = 20)
+#' res   <- gl.check.panel(panel, x, parameter = "all-Ne")
 #' sapply(res, function(r) r$performance)
+#' }
 #'
 #' @export
 #' @importFrom ggplot2 ggplot aes geom_col geom_histogram geom_bar geom_vline geom_hline
@@ -361,7 +365,7 @@ gl.check.panel <- function(x,
     ok <- complete.cases(a, b)
     if (sum(ok) < 2L) return(NA_real_)
     as.numeric(suppressWarnings(
-      cor(a[ok], b[ok], method = method)^2
+      stats::cor(a[ok], b[ok], method = method)^2
     ))
   }
   
@@ -582,7 +586,7 @@ gl.check.panel <- function(x,
         stop(paste0(
           "Fis_ind: panel object is missing ", length(missing_ind),
           " individual(s) present in xorig: ",
-          paste(head(missing_ind, 10), collapse = ", "),
+          paste(utils::head(missing_ind, 10), collapse = ", "),
           if (length(missing_ind) > 10) " ..." else ""
         ))
       }
@@ -846,7 +850,7 @@ gl.check.panel <- function(x,
       plot_data <- pop_summary
       gg <- ggplot(
         plot_data,
-        aes(x = population, y = mean_drift_score, fill = mean_drift_score)
+        aes(x = .data$population, y = .data$mean_drift_score, fill = .data$mean_drift_score)
       ) +
         geom_col(colour = "white", linewidth = 0.3) +
         scale_fill_gradient2(
@@ -960,7 +964,7 @@ gl.check.panel <- function(x,
       sp <- r2_spearman(res$rel_orig, res$rel_panel)
       pe <- r2_pearson( res$rel_orig, res$rel_panel)
       
-      gg <- ggplot(plot_res, aes(x = rel_orig, y = rel_panel)) +
+      gg <- ggplot(plot_res, aes(x = .data$rel_orig, y = .data$rel_panel)) +
         geom_point(alpha = 0.3, size = 0.8) +
         geom_smooth(method = "lm", formula = y ~ x, se = TRUE, colour = "steelblue") +
         annotate("text", x = -Inf, y = Inf,
@@ -1014,7 +1018,7 @@ gl.check.panel <- function(x,
         identified = maxpm < threshold
       )
       gg <- ggplot(res, aes(x=maxpm)) +
-        geom_histogram(aes(fill=identified), bins=40,
+        geom_histogram(aes(fill=.data$identified), bins=40,
                        colour="white", linewidth=0.2) +
         geom_vline(xintercept=threshold, linetype="dashed",
                    colour="firebrick", linewidth=0.8) +
@@ -1073,7 +1077,7 @@ gl.check.panel <- function(x,
           g1 <- gmat[p1,l]; g2 <- gmat[p2,l]
           ap1 <- if (is.na(g1)) 0.5 else a1[g1+1]
           ap2 <- if (is.na(g2)) 0.5 else a1[g2+1]
-          ot  <- rbinom(1,1,ap1)+rbinom(1,1,ap2)
+          ot  <- stats::rbinom(1,1,ap1)+stats::rbinom(1,1,ap2)
           o_obs[l] <- sample(0:2,1,prob=trans[ot+1,])
         }
         log_LL <- matrix(0,nrow=n,ncol=n)
@@ -1205,7 +1209,7 @@ gl.check.panel <- function(x,
       if (verbose >= 2)
         cat(sprintf("Correctly assigned: %d / %d (%.1f%%)\n", n_correct, n, 100*perf))
       
-      gg <- ggplot(res, aes(x=population, fill=correctly_assigned)) +
+      gg <- ggplot(res, aes(x=.data$population, fill=.data$correctly_assigned)) +
         geom_bar(colour="white", linewidth=0.2) +
         scale_fill_manual(
           values=c("TRUE"="steelblue","FALSE"="salmon"),
@@ -1311,7 +1315,7 @@ gl.check.panel <- function(x,
           g2 <- gmat[par2,l]
           ap1 <- if (is.na(g1)) 0.5 else a1_v[g1+1]
           ap2 <- if (is.na(g2)) 0.5 else a1_v[g2+1]
-          ot  <- rbinom(1, 1, ap1) + rbinom(1, 1, ap2)
+          ot  <- stats::rbinom(1, 1, ap1) + stats::rbinom(1, 1, ap2)
           o[l] <- sample(0:2, 1, prob=trans[ot+1,])
         }
         o
@@ -1407,7 +1411,7 @@ gl.check.panel <- function(x,
                     100*f1_detected_r, 100*correct_pair_r))
       
       gg <- ggplot(confusion,
-                   aes(x=assigned_class, y=true_cross, fill=proportion)) +
+                   aes(x=.data$assigned_class, y=.data$true_cross, fill=.data$proportion)) +
         geom_tile(colour="white", linewidth=0.2) +
         scale_fill_gradient(low="white", high="steelblue", limits=c(0,1),
                             name="Proportion") +
@@ -1422,7 +1426,7 @@ gl.check.panel <- function(x,
               plot.subtitle= element_text(hjust=0.5))
       
       if (nrow(confusion) <= 120) {
-        gg <- gg + geom_text(aes(label=sprintf("%.2f", proportion)),
+        gg <- gg + geom_text(aes(label=sprintf("%.2f", .data$proportion)),
                              size=2.4)
       }
     }
@@ -1464,8 +1468,8 @@ gl.check.panel <- function(x,
       levels(perf_df$parameter)[levels(perf_df$parameter) == "drift_resistance"] <-
         "drift_sensitivity"
     
-    summary_gg <- ggplot(perf_df, aes(x=parameter, y=performance,
-                                      fill=performance)) +
+    summary_gg <- ggplot(perf_df, aes(x=parameter, y=.data$performance,
+                                      fill=.data$performance)) +
       geom_col(colour="white", linewidth=0.3) +
       scale_fill_gradient2(low="salmon", mid="goldenrod", high="steelblue",
                            midpoint=0.7, limits=c(0,1), name=NULL) +

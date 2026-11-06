@@ -107,14 +107,18 @@
 #' generation), \code{$plot}.
 #'
 #' @examples
-#' panel <- gl.select.panel(possums.gl, method = "random", nl = 50)
+#' \donttest{
+#' # Short demonstration on four populations; use more replicates in real analyses
+#' x <- gl.keep.pop(possums.gl, pop.list = levels(pop(possums.gl))[1:4], verbose = 0)
+#' panel <- gl.select.panel(x, method = "random", nl = 20)
 #'
-#' # check at generations 5, 10, 20 — n_gen extended automatically to 20
-#' fut <- gl.check.future.panel(panel, possums.gl,
+#' # check at generations 2 and 4; n_gen is extended automatically to 4
+#' fut <- gl.check.future.panel(panel, x,
 #'                               parameter = c("Fst", "He"),
-#'                               n_gen  = 10,
-#'                               replicates  = 5,
-#'                               n_check = c(5, 10, 20))
+#'                               n_gen  = 2,
+#'                               replicates  = 2,
+#'                               n_check = c(2, 4))
+#' }
 #'
 #' @export
 #' @importFrom ggplot2 ggplot aes geom_ribbon geom_line geom_point
@@ -320,7 +324,7 @@ gl.check.future.panel <- function(x,
                         dimnames=list(pop_names, NULL))
     } else {
       # trajectory: interpolate the supplied Ne vector to n_gen points
-      ne_interp <- approx(x=seq_along(Ne), y=Ne,
+      ne_interp <- stats::approx(x=seq_along(Ne), y=Ne,
                           xout=seq(1, length(Ne), length.out=n_gen))$y
       Ne_traj <- outer(census_frac, ne_interp)   # K x n_gen
       dimnames(Ne_traj) <- list(pop_names, NULL)
@@ -359,7 +363,7 @@ gl.check.future.panel <- function(x,
         valid <- !is.na(af_mat[k,])
         if (any(valid)) {
           twoN             <- 2L * as.integer(ne_gen[k])
-          new_counts       <- rbinom(sum(valid), size=twoN,
+          new_counts       <- stats::rbinom(sum(valid), size=twoN,
                                      prob=af_mat[k,valid])
           af_mat[k,valid]  <- new_counts/twoN
         }
@@ -382,7 +386,7 @@ gl.check.future.panel <- function(x,
         row_end <- row_start+n_k-1L
         if (any(valid)) {
           p_rep <- rep(alf_k[valid], each=n_k)
-          draws <- matrix(rbinom(n_k*sum(valid), size=2L, prob=p_rep), nrow=n_k)
+          draws <- matrix(stats::rbinom(n_k*sum(valid), size=2L, prob=p_rep), nrow=n_k)
           full_mat[row_start:row_end, which(valid)] <- draws
         }
         row_start <- row_end+1L
@@ -470,7 +474,7 @@ gl.check.future.panel <- function(x,
         
         if (gen %in% check_gens) {
           cat(sprintf("\r  gen %3d / %d  [evaluating]   ", gen, n_gen))
-          flush.console()
+          utils::flush.console()
           xorig_sim <- af_to_genlight(af_curr)
           x_sim     <- xorig_sim[, panel_idx]
           x_sim     <- .subsample_panel(x_sim, sample)
@@ -486,7 +490,7 @@ gl.check.future.panel <- function(x,
           
         } else {
           cat(sprintf("\r  gen %3d / %d               ", gen, n_gen))
-          flush.console()
+          utils::flush.console()
         }
       }
       cat("\n")
@@ -499,7 +503,7 @@ gl.check.future.panel <- function(x,
     for (gen in seq_len(n_gen)) {
       if (gen %in% check_gens) {
         cat(sprintf("\r  gen %3d / %d  [evaluating]   ", gen, n_gen))
-        flush.console()
+        utils::flush.console()
         xorig_sim <- user.gl[[gen]][order(pop(user.gl[[gen]])),]
         x_sim     <- gl.keep.loc(xorig_sim, loc.list=panel_loci, verbose=0)
         x_sim     <- .subsample_panel(x_sim, sample)
@@ -515,7 +519,7 @@ gl.check.future.panel <- function(x,
         
       } else {
         cat(sprintf("\r  gen %3d / %d               ", gen, n_gen))
-        flush.console()
+        utils::flush.console()
       }
     }
     cat("\n")
@@ -576,10 +580,10 @@ gl.check.future.panel <- function(x,
         "drift_sensitivity (1-DR)"
     }
     
-    gg <- ggplot(plot_summary, aes(x=generation, colour=parameter,
+    gg <- ggplot(plot_summary, aes(x=.data$generation, colour=parameter,
                                  fill=parameter)) +
       geom_ribbon(aes(ymin=min, ymax=max), alpha=0.10, colour=NA) +
-      geom_ribbon(aes(ymin=q25, ymax=q75), alpha=0.25, colour=NA) +
+      geom_ribbon(aes(ymin=.data$q25, ymax=.data$q75), alpha=0.25, colour=NA) +
       geom_line( aes(y=mean), linewidth=1.0) +
       geom_point(aes(y=mean), size=2.0) +
       coord_cartesian(ylim=c(0,1)) +
@@ -603,7 +607,7 @@ gl.check.future.panel <- function(x,
       ne_line$Ne_scaled <- ne_line$Ne / ne_max
       gg <- gg +
         geom_line(data = ne_line,
-                  aes(x = generation, y = Ne_scaled),
+                  aes(x = .data$generation, y = .data$Ne_scaled),
                   inherit.aes = FALSE,
                   colour = "grey40", linetype = "dotdash", linewidth = 0.7) +
         scale_y_continuous(

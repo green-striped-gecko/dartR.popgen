@@ -130,19 +130,24 @@
 #' simulated annealing. \emph{Science}, 220(4598), 671--680.
 #'
 #' @examples
-#' # Basic run
-#' panel <- gl.select.panel.combined(possums.gl, nl = 50,
-#'                                    parameter = c("Fst", "He"))
+#' \donttest{
+#' # Short demonstration on four populations; use n_iter of 100 or more in real analyses
+#' x <- gl.keep.pop(possums.gl, pop.list = levels(pop(possums.gl))[1:4], verbose = 0)
+#' panel <- gl.select.panel.combined(x, nl = 20,
+#'                                    parameter = c("Fst", "He"),
+#'                                    n_iter = 3, plot.every = 3)
 #'
 #' # With restart-from-best
-#' panel <- gl.select.panel.combined(possums.gl, nl = 50,
+#' panel <- gl.select.panel.combined(x, nl = 20,
 #'                                    parameter    = c("Fst", "He", "Fis"),
 #'                                    weights      = c(2, 1, 1),
-#'                                    n_iter       = 200,
+#'                                    n_iter       = 3,
+#'                                    plot.every   = 3,
 #'                                    restart_tol  = 0.1)
 #'
 #' panel@other$sa_best_performance
 #' panel@other$sa_stop_reason
+#' }
 #'
 #' @export
 #' @importFrom ggplot2 ggplot aes geom_line geom_hline annotate labs
@@ -414,8 +419,8 @@ gl.select.panel.combined <- function(x,
     type_colours <- type_colours[names(type_colours) %in% all_types]
     type_widths  <- type_widths[names(type_widths) %in% all_types]
     
-    gg <- ggplot(plot_df, aes(x = iteration, y = performance,
-                              colour = type, linewidth = type)) +
+    gg <- ggplot(plot_df, aes(x = .data$iteration, y = .data$performance,
+                              colour = .data$type, linewidth = .data$type)) +
       geom_line() +
       scale_colour_manual(values = type_colours, name = NULL) +
       scale_linewidth_manual(values = type_widths, name = NULL) +
@@ -619,7 +624,7 @@ gl.select.panel.combined <- function(x,
           "\r  iter %4d/%d  T=%.5f  swap=%d  curr=%.4f  best=%.4f  restarts=%d  ",
           iter, n_iter, T_sa, n_swap, curr_perf, best_perf, n_restarts
         ))
-        flush.console()
+        utils::flush.console()
         
         # live plot
         if (plot.out && iter %% plot.every == 0) {

@@ -249,9 +249,13 @@ unchanged. The panel relatedness data frame columns are
 \code{rel_orig} and \code{rel_panel}.
 }
 \examples{
-panel <- gl.select.panel(possums.gl, method = "random", nl = 50)
-res   <- gl.check.panel(panel, possums.gl, parameter = "all-Ne")
+\donttest{
+# Short demonstration on four populations
+x <- gl.keep.pop(possums.gl, pop.list = levels(pop(possums.gl))[1:4], verbose = 0)
+panel <- gl.select.panel(x, method = "random", nl = 20)
+res   <- gl.check.panel(panel, x, parameter = "all-Ne")
 sapply(res, function(r) r$performance)
+}
 
 }
 \references{
