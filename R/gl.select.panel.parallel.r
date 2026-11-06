@@ -84,7 +84,7 @@ gl.select.panel.parallel <- function(x,
   # ============================================================
   # worker-side chain state + step function
   # This is shipped to each worker. Each worker holds ONE chain in
-  # its global env (.chain) and advances it `burst` iterations per call.
+  # .panel_worker_state and advances it `burst` iterations per call.
   # ============================================================
   .worker_init <- function(chain_id, x, nl, parameter, weights, init.method,
                            include.loci, start_temp, cooling, n_swap_max,
@@ -132,7 +132,7 @@ gl.select.panel.parallel <- function(x,
     curr_loci <- locNames(init_panel)
     ev        <- eval_panel(curr_loci)
 
-    .chain <<- list(
+    .panel_worker_state$chain <- list(
       id = chain_id, x = x, nl = nl, all_loci = locNames(x),
       protected = protected, eval_panel = eval_panel,
       curr_loci = curr_loci, curr_perf = ev$composite,
@@ -146,7 +146,7 @@ gl.select.panel.parallel <- function(x,
   }
 
   .worker_step <- function(n_steps) {
-    ch <- .chain
+    ch <- .panel_worker_state$chain
     for (s in seq_len(n_steps)) {
       if (ch$iter >= ch$n_iter) break
       ch$iter <- ch$iter + 1L
@@ -181,7 +181,7 @@ gl.select.panel.parallel <- function(x,
       ch$hist_best <- c(ch$hist_best, ch$best_perf)
       ch$hist_curr <- c(ch$hist_curr, ch$curr_perf)
     }
-    .chain <<- ch
+    .panel_worker_state$chain <- ch
     list(id = ch$id, iter = ch$iter, best_perf = ch$best_perf,
          best_loci = ch$best_loci,
          hist_iter = ch$hist_iter, hist_best = ch$hist_best,
@@ -325,10 +325,10 @@ gl.select.panel.parallel <- function(x,
                  length(unique(df$chain)),
                  if (!is.null(win)) sprintf(" | winner = chain %d", win) else "")
 
-  gg <- ggplot2::ggplot(df, ggplot2::aes(x = iteration, y = best,
-                                         colour = chain)) +
+  gg <- ggplot2::ggplot(df, ggplot2::aes(x = .data$iteration, y = .data$best,
+                                         colour = .data$chain)) +
     ggplot2::geom_line(linewidth = 1.0) +
-    ggplot2::geom_line(ggplot2::aes(y = current), linewidth = 0.3, alpha = 0.4) +
+    ggplot2::geom_line(ggplot2::aes(y = .data$current), linewidth = 0.3, alpha = 0.4) +
     ggplot2::scale_colour_brewer(palette = "Set2", name = "Chain") +
     ggplot2::coord_cartesian(xlim = c(0, n_iter), ylim = c(0, 1)) +
     ggplot2::labs(title = ttl, subtitle = sub,
@@ -343,3 +343,7 @@ gl.select.panel.parallel <- function(x,
   print(gg)
   invisible(gg)
 }
+
+# Holds the one chain each cluster worker advances. Workers get their own copy
+# of the namespace, so chains stay separate and no worker global is written.
+.panel_worker_state <- new.env(parent = emptyenv())
