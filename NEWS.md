@@ -1,5 +1,24 @@
 # dartR.popgen 1.2.6
 
+## Panel selection
+
+* `gl.check.panel()` is rewritten and **now returns a named list** with one
+  element per parameter (`name`, `performance`, `corr.method`, `data`,
+  `summary`, `confusion`, `plot`). It used to return a data frame with two
+  columns, which is now `result$<parameter>$data`, and those columns have new
+  names, such as `he_orig` for `het_orig`. Scripts that read the old data
+  frame must change. Several parameters can be requested at once, and there
+  are new measures: `Ho_ind`, `Fis_ind`, `drift_resistance`, `relatedness`,
+  `id`, `parentage`, `assignment` and `hybridisation`. `xorig` is now optional
+  for measures of the panel alone. Existing arguments keep their positions.
+* `gl.check.panel()` Fst comparisons now use `Fstp` from `gl.fst.pop()`, and
+  `performance` is a squared correlation, Spearman by default.
+* New `gl.check.future.panel()`, `gl.select.panel.combined()`,
+  `gl.select.panel.parallel()` and `gl.opt.ind.all()`.
+* `gl.select.panel()` has a new argument `include.loci`, which forces loci
+  into the panel. `plot.out`, `plot.file` and `plot.dir` do nothing, but are
+  accepted again so that existing calls keep working.
+
 ## New functions
 
 * `gl.run.bayescan()` runs BayeScan (Foll & Gaggiotti 2008) to identify Fst

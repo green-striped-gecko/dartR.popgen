@@ -21,9 +21,17 @@
 #'   from the remaining loci. If FALSE, the panel holds what the method
 #'   selected, which can be more or fewer than \code{nl}; the function stops
 #'   if the method selected no loci [default TRUE].
+#' @param plot.out Not used: the function draws no plot. Accepted so that
+#'   existing calls keep working [default TRUE].
+#' @param plot.file Not used, see \code{plot.out} [default NULL].
+#' @param plot.dir Not used, see \code{plot.out} [default NULL].
 #' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 #'   brief progress messages; 3, progress and results summary; 5, full report
 #'   [default 2, unless specified using gl.set.verbosity].
+#' @param include.loci Names of loci to force into the panel whatever the
+#'   method, for example from a legacy panel. They are always kept, and the
+#'   method fills the remaining \code{nl - length(include.loci)} places. It
+#'   must not hold more than \code{nl} loci [default NULL].
 #'
 #' @details
 #' Each method has specific criteria for selecting loci:
@@ -82,7 +90,11 @@ gl.select.panel<-
            method="random",
            nl=10,
            exact=TRUE,
-           verbose = NULL) {
+           plot.out = TRUE,
+           plot.file = NULL,
+           plot.dir = NULL,
+           verbose = NULL,
+           include.loci = NULL) {
 
 
     # SET VERBOSITY
@@ -109,6 +121,19 @@ gl.select.panel<-
         nl != round(nl) || nl > nLoc(x)) {
       stop(error(paste0("'nl' must be a whole number between 1 and nLoc(x) (",
                         nLoc(x), ").\n")))
+    }
+    if (!is.null(include.loci)) {
+      miss <- setdiff(include.loci, locNames(x))
+      if (length(miss) > 0) {
+        stop(error(paste0(length(miss), " include.loci not found in x: ",
+                          paste(utils::head(miss, 5), collapse = ", "),
+                          if (length(miss) > 5) ", ..." else "", "\n")))
+      }
+      if (length(unique(include.loci)) > nl) {
+        stop(error(paste0("include.loci (", length(unique(include.loci)),
+                          ") exceeds nl (", nl, ").\n")))
+      }
+      include.loci <- unique(include.loci)
     }
     pop_methods <- c("dapc", "pahigh", "monopop", "stratified", "hafpop")
     if (method %in% pop_methods) {
@@ -297,6 +322,15 @@ gl.select.panel<-
     }
 
     selloc <- selloc[!is.na(selloc)]
+
+    # forced loci are always in the panel; the method's own selection fills
+    # the remaining places, so the panel cannot exceed nl and the random trim
+    # below can never drop a forced locus
+    if (!is.null(include.loci)) {
+      method_loci <- setdiff(selloc, include.loci)
+      selloc <- c(include.loci,
+                  utils::head(method_loci, nl - length(include.loci)))
+    }
 
     # gl.keep.loc() returns the whole object when given no loci
     if (length(selloc) == 0 && !exact) {
