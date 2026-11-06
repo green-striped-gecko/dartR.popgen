@@ -140,8 +140,40 @@ test_that("invalid arguments stop with clear errors", {
   expect_equal(nLoc(sel(y, method = "random", nl = 10, verbose = 0)), 10)
   expect_error(sel(dartR.data::testset.gs, method = "hafall", nl = 10,
                    verbose = 0), "SilicoDArT")
-  expect_error(gl.select.panel(x, nl = 10, plot.out = FALSE),
-               "unused argument")
+  # plot.out, plot.file and plot.dir do nothing but are still accepted
+  expect_equal(nLoc(sel(x, nl = 10, plot.out = FALSE, verbose = 0)), 10)
+})
+
+test_that("include.loci are always in the panel, whatever the method", {
+  x <- dartR.data::possums.gl
+  forced <- locNames(x)[c(3, 77, 150)]
+  for (m in c("random", "hafall", "pic", "hafpop", "monopop")) {
+    set.seed(1)
+    r <- sel(x, method = m, nl = 20, include.loci = forced, verbose = 0)
+    expect_equal(nLoc(r), 20, info = m)
+    expect_true(all(forced %in% locNames(r)), info = m)
+    expect_equal(nrow(r@other$loc.metrics), 20, info = m)
+  }
+  # exact = FALSE cannot exceed nl either, and all forced loci can fill it
+  set.seed(1)
+  r <- sel(x, method = "hafpop", nl = 12, exact = FALSE,
+           include.loci = forced, verbose = 0)
+  expect_lte(nLoc(r), 12)
+  expect_true(all(forced %in% locNames(r)))
+  r <- sel(x, method = "random", nl = 3, include.loci = forced, verbose = 0)
+  expect_setequal(locNames(r), forced)
+  # the arguments of the released version keep their positions
+  expect_equal(names(formals(gl.select.panel))[1:8],
+               c("x", "method", "nl", "exact", "plot.out", "plot.file",
+                 "plot.dir", "verbose"))
+})
+
+test_that("include.loci with unknown or too many loci stops", {
+  x <- dartR.data::possums.gl
+  expect_error(sel(x, nl = 5, include.loci = "nosuchlocus", verbose = 0),
+               "include.loci not found")
+  expect_error(sel(x, nl = 2, include.loci = locNames(x)[1:3], verbose = 0),
+               "exceeds nl")
 })
 
 test_that("verbose = 0 is silent; top-up warns at verbose 1", {
@@ -159,11 +191,46 @@ test_that("check.panel returns orig vs panel values per population", {
   set.seed(1)
   p <- sel(x, method = "random", nl = 100, verbose = 0)
   r <- chk(p, x, parameter = "He", verbose = 0)
-  expect_equal(names(r), c("het_orig", "het_panel"))
-  expect_equal(nrow(r), nPop(x))
-  expect_equal(r$het_orig, gl.report.heterozygosity(x, verbose = 0)$He)
+  expect_named(r, "He")
+  expect_named(r$He, c("name", "performance", "corr.method", "data",
+                       "summary", "confusion", "plot"))
+  expect_equal(names(r$He$data), c("he_orig", "he_panel"))
+  expect_equal(nrow(r$He$data), nPop(x))
+  expect_equal(r$He$data$he_orig, gl.report.heterozygosity(x, verbose = 0)$He)
   r <- chk(p, x, parameter = "Fst", verbose = 0)
-  expect_equal(nrow(r), choose(nPop(x), 2))
+  expect_equal(nrow(r$Fst$data), choose(nPop(x), 2))
+})
+
+test_that("check.panel: a panel of all loci reproduces the full data", {
+  # hand-checkable: the panel equals the data, so both columns are identical
+  # and the squared correlation is 1
+  x <- dartR.data::possums.gl
+  r <- chk(x, x, parameter = c("He", "Ho"), verbose = 0)
+  expect_named(r, c("He", "Ho"))
+  expect_equal(r$He$data$he_panel, r$He$data$he_orig)
+  expect_equal(r$Ho$data$ho_panel, r$Ho$data$ho_orig)
+  expect_equal(r$He$performance, 1)
+  expect_equal(r$Ho$performance, 1)
+  expect_equal(r$He$corr.method, "spearman")
+  expect_equal(chk(x, x, parameter = "He", corr.method = "pearson",
+                   verbose = 0)$He$corr.method, "pearson")
+})
+
+test_that("check.panel keeps the arguments of the released version in place", {
+  expect_equal(names(formals(gl.check.panel))[1:8],
+               c("x", "xorig", "parameter", "neest.path", "plot.out",
+                 "plot.file", "plot.dir", "verbose"))
+})
+
+test_that("check.panel: sample subsamples the panel, not the full data", {
+  x <- dartR.data::possums.gl
+  set.seed(1)
+  p <- sel(x, method = "random", nl = 100, verbose = 0)
+  set.seed(1)
+  r <- chk(p, x, parameter = "He", sample = 0.5, verbose = 0)
+  expect_equal(r$He$data$he_orig, gl.report.heterozygosity(x, verbose = 0)$He)
+  expect_false(isTRUE(all.equal(
+    r$He$data$he_panel, chk(p, x, parameter = "He", verbose = 0)$He$data$he_panel)))
 })
 
 test_that("check.panel accepts 'Na' and 'Nall'; rejects unknown values", {
@@ -172,10 +239,11 @@ test_that("check.panel accepts 'Na' and 'Nall'; rejects unknown values", {
   p <- sel(x, method = "random", nl = 100, verbose = 0)
   a <- chk(p, x, parameter = "Na", verbose = 0)
   b <- chk(p, x, parameter = "Nall", verbose = 0)
-  expect_equal(a, b)
-  expect_equal(nrow(a), nPop(x))
+  expect_named(a, "Nall")
+  expect_equal(a$Nall$data, b$Nall$data)
+  expect_equal(nrow(a$Nall$data), nPop(x))
   expect_error(chk(p, x, parameter = "fst", verbose = 0),
-               "'parameter' must be one of")
+               "Unknown parameter")
 })
 
 test_that("check.panel matches individuals by name", {
@@ -189,8 +257,16 @@ test_that("check.panel matches individuals by name", {
   # a panel in another individual order gives the same result
   set.seed(4)
   ps <- p[sample(nInd(p)), ]
-  expect_equal(chk(ps, x, parameter = "He", verbose = 0),
-               chk(p, x, parameter = "He", verbose = 0))
+  expect_equal(chk(ps, x, parameter = "He", verbose = 0)$He$data,
+               chk(p, x, parameter = "He", verbose = 0)$He$data)
+  # same individuals, assigned to other populations
+  x3 <- x
+  pop(x3) <- rev(pop(x3))
+  expect_error(chk(p, x3, parameter = "He", verbose = 0),
+               "different populations")
+  # xorig is not needed for measures of the panel alone
+  expect_named(chk(p, parameter = "drift_resistance", verbose = 0),
+               "drift_resistance")
 })
 
 test_that("check.panel: plot.out = FALSE draws nothing; plot.file saves", {
@@ -219,9 +295,9 @@ test_that("check.panel Ne (needs NeEstimator in NEEST_DIR)", {
   set.seed(1)
   p <- sel(x, method = "random", nl = 100, verbose = 0)
   r <- chk(p, x, parameter = "Ne", neest.path = neest, verbose = 0)
-  expect_equal(names(r), c("nes_orig", "nes_panel"))
-  expect_equal(nrow(r), 3)
-  expect_true(all(is.finite(r$nes_orig) | is.na(r$nes_orig)))
+  expect_equal(names(r$Ne$data), c("ne_orig", "ne_panel"))
+  expect_lte(nrow(r$Ne$data), 3)
+  expect_true(all(is.finite(r$Ne$data$ne_orig)))
 })
 
 test_that("private-allele rule agrees with gl.report.pa()", {

@@ -4,7 +4,17 @@
 \alias{gl.select.panel}
 \title{Select a panel of loci based on various methods}
 \usage{
-gl.select.panel(x, method = "random", nl = 10, exact = TRUE, verbose = NULL)
+gl.select.panel(
+  x,
+  method = "random",
+  nl = 10,
+  exact = TRUE,
+  plot.out = TRUE,
+  plot.file = NULL,
+  plot.dir = NULL,
+  verbose = NULL,
+  include.loci = NULL
+)
 }
 \arguments{
 \item{x}{A genlight object with SNP data [required].}
@@ -22,9 +32,21 @@ from the remaining loci. If FALSE, the panel holds what the method
 selected, which can be more or fewer than \code{nl}; the function stops
 if the method selected no loci [default TRUE].}
 
+\item{plot.out}{Not used: the function draws no plot. Accepted so that
+existing calls keep working [default TRUE].}
+
+\item{plot.file}{Not used, see \code{plot.out} [default NULL].}
+
+\item{plot.dir}{Not used, see \code{plot.out} [default NULL].}
+
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
 brief progress messages; 3, progress and results summary; 5, full report
 [default 2, unless specified using gl.set.verbosity].}
+
+\item{include.loci}{Names of loci to force into the panel whatever the
+method, for example from a legacy panel. They are always kept, and the
+method fills the remaining \code{nl - length(include.loci)} places. It
+must not hold more than \code{nl} loci [default NULL].}
 }
 \value{
 A genlight object with the selected loci; individuals are in the
@@ -79,10 +101,6 @@ selected <- gl.select.panel(possums.gl, method = "random", nl = 50)
 # Select 5 loci based on DAPC
 selected <- gl.select.panel(possums.gl, method = "dapc", nl = 5)
 
-}
-\seealso{
-Other panel selection: 
-\code{\link{gl.check.panel}()}
 }
 \author{
 Author(s): Bernd Gruber. Custodian: Bernd Gruber -- Post to
