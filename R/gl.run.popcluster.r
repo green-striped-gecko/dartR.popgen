@@ -166,7 +166,7 @@ gl.run.popcluster <- function(x,
   
   # FLAG SCRIPT START
   funname <- match.call()[[1]]
-  utils.flag.start(func = funname, verbose = verbose)
+  funname <- utils.flag.start(func = funname, verbose = verbose)
   
   # CHECK DATATYPE
   datatype <- dartR.base::utils.check.datatype(x, verbose = verbose)

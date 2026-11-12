@@ -155,7 +155,7 @@ gl.blast <- function(x,
   
   # FLAG SCRIPT START
   funname <- match.call()[[1]]
-  utils.flag.start(func = funname,
+  funname <- utils.flag.start(func = funname,
                    verbose = verbose)
   
   # CHECK DATATYPE: a genlight object carrying sequence tags, or the path to a
@@ -435,7 +435,7 @@ gl.blast <- function(x,
   # ADD TO HISTORY
   if (is_gl) {
     nh <- length(x@other$history)
-    x@other$history[[nh + 1]] <- match.call()
+    x@other$history[[nh + 1]] <- utils.history.call(match.call())
   }
   
   # FLAG SCRIPT END

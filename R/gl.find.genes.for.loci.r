@@ -107,7 +107,7 @@ gl.find.genes.for.loci <- function(x,
   # VERBOSITY ------------------------------------------------------------------
   verbose <- gl.check.verbosity(verbose)
   funname <- match.call()[[1]]
-  utils.flag.start(func = funname, verbose = verbose)
+  funname <- utils.flag.start(func = funname, verbose = verbose)
 
   # CHECKS ---------------------------------------------------------------------
   datatype <- utils.check.datatype(x, accept = "SNP", verbose = verbose)

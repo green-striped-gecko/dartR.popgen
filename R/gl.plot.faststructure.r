@@ -120,7 +120,7 @@ gl.plot.faststructure <- function(sr,
 
   # FLAG SCRIPT START
   funname <- match.call()[[1]]
-  utils.flag.start(func = funname, verbose = verbose)
+  funname <- utils.flag.start(func = funname, verbose = verbose)
 
   # FUNCTION SPECIFIC ERROR CHECKING
 

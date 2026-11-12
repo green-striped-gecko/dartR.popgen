@@ -82,7 +82,7 @@ gl.plot.popcluster <- function(pop_cluster_result,
   verbose <- gl.check.verbosity(verbose)
   # FLAG SCRIPT START
   funname <- match.call()[[1]]
-  utils.flag.start(
+  funname <- utils.flag.start(
     func = funname,
     verbose = verbose
   )

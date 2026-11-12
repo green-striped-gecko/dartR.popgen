@@ -173,7 +173,7 @@ gl.opt.ind.all <- function(x,
   
   # FLAG SCRIPT START
   funname <- match.call()[[1]]
-  utils.flag.start(func = funname,
+  funname <- utils.flag.start(func = funname,
                    build = "Elastic Elapid",
                    verbose = verbose)
   

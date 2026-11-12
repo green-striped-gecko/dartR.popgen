@@ -92,7 +92,7 @@ gl.run.mongrail <- function(x,
   funname <- match.call()[[1]]
   verbose <- gl.check.verbosity(verbose)
   outpath <- gl.check.wd(outpath, verbose = 0)
-  utils.flag.start(func = funname, build = "v.2026.1", verbose = verbose)
+  funname <- utils.flag.start(func = funname, build = "v.2026.1", verbose = verbose)
   datatype <- utils.check.datatype(x, accept = "SNP", verbose = verbose)
 
   if (is.null(mongrail.path)) {

@@ -94,7 +94,7 @@ gl.plot.snmf <- function(snmf.result,
   
   # FLAG SCRIPT START
   funname <- match.call()[[1]]
-  utils.flag.start(
+  funname <- utils.flag.start(
     func  = funname,
     verbose = verbose
   )

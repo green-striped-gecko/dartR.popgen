@@ -102,7 +102,7 @@ gl.assign.pca <- function(x,
 
   # FLAG SCRIPT START
   funname <- match.call()[[1]]
-  utils.flag.start(func = funname, verbose = verbose)
+  funname <- utils.flag.start(func = funname, verbose = verbose)
 
   # CHECK DATATYPE
   datatype <- utils.check.datatype(x, verbose = verbose)
@@ -316,7 +316,7 @@ gl.assign.pca <- function(x,
 
   # ADD TO HISTORY
   nh <- length(x2@other$history)
-  x2@other$history[[nh + 1]] <- match.call()
+  x2@other$history[[nh + 1]] <- utils.history.call(match.call())
 
   # FLAG SCRIPT END
   if (verbose > 0) {

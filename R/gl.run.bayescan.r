@@ -185,7 +185,7 @@ gl.run.bayescan <- function(x,
 
   # FLAG SCRIPT START
   funname <- match.call()[[1]]
-  utils.flag.start(func = funname, verbose = verbose)
+  funname <- utils.flag.start(func = funname, verbose = verbose)
 
   # CHECK DATATYPE
   datatype <- utils.check.datatype(x, accept = "SNP", verbose = verbose)

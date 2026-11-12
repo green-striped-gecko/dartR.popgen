@@ -81,7 +81,7 @@ gl.ld.distance <- function(ld.report,
 
   # FLAG SCRIPT START
   funname <- match.call()[[1]]
-  utils.flag.start(func = funname, verbose = verbose)
+  funname <- utils.flag.start(func = funname, verbose = verbose)
 
   # FUNCTION SPECIFIC ERROR CHECKING
   if (!is.data.frame(ld.report) ||
