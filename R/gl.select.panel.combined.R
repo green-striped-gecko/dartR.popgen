@@ -1,0 +1,690 @@
+#' Select a SNP panel optimised for specified conservation monitoring parameters
+#'
+#' @description
+#' Selects a panel of \code{nl} loci optimised simultaneously across a
+#' user-specified set of conservation monitoring parameters using simulated
+#' annealing (SA) with adaptive swapping and optional restart-from-best.
+#' Press Escape to stop — the best panel found is returned cleanly.
+#'
+#' @param x A \code{dartR} or \code{genlight} object. Full dataset from which
+#'   the panel is selected and against which performance is evaluated. If
+#'   \code{"hybridisation"} is in \code{parameter}, \code{x} must have
+#'   at least 2 populations; all pairwise population crosses are evaluated.
+#' @param nl Integer. Number of loci to select. Default \code{10}.
+#' @param parameter Character vector. Parameters to optimise. Subset of
+#'   \code{"Fst"}, \code{"He"}, \code{"Ho"}, \code{"Fis"}, \code{"Nall"},
+#'   \code{"Ho_ind"}, \code{"relatedness"}, \code{"id"},
+#'   \code{"parentage"}, \code{"assignment"}, \code{"hybridisation"},
+#'   \code{"Ne"}. The shortcuts \code{"all"} (all parameters except
+#'   \code{"hybridisation"}) and \code{"all-Ne"} (as \code{"all"} but
+#'   also excluding \code{"Ne"}) are expanded automatically. Default
+#'   \code{c("Fst", "He")}.
+#' @param neest.path Character string. Path to NEstimator executable,
+#'   required only when \code{"Ne"} is included in \code{parameter}.
+#' @param corr.method Character. Correlation method passed to
+#'   \code{gl.check.panel} for correlation-based performance metrics.
+#'   Options are \code{"spearman"} (default) and \code{"pearson"}.
+#' @param ref Character. Allele-frequency reference for \code{"relatedness"},
+#'   passed to \code{gl.check.panel}. \code{"global"} (default) pools across
+#'   the dataset and uses all pairs; \code{"by.pop"} uses within-population
+#'   frequencies and within-population pairs only. Affects the relatedness
+#'   objective when \code{"relatedness"} is optimised.
+#' @param metric Character. Relatedness reporting scale passed to
+#'   \code{gl.check.panel}: \code{"grm"} (default) or \code{"kinship"}
+#'   (GRM/2). As a constant rescaling it does not change the optimisation
+#'   objective; recorded for reproducibility.
+#' @param inverse_dr Logical. If \code{TRUE} and \code{"drift_resistance"}
+#'   is among \code{parameter}, the performance is reported as
+#'   \code{1 - drift_resistance} (drift sensitivity). The SA then
+#'   optimises for loci with \emph{low} MAF, producing a panel that is
+#'   maximally sensitive to allele-frequency change. Default \code{FALSE}.
+#' @param sample Numeric in (0,1]. Proportion of individuals per population
+#'   to retain from the panel when evaluating performance during
+#'   optimisation (passed to \code{gl.check.panel}). \code{1} (default)
+#'   uses all individuals; the reference dataset is always full size.
+#' @param include.loci Character vector of locus names to force into the
+#'   panel and keep fixed throughout optimisation (e.g. loci from a legacy
+#'   panel). These are never swapped out by the SA; only the remaining
+#'   \code{nl - length(include.loci)} slots are optimised. Must not exceed
+#'   \code{nl}. Default \code{NULL}.
+#' @param weights Numeric vector, one per element of \code{parameter}.
+#'   \code{NULL} (default) = equal weights.
+#' @param init.method Initialisation method from \code{\link{gl.select.panel}}.
+#'   Default \code{"random"}.
+#' @param n_iter Integer. Maximum SA iterations. Default \code{100}.
+#' @param start_temp Numeric. Starting temperature. Default \code{0.1}.
+#' @param cooling Numeric (0,1) or \code{NULL}. Geometric cooling rate per
+#'   iteration. If \code{NULL} (default), computed automatically:
+#'   \deqn{\text{cooling} = \left(\frac{0.001}{\text{start\_temp}}\right)^{1/\text{n\_iter}}}
+#'   Set explicitly to override.
+#' @param restart_tol Numeric or \code{NULL}. Restart-from-best tolerance.
+#'   If the current composite performance falls more than \code{restart_tol}
+#'   below the best performance seen so far, the current panel is reset to
+#'   the best panel before the next iteration. This prevents the search from
+#'   wasting iterations in low-performance regions. \code{NULL} (default)
+#'   disables restarting. A value of \code{0.1} is a reasonable starting
+#'   point.
+#' @param stop.criterion Numeric (0,1) or \code{NULL}. Auto-stop when
+#'   composite performance reaches this value. Default \code{NULL}.
+#' @param error.rate Numeric. Per-allele error rate for \code{"id"},
+#'   \code{"parentage"}, \code{"assignment"}, \code{"hybridisation"}.
+#'   Default \code{0.01}.
+#' @param threshold Numeric. Confusion threshold for \code{"id"} and
+#'   \code{"parentage"}. Default \code{0.001}.
+#' @param n_sim_parents Integer. Number of simulated trios for
+#'   \code{"parentage"}. Default \code{50}.
+#' @param n_sim_hyb Integer. Simulated F1 individuals per pairwise
+#'   population cross for \code{"hybridisation"}. Default \code{100}.
+#' @param plot.out Logical. Live convergence plot refreshed every
+#'   \code{plot.every} iterations. Default \code{TRUE}.
+#' @param plot.every Integer. Plot refresh interval in iterations.
+#'   Default \code{10}.
+#' @param plot.file Character string. File name for saving the final plot.
+#' @param plot.dir Character string. Directory for saving the final plot.
+#' @param verbose Integer controlling verbosity.
+#'
+#' @details
+#' \strong{Adaptive swapping:}
+#' The number of loci swapped per iteration scales linearly with temperature:
+#' \deqn{n\_swap(t) = \max(1,\; \text{round}(\lfloor 0.3 \cdot nl \rceil \cdot T(t) / \text{start\_temp}))}
+#' Up to 30\% of the panel is replaced early (broad exploration); by the end
+#' only 1 locus is swapped (fine-tuning). Following Ingber (1989).
+#'
+#' \strong{Restart from best:}
+#' When \code{restart_tol} is set, after each accept/reject step, if
+#' \code{curr\_perf < best\_perf - restart\_tol} the current panel is reset
+#' to the best panel found so far. This anchors exploration near the best
+#' solution without disabling the temperature-controlled acceptance of new
+#' proposals. Restarts are counted and reported.
+#'
+#' \strong{Auto-cooling:} When \code{cooling = NULL} the rate is chosen
+#' automatically to match \code{n_iter}.
+#'
+#' \strong{Composite performance:}
+#' \deqn{\text{composite} = \frac{\sum_p w_p \cdot \text{performance}_p}{\sum_p w_p}}
+#'
+#' @return
+#' A \code{dartR} or \code{genlight} object with \code{nl} selected loci.
+#' Stored in \code{x@other}:
+#' \itemize{
+#'   \item \code{sa_best_performance}
+#'   \item \code{sa_history} — data frame: \code{iteration},
+#'     \code{current_performance}, \code{best_performance},
+#'     \code{drift_resistance} (per-iteration drift-resistance score,
+#'     \code{NA} if not in the parameter set),
+#'     \code{other_performance} (weighted mean of all non-drift-resistance
+#'     parameters, renormalised to sum to 1),
+#'     \code{n_swap}, \code{restarted}
+#'   \item \code{sa_parameters} — list: \code{parameter}, \code{weights},
+#'     \code{neest.path}, \code{corr.method}, \code{ref}, \code{metric},
+#'     \code{cooling}, \code{n_swap_max}, \code{restart_tol}
+#'   \item \code{sa_stop_reason} — \code{"completed"},
+#'     \code{"stop_criterion"}, or \code{"interrupted"}
+#' }
+#'
+#' @references
+#' Ingber, L. (1989). Very fast simulated re-annealing.
+#' \emph{Mathematical and Computer Modelling}, 12(8), 967--973.
+#'
+#' Kirkpatrick, S., Gelatt, C. D., & Vecchi, M. P. (1983). Optimization by
+#' simulated annealing. \emph{Science}, 220(4598), 671--680.
+#'
+#' @examples
+#' \donttest{
+#' # Short demonstration on four populations; use n_iter of 100 or more in real analyses
+#' x <- gl.keep.pop(possums.gl, pop.list = levels(pop(possums.gl))[1:4], verbose = 0)
+#' panel <- gl.select.panel.combined(x, nl = 20,
+#'                                    parameter = c("Fst", "He"),
+#'                                    n_iter = 3, plot.every = 3)
+#'
+#' # With restart-from-best
+#' panel <- gl.select.panel.combined(x, nl = 20,
+#'                                    parameter    = c("Fst", "He", "Fis"),
+#'                                    weights      = c(2, 1, 1),
+#'                                    n_iter       = 3,
+#'                                    plot.every   = 3,
+#'                                    restart_tol  = 0.1)
+#'
+#' panel@other$sa_best_performance
+#' panel@other$sa_stop_reason
+#' }
+#'
+#' @export
+#' @importFrom ggplot2 ggplot aes geom_line geom_hline annotate labs
+#'   scale_colour_manual scale_linewidth_manual coord_cartesian
+
+gl.select.panel.combined <- function(x,
+                                     nl             = 10,
+                                     parameter      = c("Fst", "He"),
+                                     neest.path     = NULL,
+                                     corr.method    = c("spearman", "pearson"),
+                                     ref            = c("global", "by.pop"),
+                                     metric         = c("grm", "kinship"),
+                                     inverse_dr     = FALSE,
+                                     sample         = 1,
+                                     include.loci   = NULL,
+                                     weights        = NULL,
+                                     init.method    = "random",
+                                     n_iter         = 100,
+                                     start_temp     = 0.1,
+                                     cooling        = NULL,
+                                     restart_tol    = NULL,
+                                     stop.criterion = NULL,
+                                     error.rate     = 0.01,
+                                     threshold      = 0.001,
+                                     n_sim_parents  = 50,
+                                     n_sim_hyb      = 100,
+                                     plot.out       = TRUE,
+                                     plot.every     = 10,
+                                     plot.file      = NULL,
+                                     plot.dir       = NULL,
+                                     verbose        = NULL) {
+  
+  # ---------------------------------------------------------------
+  # console safety guard: record the sink depth on entry and restore
+  # it on ANY exit (normal, error, or user interrupt via Escape). This
+  # guarantees the console is never left redirected to a closed sink,
+  # which previously could happen if Escape fired while output was
+  # temporarily sinked inside evaluate_panel().
+  # ---------------------------------------------------------------
+  .sink_depth_on_entry <- sink.number()
+  on.exit({
+    while (sink.number() > .sink_depth_on_entry) sink(type = "output")
+  }, add = TRUE)
+  
+  # ---------------------------------------------------------------
+  # input validation
+  # ---------------------------------------------------------------
+  all_params <- c("Fst","He","Ho","Fis","Nall","Ne",
+                  "Ho_ind","Fis_ind","drift_resistance","relatedness",
+                  "id","parentage","assignment")
+  if (length(parameter) == 1 && parameter == "all")
+    parameter <- all_params
+  if (length(parameter) == 1 && parameter == "all-Ne")
+    parameter <- setdiff(all_params, "Ne")
+  parameter[parameter == "Ar"] <- "Nall"
+  parameter <- unique(parameter)
+
+  valid_params <- c("Fst","He","Ho","Fis","Nall",
+                    "Ho_ind","Fis_ind","drift_resistance","relatedness",
+                    "id","parentage","assignment","hybridisation","Ne")
+  corr.method <- match.arg(tolower(corr.method), c("spearman", "pearson"))
+  ref         <- match.arg(ref,    c("global", "by.pop"))
+  metric      <- match.arg(metric, c("grm", "kinship"))
+  
+  #if ("Ne" %in% parameter)
+  #  stop("'Ne' is not supported (too slow for repeated evaluation).")
+  bad <- setdiff(parameter, valid_params)
+  if (length(bad) > 0)
+    stop(paste("Unknown parameter(s):", paste(bad, collapse=", "),
+               "\nValid options:", paste(valid_params, collapse=", ")))
+
+  if (!is.numeric(sample) || sample <= 0 || sample > 1)
+    stop("sample must be in (0,1].")
+
+  if (!is.null(include.loci)) {
+    miss <- setdiff(include.loci, locNames(x))
+    if (length(miss) > 0)
+      stop(paste0(length(miss), " include.loci not found in x."))
+    if (length(include.loci) > nl)
+      stop(sprintf("include.loci (%d) exceeds nl (%d).",
+                   length(include.loci), nl))
+    if (length(include.loci) == nl)
+      warning("include.loci == nl: the panel is fully fixed; SA cannot optimise.")
+  }
+  if (length(parameter) == 0)  stop("At least one parameter must be specified.")
+  if ("Ne" %in% parameter && is.null(neest.path))
+    stop("neest.path is required when parameter includes 'Ne'.")
+  if (nl > nLoc(x))            stop("nl exceeds the number of loci in x.")
+  if (nl < 1)                  stop("nl must be at least 1.")
+  if (n_iter < 1)              stop("n_iter must be at least 1.")
+  if (start_temp <= 0)         stop("start_temp must be positive.")
+  if (!is.null(restart_tol) && (restart_tol <= 0 || restart_tol >= 1))
+    stop("restart_tol must be in (0, 1).")
+  if (!is.null(stop.criterion) &&
+      (stop.criterion <= 0 || stop.criterion > 1))
+    stop("stop.criterion must be in (0, 1].")
+  if ("hybridisation" %in% parameter && nPop(x) < 2)
+    stop(paste0("'hybridisation' requires at least 2 populations. ",
+                "Found: ", nPop(x), "."))
+  
+  # auto-cooling: decay start_temp to ~0.001 over n_iter iterations
+  if (is.null(cooling)) {
+    cooling <- (0.001 / start_temp)^(1 / n_iter)
+    cat(sprintf("Auto cooling rate: %.4f  (T: %.3f -> ~0.001 over %d iter)\n",
+                cooling, start_temp, n_iter))
+  }
+  if (cooling <= 0 || cooling >= 1)
+    stop("cooling must be between 0 and 1.")
+  
+  # adaptive swap: max swaps = 30% of panel
+  n_swap_max <- max(2L, round(nl * 0.3))
+  cat(sprintf("Adaptive swapping: %d loci/iter at start -> 1 at end\n",
+              n_swap_max))
+  
+  if (!is.null(restart_tol))
+    cat(sprintf("Restart from best when curr < best - %.3f\n", restart_tol))
+  
+  if (is.null(weights)) weights <- rep(1, length(parameter))
+  if (length(weights) != length(parameter))
+    stop(paste0("weights must be the same length as parameter (",
+                length(parameter), ")."))
+  if (any(weights < 0))  stop("All weights must be non-negative.")
+  if (sum(weights) == 0) stop("At least one weight must be positive.")
+  
+  names(weights) <- parameter
+  w_norm         <- weights / sum(weights)
+  x              <- x[order(pop(x)),]
+  
+  # ---------------------------------------------------------------
+  # evaluate_panel — all output suppressed via sink + finally
+  # returns a list: $composite, $drift_resistance, $other_weighted
+  # ---------------------------------------------------------------
+  has_dr <- "drift_resistance" %in% parameter
+
+  evaluate_panel <- function(loci) {
+    panel  <- gl.keep.loc(x, loci, verbose = 0)
+    tmp    <- tempfile()
+    con    <- file(tmp, open = "w")
+    result <- NULL
+
+    ## on.exit runs on ANY exit: normal return, error, OR user interrupt
+    ## (Escape). This guarantees the sink is always released and the
+    ## console is restored, even if the user aborts mid-evaluation.
+    sink(con, type = "output")
+    on.exit({
+      ## defensively pop the sink only if still active
+      if (sink.number() > 0) sink(type = "output")
+      if (isOpen(con)) close(con)
+      unlink(tmp)
+    }, add = TRUE)
+
+    result <- tryCatch(
+      gl.check.panel(
+        x          = panel,
+        xorig      = x,
+        parameter  = parameter,
+        corr.method = corr.method,
+        ref        = ref,
+        metric     = metric,
+        inverse_dr = inverse_dr,
+        sample     = sample,
+        error.rate = error.rate,
+        threshold  = threshold,
+        n_sim_parents = n_sim_parents,
+        n_sim_hyb  = n_sim_hyb,
+        plot.out   = FALSE,
+        neest.path = neest.path,
+        verbose    = 0
+      ),
+      error = function(e) NULL
+    )
+
+    if (is.null(result))
+      return(list(composite = 0,
+                  drift_resistance = NA_real_,
+                  other_weighted   = NA_real_))
+
+    perfs <- vapply(result, function(r) {
+      p <- r$performance
+      if (is.null(p) || length(p) == 0 || is.na(p)) 0 else as.numeric(p)
+    }, numeric(1))
+
+    composite <- sum(w_norm[names(perfs)] * perfs[names(w_norm)])
+
+    ## decompose: drift_resistance vs everything else
+    dr <- if (has_dr && "drift_resistance" %in% names(perfs))
+      perfs[["drift_resistance"]] else NA_real_
+
+    other_names <- setdiff(names(w_norm), "drift_resistance")
+    if (length(other_names) > 0 && any(other_names %in% names(perfs))) {
+      w_other <- w_norm[other_names]
+      w_other <- w_other / sum(w_other)
+      other_weighted <- sum(w_other * perfs[other_names])
+    } else {
+      other_weighted <- NA_real_
+    }
+
+    list(composite        = composite,
+         drift_resistance = dr,
+         other_weighted   = other_weighted)
+  }
+  
+  # ---------------------------------------------------------------
+  # convergence plot builder
+  # ---------------------------------------------------------------
+  build_conv_plot <- function(history, iter_done, best_perf, reason = "",
+                              dr_max = NA_real_) {
+    curr_hist <- history[seq_len(iter_done + 1), ]
+    curr_hist <- curr_hist[!is.na(curr_hist$current_performance), ]
+    if (nrow(curr_hist) == 0) return(invisible(NULL))
+    
+    ## always show composite (best + current)
+    plot_df <- rbind(
+      data.frame(iteration   = curr_hist$iteration,
+                 performance = curr_hist$current_performance,
+                 type        = "Composite (current)"),
+      data.frame(iteration   = curr_hist$iteration,
+                 performance = curr_hist$best_performance,
+                 type        = "Composite (best)")
+    )
+    
+    ## if drift_resistance is tracked, add the two component lines
+    if (has_dr && any(!is.na(curr_hist$drift_resistance))) {
+      dr_type <- if (inverse_dr) "Drift sensitivity (1-DR)" else "Drift resistance"
+      plot_df <- rbind(plot_df,
+        data.frame(iteration   = curr_hist$iteration,
+                   performance = curr_hist$drift_resistance,
+                   type        = dr_type),
+        data.frame(iteration   = curr_hist$iteration,
+                   performance = curr_hist$other_performance,
+                   type        = "Other params (weighted)")
+      )
+    }
+    
+    ttl <- if (nchar(reason) > 0)
+      sprintf("SA \u2014 %d loci  [%s | iter %d | best=%.4f]",
+              nl, reason, iter_done, best_perf)
+    else
+      sprintf("SA \u2014 %d loci  [iter %d/%d | best=%.4f]",
+              nl, iter_done, n_iter, best_perf)
+    
+    sub <- sprintf(
+      "Params: %s  |  Weights: %s  |  corr=%s  |  cooling=%.4f  |  swap: %d->1%s%s",
+      paste(parameter, collapse=", "),
+      paste(names(w_norm), round(w_norm, 2), sep="=", collapse=", "),
+      corr.method, cooling, n_swap_max,
+      if (!is.null(restart_tol))
+        sprintf("  |  restart_tol=%.2f", restart_tol) else "",
+      if (inverse_dr) "  |  inverse_dr=TRUE" else ""
+    )
+    
+    ## build scales for all possible types
+    all_types <- unique(plot_df$type)
+    type_colours <- c(
+      "Composite (current)"        = "grey60",
+      "Composite (best)"           = "steelblue",
+      "Drift resistance"           = "darkorange",
+      "Drift sensitivity (1-DR)"   = "darkorange",
+      "Other params (weighted)"    = "purple"
+    )
+    type_widths <- c(
+      "Composite (current)"        = 0.4,
+      "Composite (best)"           = 1.2,
+      "Drift resistance"           = 0.6,
+      "Drift sensitivity (1-DR)"   = 0.6,
+      "Other params (weighted)"    = 0.6
+    )
+    ## keep only types present in data
+    type_colours <- type_colours[names(type_colours) %in% all_types]
+    type_widths  <- type_widths[names(type_widths) %in% all_types]
+    
+    gg <- ggplot(plot_df, aes(x = .data$iteration, y = .data$performance,
+                              colour = .data$type, linewidth = .data$type)) +
+      geom_line() +
+      scale_colour_manual(values = type_colours, name = NULL) +
+      scale_linewidth_manual(values = type_widths, name = NULL) +
+      coord_cartesian(ylim = c(0, 1), xlim = c(0, n_iter))
+    
+    if (!is.null(stop.criterion))
+      gg <- gg +
+      geom_hline(yintercept = stop.criterion, linetype = "dashed",
+                 colour = "firebrick", linewidth = 0.7) +
+      annotate("text", x = 0, y = stop.criterion,
+               label = sprintf(" stop=%.2f", stop.criterion),
+               hjust = 0, vjust = -0.4, size = 3, colour = "firebrick")
+    
+    if (is.finite(dr_max))
+      gg <- gg +
+      geom_hline(yintercept = dr_max, linetype = "dotted",
+                 colour = "darkorange", linewidth = 0.6) +
+      annotate("text", x = n_iter, y = dr_max,
+               label = sprintf("%s max=%.2f ",
+                               if (inverse_dr) "DS" else "DR", dr_max),
+               hjust = 1, vjust = -0.4, size = 3, colour = "darkorange")
+    
+    gg + labs(title = ttl, subtitle = sub,
+              x = "Iteration", y = "Performance")
+  }
+  
+  # ---------------------------------------------------------------
+  # build_return — full result with SA metadata
+  # ---------------------------------------------------------------
+  build_return <- function(loci, perf, hist, iter_d, reason) {
+    xx <- gl.keep.loc(x, loci, verbose = 0)
+    xx@other$sa_best_performance <- perf
+    xx@other$sa_history          <- hist[seq_len(iter_d + 1), ]
+    xx@other$sa_parameters       <- list(parameter   = parameter,
+                                         weights     = w_norm,
+                                         neest.path  = neest.path,
+                                         corr.method = corr.method,
+                                         ref         = ref,
+                                         metric      = metric,
+                                         cooling     = cooling,
+                                         n_swap_max  = n_swap_max,
+                                         restart_tol = restart_tol,
+                                         inverse_dr  = inverse_dr,
+                                         sample      = sample,
+                                         include.loci = include.loci,
+                                         dr_max      = dr_max)
+    xx@other$sa_stop_reason      <- reason
+    cat(sprintf("Returning panel: %d loci | best=%.4f | %s\n",
+                nl, perf, reason))
+    xx
+  }
+  
+  # ---------------------------------------------------------------
+  # minimal_return — fallback inside interrupt handler
+  # ---------------------------------------------------------------
+  minimal_return <- function(loci, perf, reason) {
+    idx <- which(locNames(x) %in% loci)
+    xx  <- x[, idx]
+    xx@other$sa_best_performance <- perf
+    xx@other$sa_stop_reason      <- reason
+    xx
+  }
+  
+  # ---------------------------------------------------------------
+  # initialise
+  # ---------------------------------------------------------------
+  cat(sprintf("Initialising with method = '%s' (corr.method = '%s')...\n",
+              init.method, corr.method))
+  
+  init_panel  <- gl.select.panel(x, method = init.method, nl = nl,
+                                 include.loci = include.loci,
+                                 plot.out = FALSE, verbose = 0)
+  curr_loci   <- locNames(init_panel)
+  curr_eval   <- evaluate_panel(curr_loci)
+  curr_perf   <- curr_eval$composite
+  best_loci   <- curr_loci
+  best_perf   <- curr_perf
+  all_loci    <- locNames(x)
+  # loci that must never be swapped out of the panel
+  protected_loci <- if (is.null(include.loci)) character(0) else include.loci
+  stop_reason <- "completed"
+  iter_done   <- 0
+  T_sa        <- start_temp
+  n_restarts  <- 0L
+  
+  ## practical maximum for drift_resistance: top-nl MAF loci from xorig
+  dr_max <- NA_real_
+  if (has_dr) {
+    gmat_all  <- as.matrix(x)
+    pops_chr  <- as.character(pop(x))
+    upops     <- unique(pops_chr)
+    dr_scores <- vapply(seq_len(ncol(gmat_all)), function(l) {
+      mean(vapply(upops, function(pp) {
+        p <- mean(gmat_all[pops_chr == pp, l], na.rm = TRUE) / 2
+        if (!is.finite(p)) return(NA_real_)
+        (2 * min(p, 1 - p))^2
+      }, numeric(1)), na.rm = TRUE)
+    }, numeric(1))
+    if (inverse_dr) {
+      ## for 1-DR, practical max = 1 - DR of the LOWEST-MAF loci
+      bottom_nl <- order(dr_scores, decreasing = FALSE)[seq_len(min(nl, length(dr_scores)))]
+      dr_max    <- 1 - mean(dr_scores[bottom_nl], na.rm = TRUE)
+      cat(sprintf("Drift sensitivity practical max (bottom-%d MAF loci): %.4f\n", nl, dr_max))
+    } else {
+      top_nl  <- order(dr_scores, decreasing = TRUE)[seq_len(min(nl, length(dr_scores)))]
+      dr_max  <- mean(dr_scores[top_nl], na.rm = TRUE)
+      cat(sprintf("Drift resistance practical max (top-%d MAF loci): %.4f\n", nl, dr_max))
+    }
+  }
+  
+  history <- data.frame(
+    iteration           = 0:n_iter,
+    current_performance = c(curr_perf, rep(NA_real_,    n_iter)),
+    best_performance    = c(best_perf, rep(NA_real_,    n_iter)),
+    drift_resistance    = c(curr_eval$drift_resistance, rep(NA_real_, n_iter)),
+    other_performance   = c(curr_eval$other_weighted,   rep(NA_real_, n_iter)),
+    n_swap              = c(n_swap_max, rep(NA_integer_, n_iter)),
+    restarted           = c(FALSE,     rep(NA,          n_iter))
+  )
+  
+  cat(sprintf("Initial composite performance: %.4f\n", curr_perf))
+  cat(sprintf("Running up to %d iterations. Press Escape to stop early.\n",
+              n_iter))
+  if (!is.null(stop.criterion))
+    cat(sprintf("Auto-stop when performance >= %.3f\n", stop.criterion))
+  cat("\n")
+  
+  # ---------------------------------------------------------------
+  # single outer tryCatch — interrupt returns panel cleanly
+  # ---------------------------------------------------------------
+  tryCatch(
+    expr = {
+      
+      for (iter in seq_len(n_iter)) {
+        
+        # restart from best if current has drifted too far below best
+        restarted <- FALSE
+        if (!is.null(restart_tol) &&
+            curr_perf < best_perf - restart_tol) {
+          curr_loci <- best_loci
+          curr_perf <- best_perf
+          restarted  <- TRUE
+          n_restarts <- n_restarts + 1L
+          cat(sprintf("\n  iter %d: restart #%d (curr was %.4f < best %.4f - %.3f)\n",
+                      iter, n_restarts, curr_perf, best_perf, restart_tol))
+        }
+        
+        # adaptive swap size: scales linearly with temperature
+        n_swap   <- max(1L, round(n_swap_max * T_sa / start_temp))
+        
+        # propose swap — never swap out protected (include.loci)
+        swappable <- setdiff(curr_loci, protected_loci)
+        n_swap_eff <- min(n_swap, length(swappable))
+        if (n_swap_eff < 1L) {
+          # nothing swappable (all loci protected) — SA cannot move
+          history$current_performance[iter + 1] <- curr_perf
+          history$best_performance[iter + 1]    <- best_perf
+          history$drift_resistance[iter + 1]    <- curr_eval$drift_resistance
+          history$other_performance[iter + 1]   <- curr_eval$other_weighted
+          history$n_swap[iter + 1]              <- 0L
+          history$restarted[iter + 1]           <- restarted
+          T_sa <- T_sa * cooling
+          next
+        }
+        out_locs <- sample(swappable, n_swap_eff, replace = FALSE)
+        in_locs  <- sample(setdiff(all_loci, curr_loci), n_swap_eff,
+                           replace = FALSE)
+        new_loci <- c(setdiff(curr_loci, out_locs), in_locs)
+        
+        # evaluate
+        new_eval <- evaluate_panel(new_loci)
+        new_perf <- new_eval$composite
+        delta    <- new_perf - curr_perf
+        
+        # accept / reject
+        if (delta > 0 || runif(1) < exp(delta / T_sa)) {
+          curr_loci <- new_loci
+          curr_perf <- new_perf
+          curr_eval <- new_eval
+        }
+        
+        # track best
+        if (curr_perf > best_perf) {
+          best_perf <- curr_perf
+          best_loci <- curr_loci
+          cat(sprintf("\n  iter %d: new best = %.4f  (swap=%d)\n",
+                      iter, best_perf, n_swap))
+        }
+        
+        history$current_performance[iter + 1] <- curr_perf
+        history$best_performance[iter + 1]    <- best_perf
+        history$drift_resistance[iter + 1]    <- curr_eval$drift_resistance
+        history$other_performance[iter + 1]   <- curr_eval$other_weighted
+        history$n_swap[iter + 1]              <- n_swap
+        history$restarted[iter + 1]           <- restarted
+        T_sa      <- T_sa * cooling
+        iter_done <- iter
+        
+        # progress line
+        cat(sprintf(
+          "\r  iter %4d/%d  T=%.5f  swap=%d  curr=%.4f  best=%.4f  restarts=%d  ",
+          iter, n_iter, T_sa, n_swap, curr_perf, best_perf, n_restarts
+        ))
+        utils::flush.console()
+        
+        # live plot
+        if (plot.out && iter %% plot.every == 0) {
+          cat("\n")
+          gg_live <- build_conv_plot(history, iter, best_perf, dr_max = dr_max)
+          if (!is.null(gg_live)) print(gg_live)
+        }
+        
+        # stop criterion
+        if (!is.null(stop.criterion) && best_perf >= stop.criterion) {
+          cat(sprintf("\nStop criterion (%.3f) reached at iteration %d.\n",
+                      stop.criterion, iter))
+          stop_reason <- "stop_criterion"
+          break
+        }
+      }
+      
+      if (stop_reason == "completed")
+        cat(sprintf("\n\nSA complete after %d iterations.\n", n_iter))
+      cat(sprintf("Best: %.4f  |  Total restarts: %d\n",
+                  best_perf, n_restarts))
+      
+      if (plot.out) {
+        gg_f <- build_conv_plot(history, iter_done, best_perf, stop_reason,
+                               dr_max = dr_max)
+        if (!is.null(gg_f)) print(gg_f)
+      }
+      
+      build_return(best_loci, best_perf, history, iter_done, stop_reason)
+    },
+    
+    interrupt = function(e) {
+      
+      tryCatch(
+        cat(sprintf("\n\nEscape: iter=%d  best=%.4f  restarts=%d\n",
+                    iter_done, best_perf, n_restarts)),
+        interrupt = function(e2) invisible(NULL)
+      )
+      
+      stop_reason <<- "interrupted"
+      
+      tryCatch(
+        build_return(best_loci, best_perf, history, iter_done, "interrupted"),
+        
+        interrupt = function(e2) {
+          tryCatch(
+            minimal_return(best_loci, best_perf, "interrupted"),
+            
+            interrupt = function(e3) {
+              tryCatch(
+                { idx <- which(locNames(x) %in% best_loci); x[, idx] },
+                interrupt = function(e4) x,
+                error     = function(e4) x
+              )
+            },
+            error = function(e3) x
+          )
+        },
+        error = function(e2) x
+      )
+    }
+  )
+}

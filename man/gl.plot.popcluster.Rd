@@ -14,7 +14,7 @@ gl.plot.popcluster(
   plot.out = TRUE,
   plot.file = NULL,
   plot.dir = NULL,
-  verbose = 2
+  verbose = NULL
 )
 }
 \arguments{
@@ -23,14 +23,15 @@ gl.plot.popcluster(
 \item{border_ind}{The width of the border line between individuals
 [default 0.25].}
 
-\item{plot.K}{The number for K of the q matrix that should be plotted. Needs to
-be within you simulated range of K's in your PopCluster run object. [required]}
+\item{plot.K}{The K of the Q matrix to be plotted: a single value among
+the K values in the PopCluster run object [required].}
 
 \item{plot_theme}{Theme for the plot. See Details for options
 [default NULL].}
 
-\item{color_clusters}{A color palette for clusters (K) or a list with
-as many colors as there are clusters (K) [default NULL].}
+\item{color_clusters}{A colour palette function (for example
+\code{rainbow}), which is called with plot.K, or a vector with at least
+plot.K colours [default NULL, which uses gl.select.colors()].}
 
 \item{ind_name}{Whether to plot individual names [default TRUE].}
 
@@ -39,25 +40,28 @@ as many colors as there are clusters (K) [default NULL].}
 \item{plot.file}{Name for the RDS binary file to save (base name only, exclude
 extension) [default NULL]}
 
-\item{plot.dir}{Directory in which to save files [default = working directory]}
+\item{plot.dir}{Directory in which to save files [default = tempdir(),
+unless specified using gl.set.wd].}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
-progress log ; 3, progress and results summary; 5, full report [default
- 2, unless specified using gl.set.verbosity]}
+brief progress messages; 3, progress and results summary; 5, full report
+[default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-Q-matrix and structure plot
+The Q matrix of plot.K (invisible), as in the matrix element of the
+gl.run.popcluster result: Index, Order, Label, PercentMiss, Cluster,
+Pop_1 ... Pop_K, Pop.
 }
 \description{
-This function takes a Q matrix (output from
+This function takes a PopCluster run object (output from
  \code{\link{gl.run.popcluster}}) and plots the typical structure bar
-  plot that visualize the Q matrix of a structure run.
+  plot that visualises the Q matrix of the best run for one K.
 }
 \details{
-The function outputs a barplot and Q matrix which is the typical output of
- PopCluster.
- Plots and table are saved to the working directory specified in plot.dir
- if plot.file is set.
+The function outputs a barplot and Q matrix which is the typical
+ output of PopCluster, for the best run of plot.K chosen by PopCluster
+ (replicates are not averaged). The plot is saved as an RDS file in
+ plot.dir if plot.file is set.
 
 Examples of other themes that can be used can be consulted in \itemize{
  \item \url{https://ggplot2.tidyverse.org/reference/ggtheme.html} and \item
@@ -69,16 +73,11 @@ The Q matrices can be input to other R packages for plotting ancestry proportion
 \examples{
 # examples need popcluster to be installed on the system (see above)
 \dontrun{
-m <- gl.run.popcluster(x=bandicoot.gl, popcluster.path="/User/PopCluster/Bin/",
-output.path="/User/Documents/Output/",
-minK=1, maxK=3, 
-rep=10, PopData=1, location=1)
-Q <- gl.plot.popcluster(pop_cluster_result=m, plot.K = 3, ind_name=T)
+m <- gl.run.popcluster(x = bandicoot.gl,
+  popcluster.path = "/User/PopCluster/Bin/", minK = 1, maxK = 3, rep = 10)
+Q <- gl.plot.popcluster(pop_cluster_result = m, plot.K = 3, ind_name = TRUE)
 gl.map.popcluster(x = bandicoot.gl, qmat = Q)
-# move population 4 (out of 5) 0.5 degrees to the right and populations 1
-# 0.3 degree to the north of the map.
-mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
-gl.map.popcluster(bandicoot.gl, qmat=Q, movepops=mp)}
+}
 }
 \references{
 \itemize{
@@ -88,8 +87,23 @@ from genotype data from a few microsatellites to millions of SNPs. Heredity, 129
 }
 }
 \seealso{
-\code{gl.run.popcluster}, \code{gl.plot.popcluster}
+\code{\link{gl.run.popcluster}}, \code{\link{gl.map.popcluster}}
+
+Other population structure: 
+\code{\link{gl.evanno}()},
+\code{\link{gl.map.popcluster}()},
+\code{\link{gl.map.snmf}()},
+\code{\link{gl.map.structure}()},
+\code{\link{gl.plot.faststructure}()},
+\code{\link{gl.plot.snmf}()},
+\code{\link{gl.plot.structure}()},
+\code{\link{gl.read.structure}()},
+\code{\link{gl.run.faststructure}()},
+\code{\link{gl.run.popcluster}()},
+\code{\link{gl.run.snmf}()}
 }
 \author{
-Ching Ching Lau (Post to \url{https://groups.google.com/d/forum/dartr})
+Author(s): Ching Ching Lau. Custodian: Ching Ching Lau -- Post to
+ \url{https://groups.google.com/d/forum/dartr}
 }
+\concept{population structure}

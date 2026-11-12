@@ -1,0 +1,98 @@
+
+
+----------------------------------------------------
+STRUCTURE by Pritchard, Stephens and Donnelly (2000)
+     and Falush, Stephens and Pritchard (2003)
+       Code by Pritchard, Falush and Hubisz
+             Version 2.3.4 (Jul 2012)
+----------------------------------------------------
+
+
+Reading file "k2.r1_mainparams".
+datafile is
+k2.r1_data
+Reading file "k2.r1_extraparams".
+Note: RANDOMIZE is set to 1. The random number generator will be initialized using the system clock, ignoring any specified value of SEED.
+Reading file "k2.r1_data".
+Number of alleles per locus: min= 2; ave=2.0; max= 2
+
+
+--------------------------------------
+
+Finished initialization; starting MCMC 
+100 iterations + 100 burnin
+
+
+BURNIN completed
+Admixture Burnin complete.  Current alpha = 1.000 
+
+  200:        -293    0 
+
+MCMC completed
+
+Inferred ancestry of individuals:
+        Label (%Miss) Pop:  Inferred clusters
+  1        1    (0)    3 :  1.000 0.000 
+  2       10    (5)    2 :  0.990 0.010 
+  3       11    (0)    2 :  1.000 0.000 
+  4       12    (0)    3 :  1.000 0.000 
+  5       13    (0)    3 :  1.000 0.000 
+  6       14    (0)    1 :  0.000 1.000 
+  7       15    (0)    1 :  0.000 1.000 
+  8       16    (0)    3 :  1.000 0.000 
+  9       17    (0)    3 :  0.990 0.010 
+ 10       18    (0)    3 :  1.000 0.000 
+ 11       19    (0)    3 :  1.000 0.000 
+ 12        2    (0)    2 :  1.000 0.000 
+ 13       20    (0)    3 :  1.000 0.000 
+ 14       21    (0)    3 :  1.000 0.000 
+ 15       22    (0)    3 :  1.000 0.000 
+ 16       23    (0)    1 :  0.000 1.000 
+ 17       24    (0)    1 :  0.090 0.910 
+ 18       25    (0)    1 :  0.000 1.000 
+ 19       26    (5)    1 :  0.010 0.990 
+ 20       27    (0)    1 :  0.000 1.000 
+ 21       28    (0)    1 :  0.100 0.900 
+ 22       29    (0)    1 :  0.000 1.000 
+ 23        3    (0)    2 :  1.000 0.000 
+ 24       30    (0)    1 :  0.000 1.000 
+ 25       31    (0)    3 :  1.000 0.000 
+ 26        4    (5)    2 :  1.000 0.000 
+ 27        5    (0)    2 :  1.000 0.000 
+ 28        6    (0)    2 :  0.960 0.040 
+ 29        7    (5)    2 :  0.600 0.400 
+ 30        8    (0)    2 :  1.000 0.000 
+ 31        9    (0)    2 :  0.990 0.010 
+
+Command line arguments:   /Users/mijangos/programs/structure -m k2.r1_mainparams -e k2.r1_extraparams -i k2.r1_data -o k2.r1_out 
+Input File:    k2.r1_data
+Output File:   k2.r1_out_f
+
+Run parameters:
+   31 individuals
+   18 loci
+   2 populations assumed
+   100 Burn-in period
+   100 Reps
+NO ADMIXTURE model assumed
+
+--------------------------------------------
+Estimated Ln Prob of Data   = -309.6
+Mean value of ln likelihood = -295.0
+Variance of ln likelihood   = 29.1
+Allele frequencies uncorrelated
+
+
+--------------------------------------------
+Proportion of membership of each pre-defined
+ population in each of the 2 clusters
+
+Given    Inferred Clusters       Number of
+ Pop       1      2             Individuals
+
+  1:     0.020  0.980              10
+  2:     0.954  0.046              10
+  3:     0.999  0.001              11
+--------------------------------------------
+Final results printed to file k2.r1_out_f
+

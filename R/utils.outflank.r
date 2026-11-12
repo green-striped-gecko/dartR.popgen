@@ -59,6 +59,9 @@
 #' set.
 #' @param qthreshold The desired false discovery rate threshold for calculating
 #'  q-values [default 0.05].
+#' @param verbose Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
+#'   brief progress messages; 3, progress and results summary; 5, full report
+#'   [default 2, unless specified using gl.set.verbosity].
 #' @return
 #'
 #' The function returns a list with seven elements:
@@ -98,7 +101,10 @@ utils.outflank <- function(FstDataFrame,
                            RightTrimFraction = 0.05,
                            Hmin = 0.1,
                            NumberOfSamples,
-                           qthreshold = 0.05) {
+                           qthreshold = 0.05,
+                           verbose = NULL) {
+  verbose <- gl.check.verbosity(verbose)
+
   # Setting up necessary columns in dataframe
   Fstdata <- outputDFStarterNoCorr(FstDataFrame, Hmin)
 
@@ -127,21 +133,17 @@ utils.outflank <- function(FstDataFrame,
   HighTrimPoint <- sortedDataFrame$FSTNoCorr[[LargestKeeper]]
 
   if (LowTrimPoint < 0) {
-    writeLines(
-      error(
-        "ERROR: The smallest FST in the trimmed set must be > 0. Please use a larger LeftTrimFraction."
-      )
-    )
-    return()
+    stop(error(
+      "The smallest FST in the trimmed set must be > 0. Please use a larger",
+      "LeftTrimFraction.\n"
+    ))
   }
 
   if (HighTrimPoint >= 1) {
-    writeLines(
-      error(
-        "ERROR: The largest FST in the trimmed set must be < 1. Please use a larger RightTrimFraction."
-      )
-    )
-    return()
+    stop(error(
+      "The largest FST in the trimmed set must be < 1. Please use a larger",
+      "RightTrimFraction.\n"
+    ))
   }
 
   # finding dfInferred and Fstbar iteratively
@@ -161,8 +163,6 @@ utils.outflank <- function(FstDataFrame,
     count <- count + 1
     if (count > 19) {
       keepGoing <- FALSE
-      writeLines(important("Exceeded iteration maximum.")) ### Try with
-      # increased maximum value for count two lines above.
     }
 
     FstbarNoCorrTemp <- fstBarCalculatorNoCorr(workingDataFrame[putativeNeutralListTemp, ])
@@ -196,8 +196,8 @@ utils.outflank <- function(FstDataFrame,
     # stabilized
     putativeNeutralListTemp <- ifelse((!workingDataFrame$OutlierFlag), TRUE, FALSE)
     if (sum(putativeNeutralListTemp) == 0) {
-      writeLines(error("No loci in neutral list...\n"))
-      return(error("FAIL"))
+      stop(error("No loci in the neutral list; all tested loci were flagged",
+                 "as outliers.\n"))
     }
 
     if (identical(oldOutlierFlag, workingDataFrame$OutlierFlag)) {
@@ -207,21 +207,19 @@ utils.outflank <- function(FstDataFrame,
     ###### if all in trimmed get IDed as outlier - return to user with
     # warning
     if (all(workingDataFrame$OutlierFlag[workingDataFrame$FSTNoCorr < LowTrimPoint])) {
-      writeLines(
-        error(
-          "All loci with Fst below the lower (lefthand) trim point were marked as outliers. Re-run with larger LeftTrimFraction or smaller qthreshold."
-        )
-      )
-      return(0)
+      stop(error(
+        "All loci with Fst below the lower (lefthand) trim point were marked",
+        "as outliers. Re-run with larger LeftTrimFraction or smaller",
+        "qthreshold.\n"
+      ))
     }
 
     if (all(workingDataFrame$OutlierFlag[workingDataFrame$FSTNoCorr > HighTrimPoint])) {
-      writeLines(
-        error(
-          "All loci with Fst above the upper (righthand) trim point were marked as outliers. Re-run with smaller RightTrimFraction or smaller qthreshold."
-        )
-      )
-      return(0)
+      stop(error(
+        "All loci with Fst above the upper (righthand) trim point were marked",
+        "as outliers. Re-run with smaller RightTrimFraction or smaller",
+        "qthreshold.\n"
+      ))
     }
 
     oldOutlierFlag <- workingDataFrame$OutlierFlag
@@ -229,8 +227,9 @@ utils.outflank <- function(FstDataFrame,
     # writeLines(paste(as.character(count),' ',as.character(sum(putativeNeutralListTemp))))
   }
 
-  if (count > 19) {
-    writeLines(important("Loop iteration limit exceeded."))
+  if (count > 19 && verbose >= 1) {
+    cat(warn("  Warning: the outlier list did not stabilise within 20",
+             "iterations; results are from the last iteration.\n"))
   }
 
   numberLowFstOutliers <- sum(workingDataFrame$OutlierFlag[(workingDataFrame$FSTNoCorr < LowTrimPoint)])

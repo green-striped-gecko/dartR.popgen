@@ -2,51 +2,263 @@
 % Please edit documentation in R/gl.check.panel.r
 \name{gl.check.panel}
 \alias{gl.check.panel}
-\title{Check a snp panel for a specified parameter}
+\title{Check a SNP panel for specified conservation monitoring parameters}
 \usage{
 gl.check.panel(
   x,
-  xorig,
+  xorig = NULL,
   parameter = "Fst",
   neest.path = NULL,
   plot.out = TRUE,
   plot.file = NULL,
   plot.dir = NULL,
-  verbose = NULL
+  verbose = NULL,
+  corr.method = c("spearman", "pearson"),
+  ref = c("global", "by.pop"),
+  metric = c("grm", "kinship"),
+  inverse_dr = FALSE,
+  sample = 1,
+  error.rate = 0.01,
+  threshold = 0.001,
+  n_sim_parents = 100,
+  n_sim_hyb = 100,
+  n_cores = 1,
+  target = 0.9
 )
 }
 \arguments{
-\item{x}{A 'dartR or genlight' object containing the SNP panel genomic data.}
+\item{x}{A \code{dartR} or \code{genlight} object containing the SNP panel
+(subset of loci).}
 
-\item{xorig}{A 'dartR or genlight' object containing the original genomic data for comparison.}
+\item{xorig}{A \code{dartR} or \code{genlight} object containing the full
+original dataset for comparison, with the same individuals (by name) and
+populations as \code{x}. Default \code{NULL}. Required for all
+correlation/comparison parameters (\code{"Fst"}, \code{"He"},
+\code{"Ho"}, \code{"Fis"}, \code{"Nall"}, \code{"Ne"},
+\code{"Ho_ind"}, \code{"Fis_ind"}, \code{"relatedness"}). May be left
+\code{NULL} when only \code{"drift_resistance"}, \code{"id"},
+\code{"parentage"}, \code{"assignment"}, or \code{"hybridisation"} are
+requested, as these are evaluated on \code{x} alone.}
 
-\item{parameter}{A character string specifying the parameter to check. Options include: Fst, He, Ho, Ne, Nall, Fis.}
+\item{parameter}{Character string or vector specifying the parameter(s) to
+evaluate. Options:
+\itemize{
+  \item \code{"Fst"} — pairwise FST' (between-population).
+  \item \code{"He"} — expected heterozygosity per population.
+  \item \code{"Ho"} — observed heterozygosity per population.
+  \item \code{"Fis"} — inbreeding coefficient per population.
+  \item \code{"Nall"}, \code{"Na"} or \code{"Ar"} — rarefaction-corrected allelic
+    richness per population.
+  \item \code{"Ne"} — effective population size per population.
+  \item \code{"Ho_ind"} — individual observed heterozygosity.
+    Correlation r² of per-individual Ho between the panel and full
+    dataset, ignoring population membership.
+  \item \code{"Fis_ind"} — individual within-population inbreeding
+    coefficient. For each individual, \eqn{F_i = 1-H_{O,i}/H_{E,i}} is
+    calculated from the full dataset and from the panel. Performance is
+    the selected \code{corr.method} squared correlation between the two
+    sets of individual estimates, consistent with the other
+    correlation-based parameters.
+  \item \code{"drift_resistance"} — absolute panel score from 0 to 1
+    based on within-population minor allele frequencies. For locus
+    \eqn{l} in population \eqn{k}, the score is
+    \eqn{[2\min(p_{lk},1-p_{lk})]^2}. Scores are averaged across loci
+    within each population and then equally across populations. A score
+    of 1 means every panel locus has allele frequency 0.5 in every
+    population; 0 means all panel loci are fixed.
+  \item \code{"relatedness"} — pairwise genomic relatedness (VanRaden
+    GRM), optionally rescaled to kinship via \code{metric}. The
+    allele-frequency reference is controlled by \code{ref}: pooled
+    across the dataset (\code{"global"}, population membership
+    ignored) or computed within each population
+    (\code{"by.pop"}, within-population pairs only).
+  \item \code{"id"} — individual identification power.
+  \item \code{"parentage"} — parentage assignment power.
+  \item \code{"assignment"} — population assignment accuracy (LOO).
+  \item \code{"hybridisation"} — F1 hybrid detection across all
+    pairwise population crosses (requires at least 2 populations in
+    \code{x}).
+  \item \code{"all"} — all parameters except \code{"hybridisation"}.
+  \item \code{"all-Ne"} — all except \code{"Ne"} and
+    \code{"hybridisation"}.
+}}
 
-\item{neest.path}{Path to neestimator (see gl.LDNe)}
+\item{neest.path}{Character string. Path to NEstimator executable, required
+only for \code{"Ne"}.}
 
-\item{plot.out}{Logical. If `TRUE`, generates plots summarizing selected loci.}
+\item{plot.out}{Logical. Print combined plot. Default \code{TRUE}.}
 
-\item{plot.file}{A character string specifying the file name for saving plots. If `NULL`, plots are not saved.}
+\item{plot.file}{Character string. File name for saving the plot.}
 
-\item{plot.dir}{A character string specifying the directory to save plots. Defaults to the working directory.}
+\item{plot.dir}{Character string. Directory for saving the plot.}
 
-\item{verbose}{Integer level of verbosity for reporting progress and information.}
+\item{verbose}{Integer. \code{0} = silent, \code{1} = parameter names and
+performance scores only, \code{2} = full progress (default).}
+
+\item{corr.method}{Character. Correlation method used as the performance
+indicator for correlation-based parameters. Options are
+\code{"spearman"} (default, preserving previous behaviour) and
+\code{"pearson"}. Applies to \code{"Fst"}, \code{"He"},
+\code{"Ho"}, \code{"Fis"}, \code{"Nall"}, \code{"Ne"},
+\code{"Ho_ind"}, \code{"Fis_ind"}, and \code{"relatedness"}.
+Accuracy/proportion
+metrics such as \code{"id"}, \code{"parentage"},
+\code{"assignment"}, and \code{"hybridisation"} are unchanged.}
+
+\item{ref}{Character. Allele-frequency reference for
+\code{"relatedness"}. \code{"global"} (default) pools allele
+frequencies across the whole dataset and uses all pairs; between
+differentiated populations this produces strongly negative values
+that mainly reflect structure. \code{"by.pop"} computes allele
+frequencies within each population, references each population to
+its own base, and retains only within-population pairs — appropriate
+for within-population kinship. Populations with fewer than two
+individuals are skipped with a warning. Ignored by all other
+parameters.}
+
+\item{metric}{Character. Reporting scale for \code{"relatedness"}.
+\code{"grm"} (default) returns the VanRaden genomic relationship
+matrix; \code{"kinship"} returns kinship = GRM / 2 (so an outbred
+self is ~0.5, parent--offspring/full-sib ~0.25). Because this is a
+constant rescaling applied to both panel and full dataset, it does
+not change the correlation-based performance value; it affects only
+the reported values, axis labels, and plot. Ignored by all other
+parameters.}
+
+\item{inverse_dr}{Logical. If \code{TRUE} and \code{"drift_resistance"}
+is among the requested parameters, the performance is reported as
+\code{1 - drift_resistance} (drift sensitivity). A high value then
+indicates a panel whose loci are near fixation and therefore
+maximally responsive to allele-frequency change — desirable for
+genetic-erosion monitoring but not for long-lived stable panels.
+Default \code{FALSE}.}
+
+\item{sample}{Numeric in (0,1]. Proportion of individuals to randomly
+retain from each population of the \emph{panel} before evaluation.
+\code{1} (default) uses all individuals; \code{0.5} keeps a random
+half of each population. The reference dataset \code{xorig} always
+uses all individuals, so this tests how panel performance degrades
+when fewer individuals are genotyped with the panel while the truth
+is known from the full dataset. The proportion is maintained across
+all populations.}
+
+\item{error.rate}{Numeric. Per-allele genotyping error rate. Default
+\code{0.01}.}
+
+\item{threshold}{Numeric. Confusion threshold for \code{"id"} and
+\code{"parentage"}. Default \code{0.001}.}
+
+\item{n_sim_parents}{Integer. Simulated trios for \code{"parentage"}.
+Default \code{100}.}
+
+\item{n_sim_hyb}{Integer. Simulated F1 individuals per pairwise
+population cross for \code{"hybridisation"}. Total F1 simulations
+are \code{n_sim_hyb * choose(nPop(x), 2)}. Default \code{100}.}
+
+\item{n_cores}{Integer or \code{NULL}. Cores for parallel parentage
+simulation. Default \code{1} (sequential), which prevents accidental
+nested parallelism when this function is called from inside parallel
+workers (e.g. \code{gl.select.panel.combined}, parallel chains, or
+study scripts). Set to \code{NULL} to use all-but-one core, or an
+explicit integer. On Windows always sequential.}
+
+\item{target}{Numeric (0--1) or \code{NULL}. Reference line in the summary
+bar chart. Default \code{0.9}.}
 }
 \value{
-A plot and the result of the linear regression
+A named list with one element per parameter, each containing:
+\code{name}, \code{performance}, \code{corr.method}, \code{data},
+\code{summary}, \code{confusion}, and \code{plot}. \code{corr.method}
+is the correlation method used for correlation-based parameters and
+\code{NA} otherwise. For most parameters,
+\code{summary} and \code{confusion} are \code{NULL}; for
+\code{"drift_resistance"}, \code{summary} contains scores by population;
+for \code{"Fis_ind"}, \code{summary} contains correlation and error
+diagnostics; for \code{"hybridisation"}, \code{summary} gives
+per-cross F1 detection
+and correct-pair rates, and \code{confusion} gives the full true-cross by
+assigned-class table. The \code{performance} value for
+\code{"hybridisation"} is the correct F1-pair rate.
 }
 \description{
-This function checks a panel how good it is to recreate the specified parameter of conservation concern (Ne, Fst, Ho etc.)
+Evaluates how well a SNP panel recreates specified parameters of
+conservation concern compared to the full original dataset, or assesses
+the panel's power for individual identification, parentage assignment,
+population assignment, or F1 hybrid detection. Multiple parameters can be
+evaluated simultaneously. All plots are combined on a single page with the
+summary bar chart as the first panel in the same grid.
 }
 \details{
-The function applies various methods to select loci based on the input 'dartR or genlight' object.
-Each method has specific criteria for selecting loci:
+\strong{Performance metric (0--1):}
+\itemize{
+  \item Population and between-population parameters (\code{"Fst"},
+    \code{"He"}, \code{"Ho"}, \code{"Fis"}, \code{"Nall"}, \code{"Ne"})
+    — chosen \code{corr.method} r² between panel and full dataset
+    values. Plots show both Spearman r² and Pearson R².
+  \item \code{"Ho_ind"} — chosen \code{corr.method} r² of
+    per-individual observed heterozygosity. Population membership is
+    ignored.
+  \item \code{"Fis_ind"} — agreement between individual inbreeding
+    estimates from the panel and the full dataset. Within each population,
+    expected heterozygosity is calculated as \eqn{H_{e,l}=2p_l(1-p_l)}.
+    For each individual and its called loci,
+    \eqn{F_i=1-H_{O,i}/H_{E,i}}. The returned data contain the actual
+    \code{fis_orig} and \code{fis_panel} values for every individual.
+    Performance is the chosen \code{corr.method} squared correlation
+    between \code{fis_orig} and \code{fis_panel}, exactly as for the other
+    correlation-based parameters. The summary also reports RMSE, MAE,
+    bias, Pearson \eqn{R^2}, and Spearman \eqn{r^2}.
+  \item \code{"drift_resistance"} — absolute panel score
+    \eqn{\mathrm{mean}_{k}[\mathrm{mean}_{l}
+    \{(2\min(p_{lk},1-p_{lk}))^2\}]}. This is not a correlation with
+    \code{xorig}; it directly rewards loci with intermediate allele
+    frequencies and strongly penalises rare or nearly fixed alleles.
+  \item \code{"relatedness"} — chosen \code{corr.method} r² of all
+    retained pairwise relatedness values (upper triangle), on the
+    scale set by \code{metric} (GRM or kinship = GRM/2) and the
+    reference set by \code{ref} (\code{"global"}: all pairs, pooled
+    frequencies; \code{"by.pop"}: within-population pairs, local
+    frequencies) (VanRaden 2008).
+  \item \code{"id"} — fraction of individuals with MaxPmatch below
+    \code{threshold}.
+  \item \code{"parentage"} — fraction of simulated trios correctly
+    assigned.
+  \item \code{"assignment"} — fraction correctly assigned by LOO.
+  \item \code{"hybridisation"} — correct F1-pair assignment rate,
+    calculated as the proportion of simulated F1 hybrids assigned to the
+    correct pairwise F1 class across all pairwise population crosses.
+}
+
+\strong{Heterozygosity caching:} When any of \code{"He"}, \code{"Ho"},
+\code{"Fis"} are requested, \code{gl.report.heterozygosity} is called
+once per dataset and reused for all three.
+
+\strong{Relatedness reference and scale:} The VanRaden GRM is centred on
+a reference allele-frequency vector, so a value of zero corresponds to
+the average pair in that reference and roughly half of the off-diagonal
+values are negative by construction. With \code{ref = "global"} the
+reference is pooled across all populations; in structured data this makes
+between-population pairs strongly negative, so the metric largely tracks
+recovery of population structure. With \code{ref = "by.pop"} each
+population is referenced to its own allele frequencies and only
+within-population pairs are kept, giving within-population kinship; this
+requires adequate within-population sample sizes. \code{metric = "kinship"}
+rescales the matrix by 1/2 (numerator-relationship to kinship); as a
+constant applied to both datasets it leaves the correlation performance
+unchanged. The panel relatedness data frame columns are
+\code{rel_orig} and \code{rel_panel}.
 }
 \examples{
-# Example usage:
+\donttest{
+# Short demonstration on four populations
+x <- gl.keep.pop(possums.gl, pop.list = levels(pop(possums.gl))[1:4], verbose = 0)
+panel <- gl.select.panel(x, method = "random", nl = 20)
+res   <- gl.check.panel(panel, x, parameter = "all-Ne")
+sapply(res, function(r) r$performance)
+}
 
-# Select 20 loci randomly
-selected <- gl.select.panel(possums.gl, method = "random", nl = 50)
-gl.check.panel(selected, possums.gl, parameter="Fst")
-
+}
+\references{
+VanRaden, P.M. (2008). Efficient methods to compute genomic predictions.
+\emph{Journal of Dairy Science}, 91(11), 4414--4423.
 }

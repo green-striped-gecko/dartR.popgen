@@ -4,7 +4,7 @@
 \alias{utils.outflank.MakeDiploidFSTMat}
 \title{Creates OutFLANK input file from individual genotype info.}
 \usage{
-utils.outflank.MakeDiploidFSTMat(SNPmat, locusNames, popNames)
+utils.outflank.MakeDiploidFSTMat(SNPmat, locusNames, popNames, verbose = NULL)
 }
 \arguments{
 \item{SNPmat}{This is an array of genotypes with a row for each individual.
@@ -18,6 +18,10 @@ same number of locus names as there are columns in SNPmat.}
 \item{popNames}{A list of population names to give location for each
 individual. Typically multiple individuals will have the same popName. The
 list popNames should have the same length as the number of rows in SNPmat.}
+
+\item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
+brief progress messages; 3, progress and results summary; 5, full report
+[default 2, unless specified using gl.set.verbosity].}
 }
 \value{
 Returns a data frame in the form needed for the main OutFLANK
