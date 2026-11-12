@@ -147,7 +147,7 @@
 #' # small example that runs quickly
 #' res <- gl.opt.ind.all(possums.gl[1:20, 1:50], plot.display = FALSE)
 #'
-#' @seealso \code{\link{gl.filter.callrate}}
+#' @seealso \code{\link[dartR.base]{gl.filter.callrate}}
 #' @importFrom future plan multisession sequential availableCores
 #' @importFrom furrr future_map furrr_options
 #' @importFrom stats median sd aggregate

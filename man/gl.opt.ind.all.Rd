@@ -175,7 +175,7 @@ res <- gl.opt.ind.all(possums.gl[1:20, 1:50], plot.display = FALSE)
 
 }
 \seealso{
-\code{\link{gl.filter.callrate}}
+\code{\link[dartR.base]{gl.filter.callrate}}
 }
 \author{
 Custodian: Bernd Gruber -- Post to
