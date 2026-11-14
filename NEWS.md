@@ -223,6 +223,21 @@
   `L` is required unless `minbinsize = 0`; an unnamed `sfs` vector is
   accepted; missing binaries and EPOS failures stop with a clear message;
   `verbose = 0` is silent.
+* `gl.run.epos` reports the loci that `gl.sfs` excludes for missing calls
+  and scales `L` to the loci used. Previously these loci were dropped
+  without a message and `L` still counted them, so Ne and the times were too
+  low by the proportion of loci dropped (22% for a platypus population with
+  104 of 484 loci dropped). **Estimates rise for data with missing calls;
+  calls on complete data and calls with a user-supplied `sfs` are
+  unchanged.** With `folded = FALSE`, a last class 2n in a user-supplied
+  `sfs` (loci fixed for the alternative allele, as `gl.sfs` returns it) is
+  dropped, as it already was for the SFS computed by the function.
+  **Estimates change slightly for calls that pass an unfolded `gl.sfs`
+  result.** New warnings: an Ne of 1 in the history (the value EPOS writes
+  where it could not estimate a population size), `method = "exhaustive"`
+  with `depth` below 3 (which is the greedy search), and several populations
+  pooled into one SFS. The help page states the single-population
+  assumption, explains `depth` and cites Lynch et al. 2020.
 * `gl.run.stairway2`: when `L` is not given and the SFS is computed from
   `x`, the default `L` counts only the loci without missing calls (the loci
   `gl.sfs` uses) x 69, instead of all loci x 69. **Results change for data

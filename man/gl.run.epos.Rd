@@ -38,6 +38,9 @@ and bootSfs (required if boot > 0) [required].}
 \item{sfs}{the SFS to use instead of calculating it from x. Either named as
 returned by \code{gl.sfs} ("d0", "d1", ...; the names give the classes), or
 an unnamed vector of counts for the classes minbinsize, minbinsize + 1, ...
+An unfolded SFS (folded = FALSE) of n individuals has the classes 1 to
+2n-1; a last class 2n (loci fixed for the alternative allele, which gl.sfs
+returns) is dropped
 [default NULL, calculated with gl.sfs(x, singlepop = TRUE)].}
 
 \item{minbinsize}{the smallest SFS class used. 0 keeps the zero class
@@ -49,8 +52,10 @@ with a multidimensional sfs [default 1].}
 
 \item{folded}{if set to TRUE (default) a folded sfs (minor allele frequency sfs) is used. If set to FALSE an unfolded (derived allele frequency sfs) is used. It is assumed that 0 is homozygote for the reference and 2 is homozygote for the derived allele. So you need to make sure your coding is correct. Option -U in epos [default TRUE].}
 
-\item{L}{length of sequences (including monomorphic and polymorphic sites).
-Required unless minbinsize = 0. Option -l in epos [default NULL].}
+\item{L}{length of sequences (including monomorphic and polymorphic sites)
+for all the loci in x. Required unless minbinsize = 0. If loci with missing
+calls are excluded from the SFS, L is scaled to the loci used (see
+details). Option -l in epos [default NULL].}
 
 \item{u}{mutation rate. If not provided the default value of epos is used (5e-9).
 Option -u in epos [default NULL].}
@@ -66,9 +71,20 @@ Option -u in epos2plot [default 0.975].}
 \item{lower}{lower quantile of the bootstrap (only used if boot>0).
 Option -l in epos2plot [default 0.025].}
 
-\item{method}{either "exhaustive" or "greedy". Check the epos manual for details. If method="exhaustive" then the parameter depth is used [default "greedy"].}
+\item{method}{either "exhaustive" or "greedy". Under "greedy" each round
+of the search adds one level (a change in population size) to the levels
+already found. Under "exhaustive" every combination of levels is compared
+in each round up to round \code{depth}; later rounds are greedy. The first
+two rounds are the same under both methods, so "exhaustive" differs from
+"greedy" only if depth is 3 or more. Check the epos manual for details
+[default "greedy"].}
 
-\item{depth}{if method="exhaustive" then this parameter is used to set the search depth. If method is set to greedy this setting is ignored [default 2].}
+\item{depth}{the number of rounds searched exhaustively if
+method = "exhaustive" (option -E in epos); ignored if method = "greedy".
+Values below 3 give the greedy search. The run time rises steeply with
+depth and with the number of individuals, and a deeper search does not
+always end with a higher likelihood, because the greedy rounds that follow
+start from a different set of levels [default 2].}
 
 \item{other.options}{additional options for epos, as typed on the command
 line (e.g "-m 10") [default ""].}
@@ -108,10 +124,10 @@ returns a list with four components:
 }
 }
 \description{
-This function runs EPOS (based on Lynch et al. 2019) to estimate historical population-size
+This function runs EPOS (based on Lynch et al. 2020) to estimate historical population-size
 \url{https://github.com/EvolBioInf/epos}. It relies on a compiled version of the software
  epos, epos2plot and if a bootstrap output is required bootSfs. For more information on the
- approach check the publication (Lynch at al. 2019), the github repository
+ approach check the publication (Lynch et al. 2020), the github repository
  \url{https://github.com/EvolBioInf/epos} and look out for the manual epos.pdf
  (\url{https://github.com/EvolBioInf/epos/blob/master/doc/epos.pdf}).
 The binaries need to be provided in a single folder and can be downloaded via the
@@ -149,23 +165,41 @@ usually the better choice.\cr
 The SFS is sent to EPOS with its true class numbers: classes below
 \code{minbinsize} are excluded with the EPOS option -x, and an unfolded SFS
 (\code{folded = FALSE}) is sent as classes 1 to 2n-1 with option -U.\cr
-The SFS assumes that every locus is scored in all 2n sequences. A locus with
-missing calls is counted in a lower frequency class than its true one, so
-filter loci to full call rate (\code{gl.filter.callrate(x, threshold = 1)})
-or impute them (\code{gl.impute}) before running the analysis.
+The SFS is built only from the loci scored in every individual, because a
+locus with missing calls cannot be placed in a frequency class of the full
+sample (see \code{gl.sfs}). \code{L} is taken to be the sequence length of
+all the loci in \code{x}: when loci are excluded for missing calls, EPOS is
+given \code{L} multiplied by the proportion of loci used, and the number of
+loci excluded and the value of L used are reported (verbose >= 1). Without
+this correction Ne and the times would be too low by that proportion. To
+keep more loci, remove individuals with low call rate or impute
+(\code{gl.impute}) before running the analysis. With a user-supplied
+\code{sfs}, \code{L} is used as given.\cr
+EPOS assumes that the sample comes from one population without substantial
+structure (Lynch et al. 2020). If \code{x} holds several populations they
+are pooled into one SFS, and pooling differentiated populations distorts
+the SFS and the history inferred from it. Run each population on its own
+unless the populations in \code{x} form one genetic population.\cr
+EPOS writes a population size of 1 where its estimate for an interval is
+negative. An Ne of 1 in the history is therefore not an estimate: it marks
+an interval, often the most recent one, whose size EPOS could not estimate.
+These intervals are kept in the returned history and in the plot, and the
+function warns about them (verbose >= 1).
 }
 \examples{
 \dontrun{
 #gl.download.binary("epos",os="windows")
 require(dartR.data)
-epos <- gl.run.epos(possums.gl, epos.path = file.path(tempdir(),"epos"), L=1e5, u = 1e-8)
+# one population: the first 30 individuals of possums.gl
+epos <- gl.run.epos(possums.gl[1:30, ], epos.path = file.path(tempdir(),"epos"),
+                    L=1e5, u = 1e-8)
 epos$history
 }
 
 
 }
 \references{
-Lynch, Michael, Bernhard Haubold, Peter Pfaffelhuber, and Takahiro Maruki. 2019. Inference of Historical Population-Size Changes with Allele-Frequency Data. G3: Genes|Genomes|Genetics 10, no. 1: 211-23. \doi{10.1534/g3.119.400854}.
+Lynch, Michael, Bernhard Haubold, Peter Pfaffelhuber, and Takahiro Maruki. 2020. Inference of Historical Population-Size Changes with Allele-Frequency Data. G3: Genes|Genomes|Genetics 10, no. 1: 211-23. \doi{10.1534/g3.119.400854}.
 }
 \seealso{
 Other demographic history: 
