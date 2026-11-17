@@ -73,6 +73,18 @@
   population in the order the function reports. Bar and legend order are
   unchanged.
 
+* `gl.LDNe` works with long population and individual names. NeEstimator
+  reads only about 28 characters of the `population_individual` label in
+  the genepop file; with a longer label it stopped reading at that
+  population, so it and every population after it were dropped from the
+  result without a warning, or the call failed with "subscript out of
+  bounds" when it was the first (reported by Peter Unmack). `gl.LDNe` now
+  writes short codes and maps the results back to the population names, and
+  stops naming the populations if NeEstimator still returns no estimate for
+  some. Population names also come back as given: underscores in
+  individual names no longer end up in them (`A_ind`), and spaces are no
+  longer turned into underscores.
+
 * `gl.find.genes.for.loci` and `gl.find.loci.in.genes` match DArT sequence
   names of the form `<accession>_<description>` (e.g.
   `NC_041728.1_chromosome_1`) to the GFF sequence they start with

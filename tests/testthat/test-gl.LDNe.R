@@ -155,6 +155,49 @@ test_that("pairing = 'separate' gives the same result with long chromosome names
   expect_error(run(NULL), "needs the chromosome of each locus")
 })
 
+test_that("long population and individual names give the same estimates as short ones", {
+  # before: NeEstimator reads only the first characters of each
+  # population_individual label in the genepop file. A longer label ran into
+  # the genotypes, and NeEstimator skipped that population (dropped from the
+  # result without a warning) or, when it sorted first, ran no population
+  # ("subscript out of bounds") (reported by Peter Unmack, 2026-11-17)
+  skip_if(neest_dir() == "", "NeEstimator binary not available (set NEEST_DIR)")
+  pops <- possums.gl[1:60, 1:100]
+  run <- function(pop.names, ind.names = indNames(pops)) {
+    pop(pops) <- factor(pop.names[as.integer(pop(pops))], levels = pop.names)
+    indNames(pops) <- ind.names
+    quiet_ldne(pops, neest.path = neest_dir(), critical = c(0, 0.05),
+               plot.out = FALSE, verbose = 0)
+  }
+  short <- run(c("A", "B"))
+  long.first <- paste0("A", strrep("a", 25))
+  long.second <- paste0("B", strrep("b", 25))
+  long.ind <- paste0("individual_with_a_long_name_", 1:60)
+  for (res in list(run(c(long.first, "B")), run(c("A", long.second)),
+                   run(c("A", "B"), long.ind))) {
+    expect_length(res, 2)
+    expect_equal(unname(res), unname(short))
+  }
+  expect_named(run(c(long.first, "B")), c(long.first, "B"))
+  expect_named(run(c("A", long.second)), c("A", long.second))
+})
+
+test_that("population names come back as given, whatever the individual names", {
+  # before: the population name was read back from the label by dropping the
+  # text after its last underscore, so underscores in individual names ended
+  # up in it ("A_ind"), and spaces in population names became underscores
+  skip_if(neest_dir() == "", "NeEstimator binary not available (set NEEST_DIR)")
+  pops <- possums.gl[1:60, 1:100]
+  indNames(pops) <- paste0("ind_", 1:60)
+  res <- quiet_ldne(pops, neest.path = neest_dir(), plot.out = FALSE,
+                    verbose = 0)
+  expect_named(res, c("A", "B"))
+  pop(pops) <- factor(c("Pop A", "Pop B")[as.integer(pop(pops))])
+  res <- quiet_ldne(pops, neest.path = neest_dir(), plot.out = FALSE,
+                    verbose = 0)
+  expect_named(res, c("Pop A", "Pop B"))
+})
+
 test_that("a population of two individuals keeps its own missing jackknife CIs wherever it sorts", {
   skip_if(neest_dir() == "", "NeEstimator binary not available (set NEEST_DIR)")
   # small population first: the defect this replaces gave A the values of B
