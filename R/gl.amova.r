@@ -115,14 +115,16 @@ gl.amova <- function(x,
         )
     }
 
-    #!# intermediate fbm fix
-    # local copy of dartR.base's internal FBM probe (same idiom as gl.fbm2gen)
-    .fbm_or_null <- function(obj) tryCatch(methods::slot(obj, "fbm"), error = function(e) NULL)
-    if (!is.null(.fbm_or_null(x))) x <- gl.fbm2gen(x)
-
     if (is.null(distance)) {
-        class(x) <- "genlight"  #needs to be genlight due to stampp
-        dd <- StAMPP::stamppNeisD(x, FALSE)
+        if (dartR.base::utils.fbm.has(x)) {
+            # File-backed: not converted to a genlight; the distances are
+            # built from pairwise counts read in blocks of loci and are
+            # identical to StAMPP::stamppNeisD (see .neis_d_ind_fbm)
+            dd <- .neis_d_ind_fbm(x)
+        } else {
+            class(x) <- "genlight"  #needs to be genlight due to stampp
+            dd <- StAMPP::stamppNeisD(x, FALSE)
+        }
         if (is.null(rownames(dd))) rownames(dd) <- indNames(x)
         if (is.null(colnames(dd))) colnames(dd) <- rownames(dd)
     } else {
@@ -247,4 +249,58 @@ gl.amova <- function(x,
     # RETURN
     return(res)
 
+}
+
+## Nei's (1972) distance between individuals exactly as
+## StAMPP::stamppNeisD(x, pop = FALSE), for a file-backed (diploid) x that is
+## not converted to a genlight. StAMPP uses the frequencies p = genotype / 2
+## (0, 0.5 or 1; missing as 0 with weight m = 0) and, for each pair (i, j),
+## jxy = sum p_i p_j + (1 - p_i)(1 - p_j) over loci called in both, and
+## J(i, j) = sum p_i^2 + (1 - p_i)^2 over loci called in both. Per locus
+## these terms are 1 (same homozygote), 0.5 (one heterozygote, or both) or
+## 0 (opposite homozygotes); J is 1 where i is homozygous and 0.5 where it
+## is heterozygous. So, with L loci in common, n1 and n2 differing by one
+## and two allele copies (dartR.base::utils.fbm.pair.counts), N11 both
+## heterozygous and H(i, j) i heterozygous and j called:
+##   jxy = (L - n1 - n2 - N11) + 0.5 (N11 + n1),   J(i, j) = L - 0.5 H(i, j).
+## All are multiples of 0.25 and exact in double precision, as are StAMPP's
+## sums, so the distances (same final operations and rounding to 6
+## decimals) are identical. N11 and H are cross-products of indicator
+## matrices added over blocks of loci; nothing is held beyond n x n
+## matrices and one block.
+.neis_d_ind_fbm <- function(x) {
+    n <- nInd(x)
+    rd <- dartR.base::utils.fbm.reader(x)
+    H <- N11 <- matrix(0, n, n)
+    n.called <- numeric(n)
+    for (cols in dartR.base::utils.fbm.blocks(x)) {
+        g <- rd(cols = cols)
+        called <- (!is.na(g)) * 1
+        het <- (g == 1) * 1
+        het[is.na(het)] <- 0
+        H <- H + het %*% t(called)
+        N11 <- N11 + het %*% t(het)
+        n.called <- n.called + rowSums(called)
+    }
+    pc <- dartR.base::utils.fbm.pair.counts(x)
+    sym <- function(v, d) {
+        m <- matrix(0, n, n)
+        m[lower.tri(m)] <- v
+        m <- m + t(m)
+        diag(m) <- d
+        m
+    }
+    L <- sym(as.numeric(pc$L), n.called)
+    n1 <- sym(as.numeric(pc$n1), 0)
+    n2 <- sym(as.numeric(pc$n2), 0)
+    dimnames(H) <- dimnames(N11) <- NULL
+    jxy <- (L - n1 - n2 - N11) + 0.5 * (N11 + n1)
+    # StAMPP's matrix of square roots holds J(column, row)
+    sq.jxjy <- sqrt(t(L - 0.5 * H))
+    i <- jxy / sq.jxjy
+    i <- i / t(sq.jxjy)
+    d <- -log(i)
+    neis.d <- matrix(as.numeric(sprintf("%.6f", d)), nrow = n)
+    row.names(neis.d) <- indNames(x)
+    neis.d
 }

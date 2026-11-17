@@ -121,8 +121,18 @@ gl.sfs <- function(x,
   }
 
   # loci with missing calls cannot be placed in a class of the full sample
-  mat <- as.matrix(x)
-  miss <- colSums(is.na(mat)) > 0
+  # Per locus: missing calls, alternative-allele count of all individuals
+  # and of each population (rows 3, 4, ...), in one pass over blocks of
+  # loci (dartR.base::utils.fbm.colwise), so a file-backed object is not
+  # decoded as a whole; the counts equal those of as.matrix(x)
+  pop.rows <- lapply(levels(pop(x)), function(p) which(pop(x) == p))
+  cnt <- dartR.base::utils.fbm.colwise(x, function(m) {
+    rbind(colSums(is.na(m)), colSums(m),
+          do.call(rbind, lapply(pop.rows, function(r) {
+            colSums(m[r, , drop = FALSE])
+          })))
+  })
+  miss <- cnt[1, ] > 0
   if (any(miss)) {
     if (verbose >= 1) {
       cat(
@@ -133,9 +143,9 @@ gl.sfs <- function(x,
         )
       )
     }
-    mat <- mat[, !miss, drop = FALSE]
   }
-  if (ncol(mat) == 0) {
+  cnt <- cnt[, !miss, drop = FALSE]
+  if (ncol(cnt) == 0) {
     stop(error("Fatal Error: No loci without missing calls; cannot build the sfs.\n"))
   }
 
@@ -145,7 +155,7 @@ gl.sfs <- function(x,
     if (!folded) {
       mi <- 2 * mi # double the number of slots...
     }
-    cs <- colSums(mat)
+    cs <- cnt[2, ]
     if (folded) {
       sfs0 <- table(mi - (abs(mi - cs)))
     } else {
@@ -163,9 +173,7 @@ gl.sfs <- function(x,
   } else {
     pops <- pop(x)
     ni <- as.vector(table(pops))
-    cs <- lapply(levels(pops), function(p) {
-      colSums(mat[pops == p, , drop = FALSE])
-    })
+    cs <- lapply(seq_along(levels(pops)), function(i) cnt[2 + i, ])
     if (folded) {
       # fold on the minor allele of all populations combined
       flip <- Reduce(`+`, cs) > sum(ni)

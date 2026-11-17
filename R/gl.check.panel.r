@@ -545,7 +545,13 @@ gl.check.panel <- function(x,
     # population membership ignored
     # ---------------------------------------------------------
     if (param == "Ho_ind") {
-      ho_ind_orig  <- rowMeans(as.matrix(xorig)==1L, na.rm=TRUE)
+      # full data counted over blocks of loci (a file-backed xorig is not
+      # decoded as a whole); the mean is formed as rowMeans() forms it
+      cnt_orig     <- dartR.base::utils.fbm.rowwise(xorig, function(m) {
+        cbind(rowSums(m == 1L, na.rm = TRUE), rowSums(!is.na(m)))
+      })
+      ho_ind_orig  <- dartR.base::utils.fbm.count.mean(
+        stats::setNames(cnt_orig[, 1], rownames(cnt_orig)), cnt_orig[, 2])
       ho_ind_panel <- rowMeans(as.matrix(x)    ==1L, na.rm=TRUE)
       res <- data.frame(
         individual   = indNames(x),
@@ -591,7 +597,12 @@ gl.check.panel <- function(x,
         ))
       }
       
-      mat_orig <- as.matrix(xorig)
+      # The full data are read one population at a time
+      # (dartR.base::utils.fbm.reader): the expected heterozygosity is
+      # summed along each individual's loci, so the population's rows are
+      # read whole to keep the sums identical; a file-backed xorig is never
+      # decoded as a whole. The panel is small and decoded as before.
+      rd_orig  <- dartR.base::utils.fbm.reader(xorig)
       mat_pan  <- as.matrix(x)[idx_pan_ind, , drop = FALSE]
       loci_all <- locNames(xorig)
       loci_pan <- locNames(x)
@@ -603,7 +614,7 @@ gl.check.panel <- function(x,
       
       pops_chr <- as.character(pop(xorig))
       upops    <- unique(pops_chr)
-      n_ind    <- nrow(mat_orig)
+      n_ind    <- nInd(xorig)
       
       fis_orig <- rep(NA_real_, n_ind)
       fis_panel <- rep(NA_real_, n_ind)
@@ -637,7 +648,7 @@ gl.check.panel <- function(x,
       
       for (pp in upops) {
         idx <- which(pops_chr == pp)
-        mo  <- mat_orig[idx, , drop = FALSE]
+        mo  <- rd_orig(rows = idx)
         mp  <- mat_pan[idx, , drop = FALSE]
         
         p_full <- colMeans(mo, na.rm = TRUE) / 2
@@ -795,12 +806,19 @@ gl.check.panel <- function(x,
       ## DR: top-nl highest-MAF loci; inverse: top-nl lowest-MAF loci
       dr_max <- NA_real_
       if (!is.null(xorig)) {
-        gmat_orig  <- as.matrix(xorig)
         pops_orig  <- as.character(pop(xorig))
         upops_orig <- unique(pops_orig)
-        dr_all <- vapply(seq_len(ncol(gmat_orig)), function(l) {
-          mean(vapply(upops_orig, function(pp) {
-            p <- mean(gmat_orig[pops_orig == pp, l], na.rm = TRUE) / 2
+        # allele frequency of each population at each locus, read in
+        # blocks of loci of the population's rows (xorig is not decoded as
+        # a whole; colMeans() equals mean() of each column)
+        p_orig <- lapply(upops_orig, function(pp) {
+          dartR.base::utils.fbm.colwise(xorig, function(m) {
+            colMeans(m, na.rm = TRUE)
+          }, rows = which(pops_orig == pp)) / 2
+        })
+        dr_all <- vapply(seq_len(nLoc(xorig)), function(l) {
+          mean(vapply(seq_along(upops_orig), function(k) {
+            p <- p_orig[[k]][[l]]
             if (!is.finite(p)) return(NA_real_)
             (2 * min(p, 1 - p))^2
           }, numeric(1)), na.rm = TRUE)
