@@ -167,3 +167,27 @@ test_that("gl.check.panel and gl.check.future.panel: file-backed full data", {
   set.seed(1)
   expect_no_error(utils::capture.output(suppressWarnings(fut(p.f, xs$f))))
 })
+
+test_that("gl.opt.ind.all decodes explicitly, within the memory limit", {
+  skip_if_not_installed("bigstatsr")
+  pdf(NULL); on.exit(dev.off(), add = TRUE)
+  set.seed(3)
+  xs <- fbm_pair()
+  run <- function(z, verbose = 0) {
+    set.seed(1)
+    gl.opt.ind.all(z, first = "random", bootstrap = 3, plot.display = FALSE,
+                   verbose = verbose)
+  }
+  strip.plots <- function(v) {
+    v[vapply(v, inherits, logical(1), "ggplot")] <- NULL
+    v
+  }
+  expect_identical(strip.plots(run(xs$f)), strip.plots(run(xs$x)))
+  out <- utils::capture.output(run(xs$f, verbose = 3))
+  expect_true(any(grepl("whole genotype matrix", out)))
+  # the verbose >= 3 missing-data check reads blocks of loci, no decode
+  old <- options(dartR_fbm_max_decode_gb = 1e-9)  # below the test size
+  on.exit(options(old), add = TRUE)
+  expect_error(run(xs$f), "dartR_fbm_max_decode_gb")
+  expect_no_error(run(xs$x))                 # gen-backed: no limit
+})

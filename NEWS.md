@@ -15,6 +15,12 @@
   of the full data set in blocks of loci (global and within-population
   reference frequencies); the results are identical to the previous
   version (checked with R's reference BLAS) and for both storage types.
+* `gl.opt.ind.all()` needs the whole genotype matrix by design: for a
+  file-backed object it is decoded explicitly through
+  `dartR.base::utils.fbm.decode()` (memory reported, stops above
+  `getOption("dartR_fbm_max_decode_gb", 4)` Gb); its verbose >= 3
+  missing-data check counts in blocks of loci. Gen-backed objects are
+  unchanged.
 * Needs dartR.base >= 1.2.7.9000 (the exported `utils.fbm.*` helpers).
 
 # dartR.popgen 1.2.7
