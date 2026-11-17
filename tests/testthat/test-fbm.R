@@ -134,7 +134,13 @@ test_that("gl.check.panel and gl.check.future.panel: file-backed full data", {
   p.f <- xs$f[, 1:20]
   chk <- function(p, x) {
     gl.check.panel(p, x, parameter = c("Ho_ind", "Fis_ind",
-                                       "drift_resistance"),
+                                       "drift_resistance", "relatedness"),
+                   plot.out = FALSE, verbose = 3)
+  }
+  # relatedness (VanRaden GRM of the full data, in blocks of loci) with
+  # within-population reference frequencies
+  chk.pop <- function(p, x) {
+    gl.check.panel(p, x, parameter = "relatedness", ref = "by.pop",
                    plot.out = FALSE, verbose = 3)
   }
   fut <- function(p, x) {
@@ -143,7 +149,7 @@ test_that("gl.check.panel and gl.check.future.panel: file-backed full data", {
   }
   for (bs in c(1, 1e-6)) {
     options(bigstatsr.block.sizeGB = bs)
-    for (FUN in list(chk = chk, fut = fut)) {
+    for (FUN in list(chk = chk, chk.pop = chk.pop, fut = fut)) {
       set.seed(1)
       g.out <- utils::capture.output(g <- suppressWarnings(FUN(p.g, xs$x)))
       set.seed(1)

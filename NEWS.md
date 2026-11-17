@@ -11,6 +11,10 @@
   file-backed object one population at a time, for the pair compared,
   instead of as a whole (adegenet needs a genlight). Results are identical
   to those of the same data held in memory.
+* `gl.check.panel(parameter = "relatedness")` computes the VanRaden GRM
+  of the full data set in blocks of loci (global and within-population
+  reference frequencies); the results are identical to the previous
+  version (checked with R's reference BLAS) and for both storage types.
 * Needs dartR.base >= 1.2.7.9000 (the exported `utils.fbm.*` helpers).
 
 # dartR.popgen 1.2.7
