@@ -1,4 +1,4 @@
-# dartR.popgen (dev_fbm)
+# dartR.popgen 1.3.0
 
 * `gl.amova()` no longer converts a file-backed object to a genlight: Nei's
   distances between individuals are built from pairwise genotype counts
