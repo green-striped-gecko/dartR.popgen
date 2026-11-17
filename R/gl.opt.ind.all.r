@@ -99,6 +99,14 @@
 #' a plot directory (plot.dir) is specified, the ggplot binary is saved to
 #' that directory; otherwise to the tempdir().
 #'
+#' File-backed (FBM) objects: the algorithm needs the whole genotype
+#' matrix in memory. It is decoded with a message stating the memory
+#' needed (verbose >= 2); above
+#' \code{getOption("dartR_fbm_max_decode_gb", 4)} Gb the function stops
+#' with an error instead of exhausting memory (raise the limit with
+#' \code{options(dartR_fbm_max_decode_gb = ...)} if enough memory is
+#' available). See \code{dartR.base::utils.fbm.decode}.
+#'
 #' @return A list (returned invisibly when \code{verbose} is 0) with:
 #' \itemize{
 #' \item \code{table} data.frame with one row per individual and run: run,
@@ -264,7 +272,10 @@ gl.opt.ind.all <- function(x,
   plot.colors.pop <- plot.colors.pop[1:nPop(x)]
   names(plot.colors.pop) <- popNames(x)
   
-  if (verbose >= 3 && sum(is.na(as.matrix(x))) > 0) {
+  # missing genotypes counted over blocks of loci (no whole-matrix decode)
+  if (verbose >= 3 && sum(dartR.base::utils.fbm.colwise(x, function(m) {
+    colSums(is.na(m))
+  })) > 0) {
     cat(warn("  Warning: data contain missing values. Missing genotypes add no alleles, consider filtering for call rate first.\n"))
   }
   
@@ -318,7 +329,11 @@ gl.opt.ind.all <- function(x,
   
   # DO THE JOB
   
-  xx <- as.matrix(x)
+  # The greedy search needs the whole matrix (each run modifies a copy).
+  # For a file-backed object dartR.base::utils.fbm.decode states the memory
+  # and stops above getOption("dartR_fbm_max_decode_gb")
+  xx <- dartR.base::utils.fbm.decode(x, what = "gl.opt.ind.all", bytes = 4,
+                                     copies = 2, verbose = verbose)
   dimnames(xx) <- NULL
   ids <- indNames(x)
   pops <- factor(pop(x), levels = popNames(x))

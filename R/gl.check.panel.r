@@ -418,7 +418,27 @@ gl.check.panel <- function(x,
     denom <- 2*sum(p*(1-p), na.rm=TRUE)
     (Z %*% t(Z)) / denom
   }
-  
+  # The same for the full data set (xorig, possibly file-backed), with the
+  # cross-product added over blocks of loci (dartR.base::utils.fbm.reader,
+  # utils.fbm.blocks) for the rows given (NULL: all), so xorig is never
+  # decoded as a whole. Imputation, centring and denominator as in
+  # grm_vanraden; the block sums agree with it to rounding (with R's
+  # reference BLAS bit for bit), and are identical for both storage types.
+  # rd: dartR.base::utils.fbm.reader(xobj), made once by the caller (for a
+  # gen-backed xobj it holds the decoded matrix)
+  grm_vanraden_blocks <- function(xobj, rd, p, rows = NULL) {
+    n  <- if (is.null(rows)) nInd(xobj) else length(rows)
+    G  <- matrix(0, n, n)
+    for (cols in dartR.base::utils.fbm.blocks(xobj, nr = n)) {
+      g    <- rd(rows, cols)
+      miss <- is.na(g)
+      if (any(miss)) g[miss] <- (2*p[cols])[col(g)][miss]
+      Z <- sweep(g, 2, 2*p[cols], "-")
+      G <- G + Z %*% t(Z)
+    }
+    G / (2*sum(p*(1-p), na.rm=TRUE))
+  }
+
   # ---------------------------------------------------------------
   # cache heterozygosity — shared across He / Ho / Fis
   # ---------------------------------------------------------------
@@ -545,7 +565,13 @@ gl.check.panel <- function(x,
     # population membership ignored
     # ---------------------------------------------------------
     if (param == "Ho_ind") {
-      ho_ind_orig  <- rowMeans(as.matrix(xorig)==1L, na.rm=TRUE)
+      # full data counted over blocks of loci (a file-backed xorig is not
+      # decoded as a whole); the mean is formed as rowMeans() forms it
+      cnt_orig     <- dartR.base::utils.fbm.rowwise(xorig, function(m) {
+        cbind(rowSums(m == 1L, na.rm = TRUE), rowSums(!is.na(m)))
+      })
+      ho_ind_orig  <- dartR.base::utils.fbm.count.mean(
+        stats::setNames(cnt_orig[, 1], rownames(cnt_orig)), cnt_orig[, 2])
       ho_ind_panel <- rowMeans(as.matrix(x)    ==1L, na.rm=TRUE)
       res <- data.frame(
         individual   = indNames(x),
@@ -591,7 +617,12 @@ gl.check.panel <- function(x,
         ))
       }
       
-      mat_orig <- as.matrix(xorig)
+      # The full data are read one population at a time
+      # (dartR.base::utils.fbm.reader): the expected heterozygosity is
+      # summed along each individual's loci, so the population's rows are
+      # read whole to keep the sums identical; a file-backed xorig is never
+      # decoded as a whole. The panel is small and decoded as before.
+      rd_orig  <- dartR.base::utils.fbm.reader(xorig)
       mat_pan  <- as.matrix(x)[idx_pan_ind, , drop = FALSE]
       loci_all <- locNames(xorig)
       loci_pan <- locNames(x)
@@ -603,7 +634,7 @@ gl.check.panel <- function(x,
       
       pops_chr <- as.character(pop(xorig))
       upops    <- unique(pops_chr)
-      n_ind    <- nrow(mat_orig)
+      n_ind    <- nInd(xorig)
       
       fis_orig <- rep(NA_real_, n_ind)
       fis_panel <- rep(NA_real_, n_ind)
@@ -637,7 +668,7 @@ gl.check.panel <- function(x,
       
       for (pp in upops) {
         idx <- which(pops_chr == pp)
-        mo  <- mat_orig[idx, , drop = FALSE]
+        mo  <- rd_orig(rows = idx)
         mp  <- mat_pan[idx, , drop = FALSE]
         
         p_full <- colMeans(mo, na.rm = TRUE) / 2
@@ -795,12 +826,19 @@ gl.check.panel <- function(x,
       ## DR: top-nl highest-MAF loci; inverse: top-nl lowest-MAF loci
       dr_max <- NA_real_
       if (!is.null(xorig)) {
-        gmat_orig  <- as.matrix(xorig)
         pops_orig  <- as.character(pop(xorig))
         upops_orig <- unique(pops_orig)
-        dr_all <- vapply(seq_len(ncol(gmat_orig)), function(l) {
-          mean(vapply(upops_orig, function(pp) {
-            p <- mean(gmat_orig[pops_orig == pp, l], na.rm = TRUE) / 2
+        # allele frequency of each population at each locus, read in
+        # blocks of loci of the population's rows (xorig is not decoded as
+        # a whole; colMeans() equals mean() of each column)
+        p_orig <- lapply(upops_orig, function(pp) {
+          dartR.base::utils.fbm.colwise(xorig, function(m) {
+            colMeans(m, na.rm = TRUE)
+          }, rows = which(pops_orig == pp)) / 2
+        })
+        dr_all <- vapply(seq_len(nLoc(xorig)), function(l) {
+          mean(vapply(seq_along(upops_orig), function(k) {
+            p <- p_orig[[k]][[l]]
             if (!is.finite(p)) return(NA_real_)
             (2 * min(p, 1 - p))^2
           }, numeric(1)), na.rm = TRUE)
@@ -909,18 +947,25 @@ gl.check.panel <- function(x,
       
       # align panel individuals to xorig order so the upper-triangle
       # pairs from the two matrices correspond row-for-row
-      mat_orig <- as.matrix(xorig)
+      # the full data are read in blocks of loci (grm_vanraden_blocks); the
+      # panel is small and decoded as before
       mat_pan  <- as.matrix(x)[indNames(xorig), , drop = FALSE]
       loc_pan  <- colnames(mat_pan)
-      
+      rd_orig <- dartR.base::utils.fbm.reader(xorig)
+      col_means_orig <- function(rows = NULL) {
+        dartR.base::utils.fbm.colwise(xorig, function(m) {
+          colMeans(m, na.rm = TRUE)
+        }, rows = rows)
+      }
+
       if (ref == "global") {
         if (verbose >= 2)
           cat("Computing global reference allele frequencies...\n")
-        p_ref <- colMeans(mat_orig, na.rm = TRUE) / 2
+        p_ref <- col_means_orig() / 2
         p_ref[is.nan(p_ref)] <- 0.5
-        
-        grm_orig    <- grm_vanraden(mat_orig, p_ref)            * scale_fac
-        grm_panel   <- grm_vanraden(mat_pan,  p_ref[loc_pan])   * scale_fac
+
+        grm_orig    <- grm_vanraden_blocks(xorig, rd_orig, p_ref) * scale_fac
+grm_panel   <- grm_vanraden(mat_pan,  p_ref[loc_pan])   * scale_fac
         pairs_orig  <- grm_orig[ upper.tri(grm_orig)]
         pairs_panel <- grm_panel[upper.tri(grm_panel)]
         
@@ -935,12 +980,11 @@ gl.check.panel <- function(x,
         for (pp in upops) {
           idx <- which(pops_chr == pp)
           if (length(idx) < 2) { skipped <- c(skipped, pp); next }
-          mo   <- mat_orig[idx, , drop = FALSE]
           mp   <- mat_pan[ idx, , drop = FALSE]
-          p_pp <- colMeans(mo, na.rm = TRUE) / 2
+          p_pp <- col_means_orig(idx) / 2
           p_pp[is.nan(p_pp)] <- 0.5
-          g_o  <- grm_vanraden(mo, p_pp)            * scale_fac
-          g_p  <- grm_vanraden(mp, p_pp[loc_pan])   * scale_fac
+          g_o  <- grm_vanraden_blocks(xorig, rd_orig, p_pp, idx) * scale_fac
+g_p  <- grm_vanraden(mp, p_pp[loc_pan])   * scale_fac
           pairs_orig  <- c(pairs_orig,  g_o[upper.tri(g_o)])
           pairs_panel <- c(pairs_panel, g_p[upper.tri(g_p)])
         }

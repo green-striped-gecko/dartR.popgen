@@ -148,14 +148,23 @@ gl.select.panel<-
     }
 
     # Allele frequencies (reference, alternate) per locus from the genotype
-    # matrix. gl.alf() runs the dartR.base datatype check, which stops on
-    # population subsets whose genotypes are all 0/1 when the object carries
-    # no SNP metadata.
-    alf <- function(g) {
-      q <- colMeans(as.matrix(g), na.rm = TRUE) / 2
+    # matrix, of all individuals or of the rows of one population. gl.alf()
+    # runs the dartR.base datatype check, which stops on population subsets
+    # whose genotypes are all 0/1 when the object carries no SNP metadata.
+    # Read in blocks of loci (dartR.base::utils.fbm.colwise), so populations
+    # are not copied with seppop() and a file-backed object is not decoded
+    # as a whole; values identical to colMeans(as.matrix(seppop(x)[[i]])).
+    col.means <- function(rows = NULL) {
+      dartR.base::utils.fbm.colwise(x, function(m) colMeans(m, na.rm = TRUE),
+                                    rows = rows)
+    }
+    alf <- function(rows = NULL) {
+      q <- col.means(rows) / 2
       q[is.nan(q)] <- NA
       cbind(alf1 = 1 - q, alf2 = q)
     }
+    # rows of each population, in the order of seppop() (levels of pop(x))
+    pop.rows <- lapply(levels(pop(x)), function(p) which(pop(x) == p))
 
     ### DO THE JOB
 
@@ -163,13 +172,18 @@ gl.select.panel<-
 
     if (method=="dapc"){
       com <- t(combn(nPop(x), 2))
-      # adegenet (dapc, glPca) cannot read file-backed (FBM) genotypes
-      .fbm_or_null <- function(obj) tryCatch(methods::slot(obj, "fbm"), error = function(e) NULL)
-      pops <- seppop(if (is.null(.fbm_or_null(x))) x else gl.fbm2gen(x, verbose = 0))
+      # adegenet (dapc, glPca) cannot read file-backed (FBM) genotypes: a
+      # file-backed object is converted one population at a time, only for
+      # the pair compared, instead of as a whole
+      fbm <- dartR.base::utils.fbm.has(x)
+      pops <- if (fbm) NULL else seppop(x)
+      get.pop <- function(k) {
+        if (fbm) gl.fbm2gen(x[pop.rows[[k]], ], verbose = 0) else pops[[k]]
+      }
       nl2 <- ceiling(nl/nrow(com))
 
       for (i in 1:nrow(com)){
-        dummy <- pops[c(com[i,1],com[i,2])]
+        dummy <- list(get.pop(com[i,1]), get.pop(com[i,2]))
         dummy <-do.call(rbind,dummy)
         # glPca (inside dapc) stops on loci with no calls in the pair
         called <- colSums(!is.na(as.matrix(dummy))) > 0
@@ -188,16 +202,17 @@ gl.select.panel<-
 
     if (method=="pahigh"){
       com <- t(combn(nPop(x), 2))
-      pops <- seppop(x)
       nl2 <- ceiling(nl/(nrow(com)*2))
+      # allele frequencies of each population (per locus)
+      q.pop <- lapply(pop.rows, function(r) alf(r)[, 2])
 
       # Private-allele loci of population a against b, with the rule of
       # gl.report.pa(): an allele present in a and absent from b. Computed
       # here because gl.report.pa() needs networkD3, tibble and tidyr (for
       # its plot) on every call.
       pa_loci <- function(a, b) {
-        qa <- alf(pops[[a]])[, 2]
-        qb <- alf(pops[[b]])[, 2]
+        qa <- q.pop[[a]]
+        qb <- q.pop[[b]]
         locNames(x)[which((qb == 0 & qa != 0) | (qb == 1 & qa != 1))]
       }
       panxx <- lapply(seq_len(nrow(com)), function(i) {
@@ -208,10 +223,13 @@ gl.select.panel<-
       # highest-frequency private alleles of population a against b
       top_pa <- function(pas, a, b) {
         if (length(pas) == 0) return(character(0))
-        p1p <- gl.keep.loc(pops[[a]], loc.list = pas, verbose = 0)
-        p2p <- gl.keep.loc(pops[[b]], loc.list = pas, verbose = 0)
-        score <- rowSums(alf(p1p) * !alf(p2p))
-        names(score) <- locNames(p1p)
+        # the loci in pas, in the order of the object (as gl.keep.loc())
+        keep <- which(locNames(x) %in% pas)
+        qa <- q.pop[[a]][keep]
+        qb <- q.pop[[b]][keep]
+        score <- rowSums(cbind(alf1 = 1 - qa, alf2 = qa) *
+                           !cbind(alf1 = 1 - qb, alf2 = qb))
+        names(score) <- locNames(x)[keep]
         utils::head(names(sort(score, decreasing = TRUE)), nl2)
       }
 
@@ -232,14 +250,12 @@ gl.select.panel<-
     }
     if (method=="monopop"){
       res <- list()
-      pops <- seppop(x)
-      nl2 <- ceiling(nl/length(pops))
+      nl2 <- ceiling(nl/length(pop.rows))
 
       for (i in 1:nPop(x)){
-        dummy <- pops[[i]]
-        cm <- colMeans(as.matrix(dummy), na.rm = TRUE)
+        cm <- col.means(pop.rows[[i]])
         index <- !is.na(cm) & (cm == 0 | cm == 2)
-        dl<-  locNames(dummy)[index]
+        dl<-  locNames(x)[index]
         # a population can hold fewer monomorphic loci than its share
         mons <- dl[sample.int(length(dl), min(nl2, length(dl)))]
         res[[i]] <- mons
@@ -251,13 +267,11 @@ gl.select.panel<-
     }
     if (method=="stratified"){
       res <- list()
-      pops <- seppop(x)
-      nl2 <- ceiling(nl/length(pops))
+      nl2 <- ceiling(nl/length(pop.rows))
       for (i in 1:nPop(x)){
 
-        dummy <- pops[[i]]
-
-        df <- data.frame(id=locNames(dummy), freq=0.5-(abs(alf(dummy)[,1]-0.5)))
+        df <- data.frame(id=locNames(x),
+                         freq=0.5-(abs(alf(pop.rows[[i]])[,1]-0.5)))
         df <- df[order(df$freq),]
 
         self <- seq(0,0.5, length=nl2+1)
@@ -279,7 +293,7 @@ gl.select.panel<-
     }
     if (method=="hafall"){
 
-      index <- order(0.5-abs(0.5-alf(x)[,1]), decreasing = TRUE)
+      index <- order(0.5-abs(0.5-alf()[,1]), decreasing = TRUE)
       selloc <- locNames(x)[index[1:nl]]
 
 
@@ -287,12 +301,11 @@ gl.select.panel<-
     if (method=="hafpop"){
 
       res <- list()
-      pops <- seppop(x)
-      nl2 <- ceiling(nl/length(pops))
+      nl2 <- ceiling(nl/length(pop.rows))
       for (i in 1:nPop(x)){
 
-        index <- order(0.5-abs(0.5-alf(pops[[i]])[,1]), decreasing = TRUE)
-        res[[i]] <- locNames(pops[[i]])[index[seq_len(min(nl2, length(index)))]]
+        index <- order(0.5-abs(0.5-alf(pop.rows[[i]])[,1]), decreasing = TRUE)
+        res[[i]] <- locNames(x)[index[seq_len(min(nl2, length(index)))]]
       }
 
 
@@ -303,7 +316,7 @@ gl.select.panel<-
     if (method=="pic"){
 
       res <- list()
-      af <- alf(x)
+      af <- alf()
       p <- af[,1]
       q <- af[,2]
       pic <- order(1-(p^2+q^2)-2*p^2*q^2, decreasing = TRUE)
