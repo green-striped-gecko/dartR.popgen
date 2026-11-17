@@ -239,7 +239,30 @@ gl.LDNe <- function(x,
   # path such as '.' means the caller's working directory, as documented
   outpath <- normalizePath(outpath, winslash = "/", mustWork = FALSE)
 
-  xx <- gl2genepop(x,
+  # NeEstimator reads only the first characters (about 28) of the
+  # population_individual label that gl2genepop writes for each individual.
+  # A longer label ran into the genotypes, and NeEstimator skipped that
+  # population, or ran none when it sorted first. The population name was
+  # also read back from the label, so underscores in individual names ended
+  # up in it. Short codes are written instead (p<i>_i<j>, population i in
+  # the order of its levels) and the results are mapped back to the names.
+  x.ne <- x
+  if (is.null(pop(x.ne))) {
+    if (verbose >= 2) {
+      cat(important(
+        "  No population definition: all individuals are treated as one",
+        "population, Pop1.\n"
+      ))
+    }
+    pop(x.ne) <- rep("Pop1", nInd(x.ne))
+  }
+  pop.ne <- droplevels(as.factor(pop(x.ne)))
+  pop.names <- levels(pop.ne)
+  pop(x.ne) <- factor(paste0("p", as.integer(pop.ne)),
+                      levels = paste0("p", seq_along(pop.names)))
+  indNames(x.ne) <- paste0("i", seq_len(nInd(x.ne)))
+
+  xx <- gl2genepop(x.ne,
     outfile = "dummy.gen", outpath = run.dir,
     verbose = if (verbose >= 3) verbose else 0
   )
@@ -367,7 +390,18 @@ gl.LDNe <- function(x,
     sapply(res[res %like% "Population"], function(x) {
       str_extract(x, "(?<=\\[).*(?=\\])")
     }, USE.NAMES = F)
-  pops <- sub("_[^_]+$", "", pops)
+  pops <- pop.names[as.integer(sub("^p([0-9]+)_.*$", "\\1", pops))]
+  # a population NeEstimator could not read is missing from its output; the
+  # tables below are matched to populations by position, so stop rather than
+  # return the others without it
+  missing.pops <- setdiff(pop.names, pops)
+  if (length(missing.pops) > 0) {
+    stop(error(
+      "  NeEstimator returned no estimate for population(s):",
+      paste0(paste(missing.pops, collapse = ", "), ". Its last messages:\n"),
+      paste0("  ", utils::tail(ne.log, 10), "\n", collapse = "")
+    ))
+  }
   freq <- str_split(res[res %like% "Lowest"], "\\s{3,}")[[1]][-1]
   Estimated_Ne <-
     lapply(res[res %like% "Estimated"], function(x) {
@@ -392,7 +426,7 @@ gl.LDNe <- function(x,
 
   # JackKnife works only with more than 2 individuals
 
-  ind_threshold <- which(table(pop(x)) < 3)
+  ind_threshold <- which(table(pop.ne) < 3)
 
   # NeEstimator prints no jackknife line for such a population, so a
   # placeholder is inserted at its position. append() is used because
