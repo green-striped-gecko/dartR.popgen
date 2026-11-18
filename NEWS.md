@@ -21,7 +21,9 @@
   `getOption("dartR_fbm_max_decode_gb", 4)` Gb); its verbose >= 3
   missing-data check counts in blocks of loci. Gen-backed objects are
   unchanged.
-* Needs dartR.base >= 1.2.7.9000 (the exported `utils.fbm.*` helpers).
+* Needs dartR.base >= 1.3.0 (the exported `utils.fbm.*` helpers).
+* `stats` and `parallel`, already imported in NAMESPACE, are now listed in
+  Imports in DESCRIPTION.
 
 # dartR.popgen 1.2.7
 
