@@ -2,24 +2,38 @@
 % Please edit documentation in R/utils.structure.evanno.r
 \name{utils.structure.evanno}
 \alias{utils.structure.evanno}
-\title{Util function for evanno plots}
+\title{Evanno statistics and plots from a STRUCTURE run object}
 \usage{
-utils.structure.evanno(sr, plot = TRUE)
+utils.structure.evanno(sr, plot = TRUE, plot.theme = NULL, verbose = 0)
 }
 \arguments{
-\item{sr}{structure run object}
+\item{sr}{Structure run object from \code{\link{gl.run.structure}}
+[required].}
 
-\item{plot}{should the plots be returned}
+\item{plot}{Whether the combined plot is printed [default TRUE].}
+
+\item{plot.theme}{Theme added to every plot; NULL leaves the ggplot2
+default [default NULL].}
+
+\item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
+brief progress messages; 3, progress and results summary; 5, full report
+[default 0].}
 }
 \value{
-returns a list of dataframes (structure results) and a list of plots
+A list with the statistics (element df) and a list of plots
+(element plots: mean.ln.k, ln.pk, ln.ppk, delta.k when it can be computed,
+and combined).
 }
 \description{
-These functions were copied from package strataG, which is no longer on CRAN
-(maintained by Eric Archer)
+Computes the Evanno et al. (2005) statistics from a structure run object
+(\code{\link{gl.run.structure}}) and builds their plots. Called by
+\code{\link{gl.evanno}} and \code{\link{gl.run.structure}}.
+
+The code was adapted from package strataG (Eric Archer), which is no longer
+on CRAN. See \code{\link{gl.evanno}} for the statistics returned.
 }
 \author{
-Bernd Gruber (bugs? Post to
- \url{https://groups.google.com/d/forum/dartr}); original implementation of
-  Eric Archer \url{https://github.com/EricArcher/strataG}
+Author(s): Bernd Gruber, original implementation by Eric Archer
+(\url{https://github.com/EricArcher/strataG}). Custodian: Bernd Gruber --
+Post to \url{https://groups.google.com/d/forum/dartr}
 }

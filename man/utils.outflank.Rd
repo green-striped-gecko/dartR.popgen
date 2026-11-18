@@ -11,7 +11,8 @@ utils.outflank(
   RightTrimFraction = 0.05,
   Hmin = 0.1,
   NumberOfSamples,
-  qthreshold = 0.05
+  qthreshold = 0.05,
+  verbose = NULL
 )
 }
 \arguments{
@@ -52,6 +53,10 @@ set.}
 
 \item{qthreshold}{The desired false discovery rate threshold for calculating
 q-values [default 0.05].}
+
+\item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
+brief progress messages; 3, progress and results summary; 5, full report
+[default 2, unless specified using gl.set.verbosity].}
 }
 \value{
 The function returns a list with seven elements:

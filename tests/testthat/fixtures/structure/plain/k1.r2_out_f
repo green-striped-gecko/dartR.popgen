@@ -1,0 +1,200 @@
+
+
+----------------------------------------------------
+STRUCTURE by Pritchard, Stephens and Donnelly (2000)
+     and Falush, Stephens and Pritchard (2003)
+       Code by Pritchard, Falush and Hubisz
+             Version 2.3.4 (Jul 2012)
+----------------------------------------------------
+
+
+
+Command line arguments:   /Users/mijangos/programs/structure -m k1.r2_mainparams -e k1.r2_extraparams -i k1.r2_data -o k1.r2_out 
+Input File:    k1.r2_data
+
+Run parameters:
+   31 individuals
+   18 loci
+   1 populations assumed
+   100 Burn-in period
+   100 Reps
+NO ADMIXTURE model assumed
+
+
+--------------------------------------------
+Proportion of membership of each pre-defined
+ population in each of the 1 clusters
+
+Given    Inferred Clusters       Number of
+ Pop       1                    Individuals
+
+  1:     1.000                     10
+  2:     1.000                     10
+  3:     1.000                     11
+--------------------------------------------
+
+Allele-freq. divergence among pops (Net nucleotide distance),
+computed using point estimates of P.
+
+      1      
+ 1      -    
+
+Average distances (expected heterozygosity) between individuals in same cluster:
+cluster  1  : 0.2062 
+
+--------------------------------------------
+Estimated Ln Prob of Data   = -344.9
+Mean value of ln likelihood = -341.1
+Variance of ln likelihood   = 7.7
+Allele frequencies uncorrelated
+
+
+Inferred ancestry of individuals:
+        Label (%Miss) Pop:  Inferred clusters
+  1        1    (0)    3 :  1.000 
+  2       10    (5)    2 :  1.000 
+  3       11    (0)    2 :  1.000 
+  4       12    (0)    3 :  1.000 
+  5       13    (0)    3 :  1.000 
+  6       14    (0)    1 :  1.000 
+  7       15    (0)    1 :  1.000 
+  8       16    (0)    3 :  1.000 
+  9       17    (0)    3 :  1.000 
+ 10       18    (0)    3 :  1.000 
+ 11       19    (0)    3 :  1.000 
+ 12        2    (0)    2 :  1.000 
+ 13       20    (0)    3 :  1.000 
+ 14       21    (0)    3 :  1.000 
+ 15       22    (0)    3 :  1.000 
+ 16       23    (0)    1 :  1.000 
+ 17       24    (0)    1 :  1.000 
+ 18       25    (0)    1 :  1.000 
+ 19       26    (5)    1 :  1.000 
+ 20       27    (0)    1 :  1.000 
+ 21       28    (0)    1 :  1.000 
+ 22       29    (0)    1 :  1.000 
+ 23        3    (0)    2 :  1.000 
+ 24       30    (0)    1 :  1.000 
+ 25       31    (0)    3 :  1.000 
+ 26        4    (5)    2 :  1.000 
+ 27        5    (0)    2 :  1.000 
+ 28        6    (0)    2 :  1.000 
+ 29        7    (5)    2 :  1.000 
+ 30        8    (0)    2 :  1.000 
+ 31        9    (0)    2 :  1.000 
+
+
+Estimated Allele Frequencies in each cluster
+
+
+Locus 1 : 100049990-20-G 
+2 alleles
+0.0% missing data
+   0   0.508 
+   1   0.492 
+
+Locus 2 : 100050129-31-G 
+2 alleles
+0.0% missing data
+   1   0.494 
+   0   0.506 
+
+Locus 3 : 100051015-65-C 
+2 alleles
+0.0% missing data
+   0   0.951 
+   1   0.049 
+
+Locus 4 : 100052090-40-A 
+2 alleles
+0.0% missing data
+   0   0.969 
+   1   0.031 
+
+Locus 5 : 100055453-43-T 
+2 alleles
+0.0% missing data
+   1   0.970 
+   0   0.030 
+
+Locus 6 : 100056847-35-C 
+2 alleles
+0.0% missing data
+   0   0.970 
+   1   0.030 
+
+Locus 7 : 100059287-7-T/ 
+2 alleles
+0.0% missing data
+   1   0.956 
+   0   0.044 
+
+Locus 8 : 100061754-64-C 
+2 alleles
+0.0% missing data
+   0   0.965 
+   1   0.035 
+
+Locus 9 : 100097057-15-G 
+2 alleles
+0.0% missing data
+   1   0.969 
+   0   0.031 
+
+Locus 10 : 100097351-21-G 
+2 alleles
+0.0% missing data
+   1   0.972 
+   0   0.028 
+
+Locus 11 : 100097451-8-G/ 
+2 alleles
+0.0% missing data
+   0   0.431 
+   1   0.569 
+
+Locus 12 : 100097553-6-G/ 
+2 alleles
+0.0% missing data
+   1   0.925 
+   0   0.075 
+
+Locus 13 : 100097862-14-A 
+2 alleles
+0.0% missing data
+   0   0.788 
+   1   0.212 
+
+Locus 14 : 100097967-30-T 
+2 alleles
+0.0% missing data
+   0   0.713 
+   1   0.287 
+
+Locus 15 : 100097985-19-A 
+2 alleles
+9.7% missing data
+   0   0.553 
+   1   0.447 
+
+Locus 16 : 100113744-6-T/ 
+2 alleles
+0.0% missing data
+   1   0.944 
+   0   0.056 
+
+Locus 17 : 100113811-12-C 
+2 alleles
+0.0% missing data
+   0   0.956 
+   1   0.044 
+
+Locus 18 : 100113823-26-T 
+2 alleles
+3.2% missing data
+   1   0.937 
+   0   0.063 
+
+Values of parameters used in structure:
+DATAFILE=k1.r2_data,	OUTFILE=k1.r2_out,	NUMINDS=31,	NUMLOCI=18,	MISSING=-9,	LABEL=1,	POPDATA=1,	POPFLAG=1,	PHENOTYPE=0,	EXTRACOLS=0,	MAXPOPS=1,	BURNIN=100,	NUMREPS=100,	USEPOPINFO=0,	INFERALPHA=0,	INFERLAMBDA=0,	POPSPECIFICLAMBDA=0,	POPALPHAS=0,	COMPUTEPROB=1,	NOADMIX=1,	ADMBURNIN=50,	UPDATEFREQ=200,	PRINTLIKES=0,	INTERMEDSAVE=0,	PRINTKLD=0,	PRINTNET=0,	PRINTLAMBDA=0,	ANCESTDIST=0,	NUMBOXES=1000,	ANCESTPINT=0.90000,	GENSBACK=2,	MIGRPRIOR=0.05000,	PRINTQHAT=0,	PRINTQSUM=0,	ALPHA=1.0000,	FREQSCORR=0,	FPRIORMEAN=0.0100,	FPRIORSD=0.0500,	ONEFST=0,	LAMBDA=1.0000,	UNIFPRIORALPHA=1,	ALPHAMAX=20.0000,	ALPHAPRIORA=0.0500,	ALPHAPRIORB=0.0010,	ALPHAPROPSD=0.0250,	STARTATPOPINFO=0,	RANDOMIZE=1,	LINKAGE=0,	METROFREQ=10,	REPORTHITRATE=0,	MARKOVPHASE=-1,	PHASED=1,	PLOIDY=2,	PHASEINFO=0	LOCPRIOR=0, 	LOCPRIORINIT=1.000000, 	LOCDATA=0, 	LOCISPOP=0, 	LOCPRIORSTEP=0.100000, 	MAXLOCPRIOR=20.000000, 	SEED=1790154623,	
+[STRAT parameters]:    NUMSIMSTATS=1000,	PHENOTYPECOL=-9,	POOLFREQ=10,	LOCUSxONLY=0,	EMERROR=0.00100,	MISSINGPHENO=-9,	

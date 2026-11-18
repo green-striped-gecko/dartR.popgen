@@ -15,27 +15,29 @@ gl.TajimasD(
   plot.out = TRUE,
   plot.file = NULL,
   plot_theme = NULL,
-  verbose = 2
+  verbose = NULL
 )
 }
 \arguments{
-\item{x}{Name of the genlight object containing the SNP data [required]}
+\item{x}{Name of the genlight object containing the SNP data [required].}
 
-\item{ms.path}{absolute path that stores the ms program
-(eg: /User/msdir/) [default  NULL].}
+\item{ms.path}{Not needed any more: the neutral simulation is done in R.
+Accepted for compatibility and ignored [default NULL].}
 
-\item{simulation.out}{Directory in which to save simulated summary
-statistics from MS, given ms.path is provided  [default  NULL].}
+\item{simulation.out}{Directory in which to save the simulated Tajima's D
+values (one file per population), if rep is given [default NULL].}
 
-\item{rep}{Number of replicates in ms
-[default  NULL, required for simulation].}
+\item{rep}{Number of simulated replicates for sim_pval. If NULL, no
+simulation is run [default NULL].}
 
-\item{seeds}{Seeds for the random number generator in ms [default  NULL,
-seeds are randomly generated].}
+\item{seeds}{Seed for the random number generator of the simulation (the
+first value is used) [default NULL, not set].}
 
-\item{cleanup}{clean data in tmp [default  TRUE].}
+\item{cleanup}{Not needed any more (no temporary files are written);
+accepted for compatibility [default TRUE].}
 
-\item{plot.dir}{Directory in which to save files [default working directory].}
+\item{plot.dir}{Directory in which to save files [default as specified by
+the global working directory or tempdir()].}
 
 \item{plot.out}{Specify if plot is to be produced [default TRUE].}
 
@@ -49,35 +51,64 @@ progress log; 3, progress and results summary; 5, full report
 [default 2 or as specified using gl.set.verbosity].}
 }
 \value{
-A plot and table of Tajima's D for each population ( and results from MS and plots of simulated Tajima's D can be returned if ms.path is provided). If you use ms, please make sure you cite: Hudson, R. R. (2002). Generating samples under a Wright–Fisher neutral model of genetic variation. Bioinformatics, 18(2), 337-338.
-
-A plot and table of Tajima's D (results from MS and plot of simulated
-Tajima's D can be returned if ms.path is provided)
+A data frame with, for each population, pi, the number of segregating
+sites S, D, Pval.normal, Pval.beta, N (mean number of genotyped
+individuals), theta_per_site (pi divided by the number of loci, not by
+the number of base pairs) and, if rep is given, sim_pval. A plot of D by
+population and, if rep is given, the simulated distributions are shown.
 }
 \description{
-This function calculate Tajima's D, with p-values from beta distribution, standard normal distribution and simulation from ms (Hudson, 2002) for each population in the dartR/genlight object.
-#' simulation results can only be output if ms and sample_stats are available. Both programs need to be compiled from here: \url{https://home.uchicago.edu/rhudson1/source/mksamples.html} or binaries can be downloaded via: \code{\link[dartRverse]{gl.download.binary}}. If you provide the ms path, the function will simulate a population according to the provided dartR/genlight object. The function will then calculate Tajima's D for each population and compare the results from ms and plot the distribution of simulated Tajima's D for each population. (this can be used to test the TajimasD against a neutral model of evolution [p values is provided under sim_pval]).
-Refer to the ms manual for further information on the program and simulation. Here we estimate theta from the number of segregating sites (S) and the number of alleles (k) in the sample and simulate a population according to the provided dartR/genlight object.
+This function calculates Tajima's D for each population in the
+dartR/genlight object, with p-values from the beta distribution, the
+standard normal distribution and, if \code{rep} is given, from
+simulations of a neutral population with unlinked SNPs.
+}
+\details{
+D is calculated from the allele counts at each locus: pi (the average
+number of pairwise differences) and Watterson's estimator use the number
+of called sequences at each locus, so loci with missing calls are used
+with their own sample size. The constants in the variance of D use the
+mean sample size (reported as N, the mean number of genotyped individuals).
+\cr
+Pval.normal and Pval.beta follow Tajima (1989), which assumes that all
+segregating sites lie on one non-recombining locus. SNPs from DArT data
+are mostly unlinked, and for unlinked sites D varies much less under
+neutrality, so these two p-values are too large (conservative) for such
+data. sim_pval is computed against a neutral null of unlinked SNPs: for
+each replicate, the derived-allele count of each of the S segregating sites
+is drawn from the neutral distribution P(k) proportional to 1/k
+(k = 1, ..., 2N - 1), and D is computed from the simulated sites.
+sim_pval is the proportion of replicates with |D| at least as large as
+the observed |D|.\cr
+DArT loci are selected because they are polymorphic, which shifts the
+site frequency spectrum towards intermediate frequencies and D upwards;
+interpret D with this ascertainment in mind.
 }
 \examples{
-# To run without ms simulation
 Tajima <- gl.TajimasD(x=bandicoot.gl)
-#' # To run with ms simulation
-\dontrun{
-Tajima <- gl.TajimasD(x=bandicoot.gl, rep=10, ms.path="/User/msdir/")
+# with a neutral null of unlinked SNPs
+\donttest{
+Tajima <- gl.TajimasD(x=bandicoot.gl, rep=100, seeds=1)
 }
 }
 \references{
 \itemize{
 \item Tajima, F. (1989). Statistical method for testing the neutral
 mutation hypothesis by DNA polymorphism. Genetics, 123(3), 585-595.
-\item Hudson, R. R. (2002). Generating samples under a Wright–Fisher
-neutral model of genetic variation. Bioinformatics, 18(2), 337-338.
+\item Fu, Y. X. (1995). Statistical properties of segregating sites.
+Theoretical Population Biology, 48(2), 172-197.
 \item Paradis, E. (2010). pegas: an R package for population genetics with
-an integrated–modular approach. Bioinformatics, 26(3), 419-420.
+an integrated-modular approach. Bioinformatics, 26(3), 419-420.
 }
+}
+\seealso{
+Other demographic history: 
+\code{\link{gl.run.epos}()},
+\code{\link{gl.run.stairway2}()},
+\code{\link{gl.sfs}()}
 }
 \author{
-Renee Catullo (Custodian: Ching Ching Lau) -- Post to
+Author(s): Renee Catullo. Custodian: Ching Ching Lau -- Post to
  \url{https://groups.google.com/d/forum/dartr}
 }
+\concept{demographic history}

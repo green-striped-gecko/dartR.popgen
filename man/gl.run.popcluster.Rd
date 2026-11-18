@@ -7,7 +7,7 @@
 gl.run.popcluster(
   x,
   popcluster.path = getwd(),
-  output.path = getwd(),
+  output.path = tempdir(),
   filename = "output",
   minK = 1,
   maxK = 2,
@@ -35,11 +35,12 @@ gl.run.popcluster(
 \arguments{
 \item{x}{Name of the genlight object containing the SNP data [required].}
 
-\item{popcluster.path}{Path to the directory that contain the PopCluster
-program [default getwd()].}
+\item{popcluster.path}{Path to the directory that contains the PopCluster
+program (PopClusterMac, PopClusterLnx or PopClusterWin.exe)
+[default getwd()].}
 
-\item{output.path}{Path to store the parameter file and input
-data [default getwd()].}
+\item{output.path}{Folder in which the PopCluster parameter file and input
+data are written; created if missing [default tempdir()].}
 
 \item{filename}{Prefix of all the files that will be produced
 [default “output”].}
@@ -85,24 +86,34 @@ moment) [default FALSE].}
 
 \item{ncores}{How many cores should be used [default 1].}
 
-\item{cleanup}{clean data in tmp [default  TRUE].}
+\item{cleanup}{Remove the temporary folder in which PopCluster runs (a
+copy of the program and all its output files) when finished
+[default TRUE].}
 
-\item{plot.dir}{Directory in which to save files [default getwd()].}
+\item{plot.dir}{Directory in which to save files [default = tempdir(),
+unless specified using gl.set.wd].}
 
 \item{plot.out}{Specify if plot is to be produced [default TRUE].}
 
 \item{plot.file}{Name for the RDS binary file to save (base name only, 
 exclude extension) [default NULL].}
 
-\item{plot_theme}{Theme of the plot [default theme_dartR()].}
+\item{plot_theme}{Theme of the plots [default theme_dartR()].}
 
 \item{verbose}{Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
-progress log; 3, progress and results summary; 5, full report
-[default 2 or as specified using gl.set.verbosity].}
+brief progress messages; 3, progress and results summary, including the
+output of PopCluster; 5, full report
+[default 2, unless specified using gl.set.verbosity].}
 }
 \value{
-The plot of likelihood, DLK1, DLK2, FST.FIS, best run, Q-matrices 
-of PopCluster.
+A list with: output_path, the folder with the parameter and input
+files; best_run, a data frame with one row per K and the numeric columns
+K, LogL_Mean, LogL_Min, LogL_Max, DLK1, DLK2, FST.FIS (NA where PopCluster
+reports "-") plus BestRun (the name of the best run); plots, a list of four
+ggplots (LogL_Mean, DLK1, DLK2, FST.FIS against K); and matrix, a list
+named by best run of data frames with one row per individual: Index,
+Order (position in the bar plot), Label, PercentMiss, Cluster,
+Pop_1 ... Pop_K (ancestry proportions) and Pop (population).
 }
 \description{
 Creates an input file for the program PopCluster and runs it if
@@ -141,18 +152,23 @@ your sample doesn't include many relatives, the Unequal Frequency Prior
 the individuals in your sample are, set pr_allele_freq = 0. This 
 will let the program check for relatedness and automatically choose the 
 best prior (Equal or Unequal) based on the results.
+
+For each K, the Q matrix of the best run chosen by PopCluster is returned;
+replicates are not averaged.
+
+PopCluster builds carry an expiry date, printed when the program starts
+(seen with verbose = 3); download a current build when it has passed.
 }
 \examples{
 \dontrun{
-m <- gl.run.popcluster(x=bandicoot.gl, 
-popcluster.path="/User/PopCluster/Bin/",
-output.path="/User/Documents/Output/", minK=1, maxK=3, rep=2)
-Q <- gl.plot.popcluster(pop_cluster_result=m, plot.K = 3, ind_name=T)
+m <- gl.run.popcluster(x = bandicoot.gl,
+  popcluster.path = "/User/PopCluster/Bin/", minK = 1, maxK = 3, rep = 2)
+Q <- gl.plot.popcluster(pop_cluster_result = m, plot.K = 3, ind_name = TRUE)
 gl.map.popcluster(x = bandicoot.gl, qmat = Q)
-# move population 4 (out of 5) 0.5 degrees to the right and populations 1
-# 0.3 degree to the north of the map.
-mp <- data.frame(lon=c(0,0,0,0.5,0), lat=c(-0.3,0,0,0,0))
-gl.map.popcluster(bandicoot.gl, qmat=Q, movepops=mp)
+# move population 4 (out of 5) 0.5 degrees to the right and population 1
+# 0.3 degrees to the south of the map.
+mp <- data.frame(lon = c(0, 0, 0, 0.5, 0), lat = c(-0.3, 0, 0, 0, 0))
+gl.map.popcluster(bandicoot.gl, qmat = Q, movepops = mp)
 }
 
 }
@@ -163,7 +179,22 @@ from genotype data from a few microsatellites to millions of SNPs.
 Heredity, 129(2), 79-92.
 }
 }
+\seealso{
+Other population structure: 
+\code{\link{gl.evanno}()},
+\code{\link{gl.map.popcluster}()},
+\code{\link{gl.map.snmf}()},
+\code{\link{gl.map.structure}()},
+\code{\link{gl.plot.faststructure}()},
+\code{\link{gl.plot.popcluster}()},
+\code{\link{gl.plot.snmf}()},
+\code{\link{gl.plot.structure}()},
+\code{\link{gl.read.structure}()},
+\code{\link{gl.run.faststructure}()},
+\code{\link{gl.run.snmf}()}
+}
 \author{
-Custodian: Ching Ching Lau -- Post to
+Author(s): Ching Ching Lau. Custodian: Ching Ching Lau -- Post to
  \url{https://groups.google.com/d/forum/dartr}
 }
+\concept{population structure}
