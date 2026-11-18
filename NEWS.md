@@ -1,3 +1,30 @@
+# dartR.popgen 1.3.0
+
+* `gl.amova()` no longer converts a file-backed object to a genlight: Nei's
+  distances between individuals are built from pairwise genotype counts
+  read in blocks of loci and are identical to `StAMPP::stamppNeisD()` (all
+  terms are exact multiples of 0.25).
+* `gl.sfs()` and `gl.select.panel()` (methods pahigh, monopop, stratified,
+  hafall, hafpop, pic) read the genotypes in blocks of loci, per population
+  by row indices instead of `seppop()` copies; a file-backed object is not
+  decoded as a whole. `gl.select.panel(method = "dapc")` converts a
+  file-backed object one population at a time, for the pair compared,
+  instead of as a whole (adegenet needs a genlight). Results are identical
+  to those of the same data held in memory.
+* `gl.check.panel(parameter = "relatedness")` computes the VanRaden GRM
+  of the full data set in blocks of loci (global and within-population
+  reference frequencies); the results are identical to the previous
+  version (checked with R's reference BLAS) and for both storage types.
+* `gl.opt.ind.all()` needs the whole genotype matrix by design: for a
+  file-backed object it is decoded explicitly through
+  `dartR.base::utils.fbm.decode()` (memory reported, stops above
+  `getOption("dartR_fbm_max_decode_gb", 4)` Gb); its verbose >= 3
+  missing-data check counts in blocks of loci. Gen-backed objects are
+  unchanged.
+* Needs dartR.base >= 1.3.0 (the exported `utils.fbm.*` helpers).
+* `stats` and `parallel`, already imported in NAMESPACE, are now listed in
+  Imports in DESCRIPTION.
+
 # dartR.popgen 1.2.7
 
 * History: functions called through `do.call(fun, list(x = gl, ...))` no
@@ -72,6 +99,18 @@
   population are now matched by name; otherwise colour i goes to the i-th
   population in the order the function reports. Bar and legend order are
   unchanged.
+
+* `gl.LDNe` works with long population and individual names. NeEstimator
+  reads only about 28 characters of the `population_individual` label in
+  the genepop file; with a longer label it stopped reading at that
+  population, so it and every population after it were dropped from the
+  result without a warning, or the call failed with "subscript out of
+  bounds" when it was the first (reported by Peter Unmack). `gl.LDNe` now
+  writes short codes and maps the results back to the population names, and
+  stops naming the populations if NeEstimator still returns no estimate for
+  some. Population names also come back as given: underscores in
+  individual names no longer end up in them (`A_ind`), and spaces are no
+  longer turned into underscores.
 
 * `gl.find.genes.for.loci` and `gl.find.loci.in.genes` match DArT sequence
   names of the form `<accession>_<description>` (e.g.

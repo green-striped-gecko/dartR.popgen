@@ -155,6 +155,14 @@ If a plot.file is given, the ggplot arising from this function is saved as
 an "RDS" binary file using saveRDS(); it can be reloaded with readRDS(). If
 a plot directory (plot.dir) is specified, the ggplot binary is saved to
 that directory; otherwise to the tempdir().
+
+File-backed (FBM) objects: the algorithm needs the whole genotype
+matrix in memory. It is decoded with a message stating the memory
+needed (verbose >= 2); above
+\code{getOption("dartR_fbm_max_decode_gb", 4)} Gb the function stops
+with an error instead of exhausting memory (raise the limit with
+\code{options(dartR_fbm_max_decode_gb = ...)} if enough memory is
+available). See \code{dartR.base::utils.fbm.decode}.
 }
 \examples{
 \donttest{

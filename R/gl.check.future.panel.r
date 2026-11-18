@@ -352,7 +352,11 @@ gl.check.future.panel <- function(x,
                       dimnames=list(pop_names, loc_orig))
     for (k in seq_len(K)) {
       idx_k        <- which(as.character(pop(xorig))==pop_names[k])
-      af_k         <- colMeans(as.matrix(xorig[idx_k,]), na.rm=TRUE)/2
+      # in blocks of loci of the population's rows: xorig is neither
+      # copied nor, if file-backed, decoded as a whole
+      af_k         <- dartR.base::utils.fbm.colwise(xorig, function(m) {
+        colMeans(m, na.rm = TRUE)
+      }, rows = idx_k)/2
       af_k[is.nan(af_k)] <- NA_real_
       af_init[k,]  <- af_k
     }
