@@ -1,3 +1,7 @@
+# Slow file: skipped on CRAN to keep the check time under 10 minutes; runs
+# with devtools::test() and on GitHub Actions.
+skip_on_cran()
+
 # File-backed objects: gl.sfs, gl.select.panel and gl.amova read the
 # genotypes in blocks of loci (dartR.base::utils.fbm.colwise,
 # utils.fbm.reader, utils.fbm.pair.counts) instead of converting the object

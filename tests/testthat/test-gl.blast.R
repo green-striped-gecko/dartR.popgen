@@ -1,3 +1,7 @@
+# Slow file: skipped on CRAN to keep the check time under 10 minutes; runs
+# with devtools::test() and on GitHub Actions.
+skip_on_cran()
+
 # Characterization baseline for gl.blast (dartr-function-review, 2026-09-18).
 # Snapshots what the function does today on testset.gl against a synthetic
 # reference genome built from the object's own sequence tags: forty tags

@@ -1,3 +1,7 @@
+# Slow file: skipped on CRAN to keep the check time under 10 minutes; runs
+# with devtools::test() and on GitHub Actions.
+skip_on_cran()
+
 # Characterization tests for gl.amova — Phase A baseline (pre-change at
 # ddaed27), updated in Phase C: assertions tagged [approved Fn] flipped
 # with the matching approved finding. See
