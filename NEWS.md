@@ -1,4 +1,4 @@
-# dartR.popgen 1.3.0
+# dartR.popgen 1.3.1
 
 * `gl.select.panel.parallel()`: BUG FIX, with fewer cores than chains
   (`n_cores < n_chains`) only `n_cores` chains ran. A worker kept one chain,
@@ -8,6 +8,9 @@
   as fast, and the result listed chain 4 twice. A worker now keeps every
   chain it runs, each with its own random stream, so a run gives the same
   chains whatever `n_cores` is.
+
+# dartR.popgen 1.3.0
+
 * `gl.amova()` no longer converts a file-backed object to a genlight: Nei's
   distances between individuals are built from pairwise genotype counts
   read in blocks of loci and are identical to `StAMPP::stamppNeisD()` (all
