@@ -17,7 +17,8 @@
 #' @param parameter Character vector of parameters to optimise (see
 #'   \code{gl.select.panel.combined}).
 #' @param n_chains Number of parallel SA chains (recommended 3-5).
-#' @param n_cores Cores to use. Default = \code{n_chains}.
+#' @param n_cores Cores to use. Default = \code{n_chains}. With fewer cores
+#'   than chains, the chains share the workers and every chain still runs.
 #' @param n_iter Total SA iterations per chain.
 #' @param burst Iterations each chain runs between synchronization/plot
 #'   points. Smaller = smoother live plot but more overhead. Default 10.
@@ -83,8 +84,11 @@ gl.select.panel.parallel <- function(x,
 
   # ============================================================
   # worker-side chain state + step function
-  # This is shipped to each worker. Each worker holds ONE chain in
-  # .panel_worker_state and advances it `burst` iterations per call.
+  # This is shipped to each worker. A worker keeps the chains it runs in
+  # .panel_worker_state, one entry per chain id, and advances one of them
+  # `burst` iterations per call. With fewer cores than chains a worker runs
+  # more than one chain: clusterApply() sends chain i to the same worker in
+  # every call, so its state is always where its next step runs.
   # ============================================================
   .worker_init <- function(chain_id, x, nl, parameter, weights, init.method,
                            include.loci, start_temp, cooling, n_swap_max,
@@ -132,7 +136,9 @@ gl.select.panel.parallel <- function(x,
     curr_loci <- locNames(init_panel)
     ev        <- eval_panel(curr_loci)
 
-    .panel_worker_state$chain <- list(
+    # seed is the chain's own random stream: chains that share a worker
+    # must not continue each other's
+    assign(paste0("chain_", chain_id), list(
       id = chain_id, x = x, nl = nl, all_loci = locNames(x),
       protected = protected, eval_panel = eval_panel,
       curr_loci = curr_loci, curr_perf = ev$composite,
@@ -140,13 +146,16 @@ gl.select.panel.parallel <- function(x,
       T_sa = start_temp, start_temp = start_temp, cooling = cooling,
       n_swap_max = n_swap_max, n_iter = n_iter, restart_tol = restart_tol,
       iter = 0L,
-      hist_iter = 0L, hist_best = ev$composite, hist_curr = ev$composite
-    )
+      hist_iter = 0L, hist_best = ev$composite, hist_curr = ev$composite,
+      seed = get(".Random.seed", envir = globalenv())
+    ), envir = .panel_worker_state)
     invisible(TRUE)
   }
 
-  .worker_step <- function(n_steps) {
-    ch <- .panel_worker_state$chain
+  .worker_step <- function(chain_id, n_steps) {
+    key <- paste0("chain_", chain_id)
+    ch <- get(key, envir = .panel_worker_state)
+    assign(".Random.seed", ch$seed, envir = globalenv())
     for (s in seq_len(n_steps)) {
       if (ch$iter >= ch$n_iter) break
       ch$iter <- ch$iter + 1L
@@ -181,7 +190,8 @@ gl.select.panel.parallel <- function(x,
       ch$hist_best <- c(ch$hist_best, ch$best_perf)
       ch$hist_curr <- c(ch$hist_curr, ch$curr_perf)
     }
-    .panel_worker_state$chain <- ch
+    ch$seed <- get(".Random.seed", envir = globalenv())
+    assign(key, ch, envir = .panel_worker_state)
     list(id = ch$id, iter = ch$iter, best_perf = ch$best_perf,
          best_loci = ch$best_loci,
          hist_iter = ch$hist_iter, hist_best = ch$hist_best,
@@ -210,7 +220,7 @@ gl.select.panel.parallel <- function(x,
   parallel::clusterExport(cl, c(".worker_init", ".worker_step"),
                           envir = environment())
 
-  # init one chain per worker.
+  # init the chains, each on the worker that will run it.
   # Share all init args via a single exported list (avoids passing the
   # S4 genlight through clusterApply's positional arg machinery, which
   # fails with 'S4 class is not subsettable').
@@ -241,8 +251,8 @@ gl.select.panel.parallel <- function(x,
       # advance every chain one burst. Export the step count as a global
       # so we don't pass extra named args through clusterApply.
       parallel::clusterExport(cl, "steps", envir = environment())
-      latest <- parallel::clusterApply(cl, seq_len(n_chains),
-                                       function(i) .worker_step(steps))
+      latest <- parallel::clusterApply(cl, chain_ids,
+                                       function(cid) .worker_step(cid, steps))
 
       # combined progress plot
       if (plot.out) .plot_chains(latest, n_iter, stop.criterion, parameter)
@@ -344,6 +354,8 @@ gl.select.panel.parallel <- function(x,
   invisible(gg)
 }
 
-# Holds the one chain each cluster worker advances. Workers get their own copy
-# of the namespace, so chains stay separate and no worker global is written.
+# Holds the chains a cluster worker advances, one entry per chain id. Workers
+# get their own copy of the namespace, so the chains of different workers stay
+# separate; the only worker global written is the random seed of the chain
+# being advanced.
 .panel_worker_state <- new.env(parent = emptyenv())
