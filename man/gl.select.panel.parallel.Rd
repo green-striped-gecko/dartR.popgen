@@ -44,7 +44,8 @@ gl.select.panel.parallel(
 
 \item{n_chains}{Number of parallel SA chains (recommended 3-5).}
 
-\item{n_cores}{Cores to use. Default = \code{n_chains}.}
+\item{n_cores}{Cores to use. Default = \code{n_chains}. With fewer cores
+than chains, the chains share the workers and every chain still runs.}
 
 \item{n_iter}{Total SA iterations per chain.}
 
