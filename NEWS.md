@@ -8,6 +8,14 @@
   as fast, and the result listed chain 4 twice. A worker now keeps every
   chain it runs, each with its own random stream, so a run gives the same
   chains whatever `n_cores` is.
+* `gl.select.panel.parallel()`: BUG FIX, the cluster workers attached
+  dartR.sim, which dartR.popgen does not depend on or use, so the function
+  stopped with "there is no package called 'dartR.sim'" where dartR.sim was
+  not installed. The workers attach only dartR.base now.
+* `gl.opt.ind.all()` counts the available cores with
+  `parallelly::availableCores()` instead of the deprecated
+  `future::availableCores()` (the same function, re-exported by future until
+  now). parallelly, already installed with future, is now in Imports.
 
 # dartR.popgen 1.3.0
 

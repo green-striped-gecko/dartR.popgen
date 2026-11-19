@@ -208,9 +208,11 @@ gl.select.panel.parallel <- function(x,
   # guarantee the cluster is torn down no matter how we exit (incl. Escape)
   on.exit(try(parallel::stopCluster(cl), silent = TRUE), add = TRUE)
 
+  # the workers need dartR.base (gl.keep.loc etc.); dartR.popgen's own
+  # functions reach them with the worker functions' namespace. dartR.sim is
+  # not a dependency and is not used here.
   parallel::clusterEvalQ(cl, {
     suppressMessages(library(dartR.base))
-    suppressMessages(library(dartR.sim))
   })
   # ship custom function versions if present in the master's global env
   fns <- character(0)

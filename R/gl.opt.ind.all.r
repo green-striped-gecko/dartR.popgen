@@ -156,7 +156,7 @@
 #' res <- gl.opt.ind.all(possums.gl[1:20, 1:50], plot.display = FALSE)
 #'
 #' @seealso \code{\link[dartR.base]{gl.filter.callrate}}
-#' @importFrom future plan multisession sequential availableCores
+#' @importFrom future plan multisession sequential
 #' @importFrom furrr future_map furrr_options
 #' @importFrom stats median sd aggregate
 #' @export
@@ -204,7 +204,8 @@ gl.opt.ind.all <- function(x,
     stop(error("  Fatal Error: parameter ncores must be a single number of 1 or more.\n"))
   }
   ncores <- as.integer(ncores)
-  maxcores <- future::availableCores()
+  # parallelly::availableCores(): future::availableCores() is deprecated
+  maxcores <- parallelly::availableCores()
   if (ncores > maxcores) {
     if (verbose >= 2) {
       cat(warn("  Warning: ncores set to", ncores, "but only", maxcores,

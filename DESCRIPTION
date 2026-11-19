@@ -32,7 +32,7 @@ Encoding: UTF-8
 Depends: R (>= 4.1.0), dartR.base (>= 1.3.0), dartR.data
 Imports: methods, adegenet (>= 2.0.0), utils, MASS, dplyr, patchwork, crayon, ggplot2, data.table, 
          stringr, furrr, future, ggdendro, LEA, pillar, plyr, terra, purrr, R.utils,
-         ape, StAMPP, stats, parallel
+         ape, StAMPP, stats, parallel, parallelly
 Suggests: 
   assignPOP,
   coda,
