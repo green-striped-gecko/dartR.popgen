@@ -20,18 +20,21 @@ par_panel <- function(...) {
   out
 }
 
+# At most 2 workers: R CMD check --as-cran (and so GitHub Actions) stops a
+# third with "3 simultaneous processes spawned" (_R_CHECK_LIMIT_CORES_). Two
+# chains on one worker show the same defect (chain 2 replaced chain 1).
 test_that("every chain runs when there are fewer cores than chains", {
-  args <- list(x = dartR.data::possums.gl, nl = 10, parameter = "He", n_chains = 3,
+  args <- list(x = dartR.data::possums.gl, nl = 10, parameter = "He", n_chains = 2,
                n_iter = 4, burst = 2, plot.out = FALSE, verbose = 0)
-  shared <- do.call(par_panel, c(args, n_cores = 2))
-  own <- do.call(par_panel, c(args, n_cores = 3))
+  shared <- do.call(par_panel, c(args, n_cores = 1))
+  own <- do.call(par_panel, c(args, n_cores = 2))
 
   chains <- shared@other$sa_all_chains
-  expect_length(chains, 3)
-  expect_equal(vapply(chains, function(z) z$id, numeric(1)), 1:3)
+  expect_length(chains, 2)
+  expect_equal(vapply(chains, function(z) z$id, numeric(1)), 1:2)
   # each chain advances n_iter iterations, no more
   expect_equal(vapply(chains, function(z) max(z$history$iteration), numeric(1)),
-               rep(4, 3))
+               rep(4, 2))
 
   # a chain has its own random stream, so it gives the same result whether
   # it has a worker to itself or shares one
